@@ -191,3 +191,17 @@ html, body {
     padding: 0;
 }
 /* End Reset Settings */
+
+
+/*Posted by Nastya*/
+#login{
+    position: relative;
+    margin-right: 0px;
+    margin-left: auto;
+    top: 0px;
+    border: 1px solid #a9a9a9;
+    line-height: 30px;
+    text-align: right;
+    max-width: 320px;
+    cursor: default;
+}

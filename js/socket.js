@@ -56,7 +56,8 @@ var Socket = {
                     }
                 });
             } else {
-                // App.message(message);
+                console.log(message)
+                authenticationSuccessful(message);
             }
         };
 
