@@ -56,8 +56,14 @@ var Socket = {
                     }
                 });
             } else {
-                console.log(message)
-                authenticationSuccessful(message);
+                // for authenticate by login/pass
+                if ( message.event.localeCompare("auth.success") == 0) {
+                    // console.log(message);
+                    authenticationSuccessful(message);
+                }
+                else if (message.event.localeCompare("auth.error.wrong_credentials") == 0){
+                    alert("wrong login or password");
+                }
             }
         };
 
@@ -75,6 +81,7 @@ var Socket = {
             console.log('Code: ' + event.code + ' reason: ' + event.reason);
 
             self.ws = null;
+            alert('Code: ' + event.code + ' reason: ' + event.reason);
         };
     }
 

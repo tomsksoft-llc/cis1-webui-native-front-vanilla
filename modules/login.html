@@ -1,5 +1,5 @@
 <div>Login</div>
-<form name = "login" onsubmit = "send_login()" id = "login_form" class = "">
+<form name = "login" onsubmit = "send_login(); return false;" id = "login_form" class = "">
   Login <input type = "text" id = "username" name = "usernsme" required>
     <br>
   Password <input type = "password" id = "password" name = "password" required>
@@ -10,5 +10,5 @@
     <a href = "#">Forgot Your Password?</a>
 </form>
 <div class = "blockNone" id = "person">
-  <input type = "button" value = "exit" class = "send " onclick = "exitPerson()" id = "signOut">
+  <input type = "button" value = "sign out" class = "send " onclick = "exitPerson(); return false;" id = "signOut">
 </div>

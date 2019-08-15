@@ -1,7 +1,6 @@
 function rememberData() {
     try{
-        form = document.forms;
-        form = form.login;
+        form = document.getElementById("login_form");
         if(Cookie.get("cis_login")) {
             form.elements.username.value = Cookie.get("cis_login");
         }
@@ -16,9 +15,9 @@ function rememberData() {
 setTimeout(rememberData,50);
 
 function send_login() {
-    form = document.forms;
-    form = form.login;
+    form = document.getElementById("login_form");
     remember = form.elements.remember.checked;
+
     if (form.elements.username.value == "") {
         alert("Please enter your login");
         return;
@@ -42,16 +41,14 @@ function send_login() {
             pass: form.elements.password.value
         }
     }
-
-    Socket.open;
+    // console.log("request " + JSON.stringify(request));
+    Socket.open();
     Socket.send(request);
-    // alert();
 }
 
 function authenticationSuccessful(message){
-    username = document.forms;
-    username = username.login;
-    username = username.elements.username.value;
+    // console.log(message);
+    username = document.getElementById("login_form").elements.username.value;
     form = document.getElementById("login_form");
     person = document.getElementById("person");
     signOut = document.getElementById("signOut");
@@ -59,8 +56,8 @@ function authenticationSuccessful(message){
     person.appendChild(signOut);
     form.classList.toggle("blockNone");
     person.classList.toggle("blockNone");
-
 }
+
 function exitPerson(){
     form = document.getElementById("login_form");
     person = document.getElementById("person");
