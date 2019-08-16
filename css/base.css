@@ -194,14 +194,14 @@ html, body {
 
 
 /*Posted by Nastya*/
-#login{
+#authenticate{
     position: relative;
+    max-width: 320px;
+    top: 0px;
     margin-right: 0px;
     margin-left: auto;
-    top: 0px;
     border: 1px solid #a9a9a9;
     line-height: 30px;
     text-align: right;
-    max-width: 320px;
     cursor: default;
 }

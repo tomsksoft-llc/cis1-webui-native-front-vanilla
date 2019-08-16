@@ -39,7 +39,6 @@ var Socket = {
 
         this.ws.onmessage = function(message) {
 
-
             try {
                 message = JSON.parse(message.data);
             } catch(e) {
@@ -60,18 +59,17 @@ var Socket = {
                 console.log(message);
                 switch (message.event) {
                     // for authenticate by login/pass
-                    case "auth.success":
+                    case 'auth.success':
                         authenticationSuccessful(message);
                         break;
-                    case "auth.error.wrong_credentials":
-                        alert("wrong login or password");
+                    case 'auth.error.wrong_credentials':
+                        alert('wrong login or password');
                         break;
-
                     // for authenticate Exit
-                    case "auth.logout_success":
+                    case 'auth.logout_success':
                         break;
                     default:
-                        alert("Unexpected message was found");
+                        alert('Unexpected message was found');
                 }
 
             }

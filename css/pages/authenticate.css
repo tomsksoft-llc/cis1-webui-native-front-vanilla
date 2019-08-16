@@ -1,0 +1,43 @@
+#authenticate .name{
+    padding: 5px 20px;
+    border-bottom: 1px solid #a9a9a9;
+    text-align: left;
+}
+#authenticate #signIn{
+    max-width: 300px;
+    margin: auto;
+    padding: 20px;
+}
+#authenticate input{
+    margin-left: 15px;
+    padding-left: 5px;
+    border: 1px solid #a9a9a9;
+    border-radius: 5px;
+}
+#authenticate input:focus{
+    border: 1px solid #38a8dd;
+}
+#authenticate .buttonForSendData
+, #authenticate .buttonForSignOut{
+    margin: 10px;
+    padding: 5px 15px;
+    border: 15px;
+    background: #38a8dd;
+    color: #ffffff;
+    cursor: pointer;
+}
+#person{
+    padding: 10px;
+    text-align: left;
+}
+#authenticate .blockOfSignInOrSignOut{
+    display: none;
+}
+#authenticate .remember{
+    margin: auto;
+    text-align: center;
+    cursor: pointer;
+}
+#authenticate a{
+    padding: 10px;
+}
