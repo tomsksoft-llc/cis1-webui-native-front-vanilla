@@ -39,6 +39,7 @@ var Socket = {
 
         this.ws.onmessage = function(message) {
 
+
             try {
                 message = JSON.parse(message.data);
             } catch(e) {
@@ -56,14 +57,23 @@ var Socket = {
                     }
                 });
             } else {
-                // for authenticate by login/pass
-                if ( message.event.localeCompare("auth.success") == 0) {
-                    // console.log(message);
-                    authenticationSuccessful(message);
+                console.log(message);
+                switch (message.event) {
+                    // for authenticate by login/pass
+                    case "auth.success":
+                        authenticationSuccessful(message);
+                        break;
+                    case "auth.error.wrong_credentials":
+                        alert("wrong login or password");
+                        break;
+
+                    // for authenticate Exit
+                    case "auth.logout_success":
+                        break;
+                    default:
+                        alert("Unexpected message was found");
                 }
-                else if (message.event.localeCompare("auth.error.wrong_credentials") == 0){
-                    alert("wrong login or password");
-                }
+
             }
         };
 
@@ -72,6 +82,7 @@ var Socket = {
         };
 
         this.ws.onclose = function(event) {
+            // alert("close");
             if (event.wasClean) {
                 console.log('Connection for Client was closed cleanly');
             } else {

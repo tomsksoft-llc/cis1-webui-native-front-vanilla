@@ -11,8 +11,41 @@ function rememberData() {
         return;
     }
 }
+function authenticateByToken(){
+    console.log("Token = " + Cookie.get("cis_token"));
+    try{
+        if(Cookie.get("cis_token") && Cookie.get("cis_token") != null) {
+            requestToken = {
+                event: "auth.token",
+                transactionId: new Date().getTime(),
+                data: {
+                    token: Cookie.get("cis_token") + "="
+                }
+            };
+            console.log("requestToken " + JSON.stringify(requestToken));
+            Socket.send(requestToken);
+        }
+    }catch (e) {
+        return;
+    }
+}
 
 setTimeout(rememberData,50);
+setTimeout(function () {
+    if(window.Socket !== undefined) {
+        try {
+            if (Socket.opened) {
+                authenticateByToken();
+            }
+        } catch (e) {
+        }
+    }
+},150);
+
+
+var token = null;
+// var remember = true;
+// alert("start " + Cookie.get("cis_token"));
 
 function send_login() {
     form = document.getElementById("login_form");
@@ -33,7 +66,7 @@ function send_login() {
         Cookie.set("cis_pass", form.elements.password.value);
     }
 
-    request = {
+    requestInLogPass = {
         event: "auth.login_pass",
         transactionId: new Date().getTime(),
         data: {
@@ -41,11 +74,9 @@ function send_login() {
             pass: form.elements.password.value
         }
     }
-    // console.log("request " + JSON.stringify(request));
-    Socket.open();
-    Socket.send(request);
+    // console.log("requestLogPas " + JSON.stringify(requestInLogPass));
+    Socket.send(requestInLogPass);
 }
-
 function authenticationSuccessful(message){
     // console.log(message);
     username = document.getElementById("login_form").elements.username.value;
@@ -56,6 +87,16 @@ function authenticationSuccessful(message){
     person.appendChild(signOut);
     form.classList.toggle("blockNone");
     person.classList.toggle("blockNone");
+    token = message.data.token;
+    if (document.getElementById("login_form").remember.checked) {
+        Cookie.delete("cis_token");
+        Cookie.set("cis_token", String(token));
+        // console.log("Занесли в Куки " + Cookie.get("cis_token"));
+    }
+    else{
+        // console.log("Удалили из Куки " + Cookie.get("cis_token"));
+        Cookie.delete("cis_token");
+    }
 }
 
 function exitPerson(){
@@ -63,5 +104,15 @@ function exitPerson(){
     person = document.getElementById("person");
     form.classList.toggle("blockNone");
     person.classList.toggle("blockNone");
+    requestOut = {
+        event: "auth.logout",
+        transactionId: new Date().getTime(),
+        data: {
+            token: token
+        }
+    }
+    token = null;
+    console.log("requestOut " + JSON.stringify(requestOut));
+    Socket.send(requestOut);
 }
 
