@@ -1,28 +1,30 @@
 <div class='name'>Login</div>
 <div id='signIn' class=''>
-    <div>
-        Login
-        <input id='username' type='text' name='username' required>
-    </div>
-    <div>
-        Password
-        <input id='password' type='password' name='password' required>
+    <div id='wrapperForm'>
+        <div>
+            Login
+            <input id='username' class='custom-input' type='text' name='username'>
+        </div>
+        <div>
+            Password
+            <input id='password' class='custom-input' type='password' name='password'>
+        </div>
     </div>
     <div>
         <div>
             <input class='remember' type='checkbox' name='remember' checked>
             Remember Me
         </div>
-        <button class='buttonForSendData' onclick='signInPerson()'>
-            Login
+        <button class='custom-button blue-button' onclick='signInPerson()'>
+            Sign in
         </button>
         <a href='#'>
             Forgot Your Password?
         </a>
     </div>
 </div>
-<div id='person' class='blockOfSignInOrSignOut'>
-    <button id='signOut' class='buttonForSignOut' onclick='exitPerson()'>
+<div id='person' class='hide'>
+    <button id='signOut' class='custom-button blue-button' onclick='exitPerson()'>
         Sign Out
     </button>
 </div>

@@ -3,6 +3,7 @@ var Socket = {
     data: {}
     , ws: null
     , opened: false
+    , _events: []
 
     , init: function(data) {
         this.data = data || {};
@@ -31,6 +32,10 @@ var Socket = {
                 'debug: ' + self.data.debug);
 
             self.opened = true;
+
+            while(self._events.length) {
+                self.send(self._events.shift());
+            }
 
             if (typeof callback == 'function') {
                 callback();
@@ -69,9 +74,8 @@ var Socket = {
                     case 'auth.logout_success':
                         break;
                     default:
-                        alert('Unexpected message was found');
+                        alert('Unexpected message was found' + message);
                 }
-
             }
         };
 
@@ -80,7 +84,6 @@ var Socket = {
         };
 
         this.ws.onclose = function(event) {
-            // alert("close");
             if (event.wasClean) {
                 console.log('Connection for Client was closed cleanly');
             } else {
@@ -90,7 +93,6 @@ var Socket = {
             console.log('Code: ' + event.code + ' reason: ' + event.reason);
 
             self.ws = null;
-            alert('Code: ' + event.code + ' reason: ' + event.reason);
         };
     }
 
@@ -98,6 +100,9 @@ var Socket = {
         if ( ! this.ws
             || this.ws.readyState == this.ws.CLOSED
             || this.ws.readyState == this.ws.CLOSING ) {
+            if ( ! this.opened) {
+                this._events.push(obj);
+            }
             return false;
         }
 
