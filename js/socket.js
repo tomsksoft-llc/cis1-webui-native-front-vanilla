@@ -65,16 +65,29 @@ var Socket = {
                 switch (message.event) {
                     // for authenticate by login/pass
                     case 'auth.success':
+                        Toast.open({
+                            type: 'success'
+                            , text: 'authentication was successful. you are ' + Cookie.get('cis_username')
+                            , delay: 2
+                        });
                         authenticationSuccessful(message);
                         break;
                     case 'auth.error.wrong_credentials':
-                        alert('wrong login or password');
+                        Toast.open({
+                            type: 'error'
+                            , text: 'wrong login or password'
+                            , button_close: true
+                        });
                         break;
                     // for authenticate Exit
                     case 'auth.logout_success':
                         break;
                     default:
-                        alert('Unexpected message was found' + message);
+                        Toast.open({
+                            type: 'error'
+                            , text: 'Unexpected message was found' + message
+                            , button_close: true
+                        });
                 }
             }
         };

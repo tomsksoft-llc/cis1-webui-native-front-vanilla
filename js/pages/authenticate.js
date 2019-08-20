@@ -1,19 +1,17 @@
 var token = '';
 
 addEvent(window, 'load', function() {
-    console.log(Socket);
-    rememberDataFromCookie();
     authenticateByToken();
+    rememberDataFromCookie();
 });
 
 function rememberDataFromCookie() {
-    Selector.queryAll('#wrapperForm input').map(function (item) {
+    Selector.queryAll('#wrapperForm input').forEach(function (item) {
         if (Cookie.get('cis_' + item.id)) {
             item.value = Cookie.get('cis_' + item.id);
         }
     });
 }
-
 function authenticateByToken(){
     if (Cookie.get('cis_token') !== '') {
         request_token = {
@@ -30,11 +28,19 @@ function authenticateByToken(){
 
 function signInPerson() {
     if ( ! Selector.id('username').value) {
-        alert('Please enter your login');
+        Toast.open({
+            type: 'info'
+            , text: 'Please enter your login'
+            , button_close: true
+        });
         return;
     }
     if ( ! Selector.id('password').value) {
-        alert('Please enter your password');
+        Toast.open({
+            type: 'info'
+            , text: 'Please enter your password'
+            , button_close: true
+        });
         return;
     }
 
@@ -58,7 +64,7 @@ function signInPerson() {
 }
 
 function authenticationSuccessful(message){
-    Selector.id('person').firstChild.nodeValue = 'You are ' + Selector.id('username').value;
+    Selector.id('person').firstChild.nodeValue = 'You are ' + Cookie.get('cis_username');
 
     token = message.data.token;
     if (Selector.query('input[type=checkbox]').checked){
@@ -88,7 +94,7 @@ function exitPerson(){
 }
 
 function toggleBlockOfSignInOrSignOut() {
-    Selector.queryAll('#authenticate > div:nth-child(n+2)').map(function (item) {
+    Selector.queryAll('#authenticate > div:nth-child(n+2)').forEach(function (item) {
         item.toggleClass('hide');
     });
 }
