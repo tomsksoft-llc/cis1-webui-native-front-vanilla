@@ -10,7 +10,7 @@ var person = (function () {
     //         }
     //     });
     // };
-    authenticateByToken = function (){
+    var authenticateByToken = function (){
         if (_token) {
             _request_token = {
                 event: 'auth.token'
@@ -28,7 +28,7 @@ var person = (function () {
         // getDataFromCookie();
     });
 
-    signInPerson = function () {
+    var signInPerson = function () {
         if (!Selector.id('username').value) {
             Toast.open({
                 type: 'info'
@@ -65,7 +65,7 @@ var person = (function () {
         Socket.send(_request_log_pass);
     };
 
-    authenticationSuccessful = function(message){
+    var authenticationSuccessful = function(message){
         Toast.open({
             type: 'success'
             , text: 'authentication was successful. you are ' + encodeURIComponent(Cookie.get('cis_username'))
@@ -87,7 +87,7 @@ var person = (function () {
         _personality = true;
     };
 
-    exitPerson = function(){
+    var exitPerson = function(){
         _request_out = {
             event: 'auth.logout'
             , transactionId: new Date().getTime()
@@ -103,7 +103,7 @@ var person = (function () {
         _personality = false;
     };
 
-    toggleBlockOfSignInOrSignOut = function() {
+    var toggleBlockOfSignInOrSignOut = function() {
         Selector.queryAll('#authenticate > div:nth-child(n+2)').forEach(function (item) {
             item.toggleClass('hide');
         });
