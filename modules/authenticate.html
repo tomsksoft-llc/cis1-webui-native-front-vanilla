@@ -1,30 +1,31 @@
-<div class='name'>Login</div>
-<div id='signIn' class=''>
-    <div id='wrapperForm'>
+<div class="name">Login</div>
+<div id="sign-in" class="">
+    <div id="wrapper-form">
         <div>
             Login
-            <input id='username' class='custom-input' type='text' name='username'>
+            <input id="username" class="custom-input" type="text" name="username">
         </div>
         <div>
             Password
-            <input id='password' class='custom-input' type='password' name='password'>
+            <input id="password" class="custom-input" type="password" name="password">
         </div>
     </div>
     <div>
         <div>
-            <input class='remember' type='checkbox' name='remember' checked>
+            <input class="remember" type="checkbox" name="remember" checked>
             Remember Me
         </div>
-        <button class='custom-button blue-button' onclick='signInPerson()'>
+        <button class="custom-button blue-button" onclick="Auth.sign_in_by_log_pass()">
             Sign in
         </button>
-        <a href='#'>
+        <a href="#">
             Forgot Your Password?
         </a>
     </div>
 </div>
-<div id='signOut' class='hide'>
-    <button id='buttomSignOut' class='custom-button blue-button' onclick='exitPerson()'>
+<div id="sign-out" class="hide">
+    You are <span></span>
+    <button id="button-sign-out" class="custom-button blue-button" onclick="Auth.sign_out()">
         Sign Out
     </button>
 </div>

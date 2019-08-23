@@ -4,7 +4,7 @@
     font-family: 'Open Sans', sans-serif;
     text-align: left;
 }
-#authenticate #signIn{
+#authenticate #sign-in{
     max-width: 300px;
     margin: auto;
     padding: 20px;
@@ -12,7 +12,7 @@
 #authenticate input{
     margin-bottom: 5px;
 }
-#authenticate #signOut{
+#authenticate #sign-out{
     padding: 10px;
     text-align: left;
 }
