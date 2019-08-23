@@ -62,32 +62,8 @@ var Socket = {
                 });
             } else {
                 console.log(message);
-                switch (message.event) {
-                    // for authenticate by login/pass
-                    case 'auth.success':
-                        Toast.open({
-                            type: 'success'
-                            , text: 'authentication was successful. you are ' + Cookie.get('cis_username')
-                            , delay: 2
-                        });
-                        authenticationSuccessful(message);
-                        break;
-                    case 'auth.error.wrong_credentials':
-                        Toast.open({
-                            type: 'error'
-                            , text: 'wrong login or password'
-                            , button_close: true
-                        });
-                        break;
-                    // for authenticate Exit
-                    case 'auth.logout_success':
-                        break;
-                    default:
-                        Toast.open({
-                            type: 'error'
-                            , text: 'Unexpected message was found' + message
-                            , button_close: true
-                        });
+                if ( message.event.indexOf('auth') === 0 ) {
+                    person.getAnswer(message);
                 }
             }
         };
