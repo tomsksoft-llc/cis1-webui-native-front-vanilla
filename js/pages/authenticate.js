@@ -1,5 +1,6 @@
 var person = (function () {
-    var token = Cookie.get('cis_token');
+    var _token = Cookie.get('cis_token');
+    var _personality = false;
 
     // getDataFromCookie = function() {
     //     console.log(Selector.id('authenticate').outerHTML);
@@ -10,16 +11,16 @@ var person = (function () {
     //     });
     // };
     authenticateByToken = function (){
-        if (token) {
-            request_token = {
+        if (_token) {
+            _request_token = {
                 event: 'auth.token'
                 , transactionId: new Date().getTime()
                 , data: {
                     token: decodeURIComponent(Cookie.get('cis_token'))
                 }
             };
-            console.log('requestToken ' + JSON.stringify(request_token));
-            Socket._events.push(request_token);
+            console.log('requestToken ' + JSON.stringify(_request_token));
+            Socket._events.push(_request_token);
         }
     };
     addEvent(window, 'load', function() {
@@ -52,7 +53,7 @@ var person = (function () {
             }
         });
 
-        request_log_pass = {
+        _request_log_pass = {
             event: 'auth.login_pass'
             , transactionId: new Date().getTime()
             , data: {
@@ -60,8 +61,8 @@ var person = (function () {
                 , pass: Selector.id('password').value
             }
         };
-        console.log('requestLogPas ' + JSON.stringify(request_log_pass));
-        Socket.send(request_log_pass);
+        console.log('requestLogPas ' + JSON.stringify(_request_log_pass));
+        Socket.send(_request_log_pass);
     };
 
     authenticationSuccessful = function(message){
@@ -73,29 +74,33 @@ var person = (function () {
 
         Selector.id('signOut').firstChild.nodeValue = 'You are ' + decodeURIComponent(Cookie.get('cis_username'));
 
-        token = message.data.token;
+        _token = message.data.token;
         if (Selector.query('input[type=checkbox]').checked){
-            Cookie.set('cis_token', encodeURIComponent(token));
+            Cookie.set('cis_token', encodeURIComponent(_token));
         }
         else {
             Cookie.delete('cis_token');
         }
 
         toggleBlockOfSignInOrSignOut();
+
+        _personality = true;
     };
 
     exitPerson = function(){
-        request_out = {
+        _request_out = {
             event: 'auth.logout'
             , transactionId: new Date().getTime()
             , data: {
-                token: token
+                token: _token
             }
         };
-        console.log('requestOut ' + JSON.stringify(request_out));
-        Socket.send(request_out);
+        console.log('requestOut ' + JSON.stringify(_request_out));
+        Socket.send(_request_out);
 
         Cookie.delete('cis_token');
+
+        _personality = false;
     };
 
     toggleBlockOfSignInOrSignOut = function() {
@@ -136,5 +141,8 @@ var person = (function () {
                 }
         }
         , exitPerson: exitPerson
+        , getPersonality: function () {
+            return _personality;
+        }
     }
 })();
