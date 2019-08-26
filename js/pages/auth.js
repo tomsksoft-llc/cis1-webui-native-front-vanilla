@@ -1,3 +1,24 @@
+/**
+ * Authenticate
+ *
+ * @param {string} _token    - user account key
+ * @param {string} _username
+ * @param {boolean} logged   - user logged in
+ * Methods:
+ *     signInByLogPass - sign in by login and password
+ *     signInByToken   - sign in by token
+ *     signOut         - log out from account
+ *     onmessage       - behavior on server response
+ *         @param {object} message     -  text of response
+ *         for authenticate by login/pass/token:
+ *             @param {string} event - success of action
+ *                                  may be: 'auth.success' - success
+ *                                          'auth.error.wrong_credentials' - data error
+ *             @param {object} data      - message (for success)
+ *                 @param {string} group - request initiator
+ *                 @param {string} token - token of user
+ */
+
 var Auth = {
 
     _token: null
@@ -34,7 +55,7 @@ var Auth = {
 
     , signInByToken: function() {
         if ( Cookie.get('cis_token') ) {
-            Socket._events.push({
+            Socket.send({
                 event: 'auth.token'
                 , transactionId: (new Date()).getTime()
                 , data: {
@@ -65,7 +86,7 @@ var Auth = {
                 this.logged = true;
 
                 if (Selector.id('username').value) {
-                    if (Selector.query('#authenticate input[type=checkbox]').checked) {
+                    if (Selector.query('#auth input[type=checkbox]').checked) {
                         Cookie.set('cis_token', encodeURIComponent(this._token));
                         Cookie.set('cis_username', encodeURIComponent(this._username));
                     } else {
@@ -81,7 +102,7 @@ var Auth = {
                     , delay: 2
                 });
 
-                enterOrExit();
+                Selector.id("auth").className = "sign-out";
 
                 break;
 
@@ -105,7 +126,7 @@ var Auth = {
                 Cookie.delete('cis_token');
                 Cookie.delete('cis_username');
 
-                enterOrExit();
+                Selector.id("auth").className = "sign-in";
 
                 break;
 
@@ -123,10 +144,3 @@ var Auth = {
 addEvent(window, 'load', function() {
     Auth.signInByToken();
 });
-
-function enterOrExit() {
-    Selector.queryAll('#authenticate div:first-child ~ div')
-        .forEach(function (item) {
-            item.toggleClass('hide');
-    });
-}

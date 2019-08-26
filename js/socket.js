@@ -88,13 +88,12 @@ var Socket = {
     , send: function(obj) {
         if ( ! this.ws
             || this.ws.readyState == this.ws.CLOSED
-            || this.ws.readyState == this.ws.CLOSING ) {
-            if ( ! this.opened) {
-                this._events.push(obj);
-            }
+            || this.ws.readyState == this.ws.CLOSING)
+            return false;
+        if ( ! this.opened) {
+            this._events.push(obj);
             return false;
         }
-
         this.ws.send(JSON.stringify(obj));
         return true;
     }

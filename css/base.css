@@ -192,16 +192,10 @@ html, body {
 }
 /* End Reset Settings */
 
-
-/*Posted by Nastya*/
-#authenticate{
+#auth{
     position: relative;
     max-width: 320px;
     top: 0px;
     margin-right: 0px;
     margin-left: auto;
-    border: 1px solid #a9a9a9;
-    line-height: 30px;
-    text-align: right;
-    cursor: default;
 }
