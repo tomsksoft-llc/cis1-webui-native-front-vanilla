@@ -9,7 +9,6 @@ Object.defineProperty(Array.prototype, 'addToHead', {
                     var script = this.document.createElement('script');
                     script.setAttribute('type', 'text/javascript');
                     script.setAttribute('src', item);
-                    // script.async = false;
                     document.querySelector('head').appendChild(script);
                 } else if (type == 'css') {
                     var link = this.document.createElement('link');

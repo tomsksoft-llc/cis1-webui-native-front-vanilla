@@ -62,7 +62,7 @@ var Socket = {
                 });
             } else {
                 console.log(message);
-                if ( message.event.indexOf('auth') === 0 ) {
+                if (message.event.indexOf('auth') === 0) {
                     Auth.onmessage(message);
                 }
             }
