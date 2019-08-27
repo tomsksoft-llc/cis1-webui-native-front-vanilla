@@ -1,21 +1,21 @@
-<div id="form-name">Login</div>
-<div id="sign-in" class="">
-    <div id="form-wrapper">
+<div id="auth-form-name">Login</div>
+<div id="auth-sign-in">
+    <div id="auth-form-wrapper">
         <div>
             Login
-            <input id="username" class="custom-input" type="text" name="username" autocomplete="on">
+            <input id="auth-username" class="custom-input" type="text" name="username" autocomplete="on">
         </div>
         <div>
             Password
-            <input id="password" class="custom-input" type="password" name="password">
+            <input id="auth-password" class="custom-input" type="password" name="password">
         </div>
     </div>
     <div>
         <div>
-            <input class="remember" type="checkbox" name="remember" checked>
+            <input id="auth-remember-me" type="checkbox" name="remember" checked>
             Remember Me
         </div>
-        <button class="custom-button blue-button" onclick="Auth.signInByLogPass()">
+        <button class="custom-button blue-button" onclick="Auth.signInByLogPass();">
             Sign in
         </button>
         <a href="#">
@@ -23,9 +23,9 @@
         </a>
     </div>
 </div>
-<div id="sign-out">
+<div id="auth-sign-out">
     You are <span></span>
-    <button class="custom-button blue-button" onclick="Auth.signOut()">
+    <button class="custom-button blue-button" onclick="Auth.signOut();">
         Sign Out
     </button>
 </div>

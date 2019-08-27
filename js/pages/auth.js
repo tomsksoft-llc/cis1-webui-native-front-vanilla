@@ -1,12 +1,14 @@
 /**
  * Authenticate
  *
+ * @param {object} _auth     - main node
  * @param {string} _token    - user account key
- * @param {string} _username
+ * @param {string} _username - username from cookie or input
+ * @param {string} _pass     - password from input
  * @param {boolean} logged   - user logged in
  * Methods:
+ *     init            - variable initialization
  *     signInByLogPass - sign in by login and password
- *     signInByToken   - sign in by token
  *     signOut         - log out from account
  *     onmessage       - behavior on server response
  *         @param {object} message     -  text of response
@@ -21,12 +23,41 @@
 
 var Auth = {
 
-    _token: null
+    _auth: null
+    , _token: null
     , _username: null
+    , _pass: null
     , logged: false
 
+    ,init: function () {
+
+        this._auth = Selector.id('auth');
+
+        if (Cookie.get('cis_token')) {
+
+            Socket.send({
+                event: 'auth.token'
+                , transactionId: (new Date()).getTime()
+                , data: {
+                    token: decodeURIComponent(Cookie.get('cis_token'))
+                }
+            });
+
+            this._username = decodeURIComponent(Cookie.get('cis_username'));
+            this._pass = '';
+
+            this._auth.className = 'auth-sign-out';
+        } else {
+            this._auth.className = 'auth-sign-in';
+        }
+    }
+
     , signInByLogPass: function() {
-        if ( ! Selector.id('username').value) {
+
+        this._username = Selector.id('auth-username').value;
+        this._pass = Selector.id('auth-password').value;
+
+        if ( ! this._username) {
             Toast.open({
                 type: 'info'
                 , text: 'Please enter your login'
@@ -34,7 +65,7 @@ var Auth = {
             });
             return;
         }
-        if ( ! Selector.id('password').value) {
+        if ( ! this._pass) {
             Toast.open({
                 type: 'info'
                 , text: 'Please enter your password'
@@ -47,22 +78,10 @@ var Auth = {
             event: 'auth.login_pass'
             , transactionId: (new Date()).getTime()
             , data: {
-                username: Selector.id('username').value
-                , pass: Selector.id('password').value
+                username: this._username
+                , pass: this._pass
             }
         });
-    }
-
-    , signInByToken: function() {
-        if ( Cookie.get('cis_token') ) {
-            Socket.send({
-                event: 'auth.token'
-                , transactionId: (new Date()).getTime()
-                , data: {
-                    token: decodeURIComponent(Cookie.get('cis_token'))
-                }
-            });
-        }
     }
 
     , signOut: function() {
@@ -75,72 +94,60 @@ var Auth = {
         });
     }
 
-    , onmessage: function(message){
-        switch (message.event) {
+    , onmessage: function(message) {
 
-            // for authenticate by login/pass/token
-            case 'auth.success':
+        if (message.event === 'auth.success') {
 
-                this._token = message.data.token;
-                this._username = Selector.id('username').value || encodeURIComponent(Cookie.get('cis_username'));
-                this.logged = true;
+            this._token = message.data.token;
+            this.logged = true;
 
-                if (Selector.id('username').value) {
-                    if (Selector.query('#auth input[type=checkbox]').checked) {
-                        Cookie.set('cis_token', encodeURIComponent(this._token));
-                        Cookie.set('cis_username', encodeURIComponent(this._username));
-                    } else {
-                        Cookie.delete('cis_token');
-                        Cookie.delete('cis_username');
-                    }
-                }
+            this._auth.className = 'auth-sign-out';
 
-                Selector.query('#sign-out > span').innerHTML = this._username;
-                Toast.open({
-                    type: 'success'
-                    , text: 'authentication was successful. You are ' + this._username
-                    , delay: 2
-                });
-
-                Selector.id("auth").className = "sign-out";
-
-                break;
-
-            case 'auth.error.wrong_credentials':
-
-                Toast.open({
-                    type: 'error'
-                    , text: 'wrong login or password'
-                    , button_close: true
-                });
-
-                break;
-
-            // for exit
-            case 'auth.logout_success':
-
-                this._token = null;
-                this._username = null;
-                this.logged = false;
-
+            if (Selector.id('auth-remember-me').checked) {
+                Cookie.set('cis_token', encodeURIComponent(this._token));
+                Cookie.set('cis_username', encodeURIComponent(this._username));
+            } else {
                 Cookie.delete('cis_token');
                 Cookie.delete('cis_username');
+            }
 
-                Selector.id("auth").className = "sign-in";
+            Selector.query('#auth-sign-out > span').innerHTML = this._username;
+            Toast.open({
+                type: 'success'
+                , text: 'authentication was successful. You are ' + this._username
+                , delay: 2
+            });
 
-                break;
+        } else if (message.event === 'auth.error.wrong_credentials') {
 
-            default:
+            Toast.open({
+                type: 'error'
+                , text: 'wrong login or password'
+                , button_close: true
+            });
 
-                Toast.open({
-                    type: 'error'
-                    , text: 'Unexpected message was found' + message
-                    , button_close: true
-                });
+        } else if (message.event === 'auth.logout_success') {
+
+            this._auth.className = 'auth-sign-in';
+
+            this._token = null;
+            this._username = null;
+            this._pass = null;
+            this.logged = false;
+
+            Cookie.delete('cis_token');
+            Cookie.delete('cis_username');
+
+        } else {
+            Toast.open({
+                type: 'error'
+                , text: 'Unexpected message was found' + message
+                , button_close: true
+            });
         }
     }
 };
 
 addEvent(window, 'load', function() {
-    Auth.signInByToken();
+    Auth.init();
 });
