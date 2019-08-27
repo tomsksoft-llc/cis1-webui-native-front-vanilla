@@ -2,19 +2,19 @@
     <span>Login</span>
 </div>
 <div id="auth-sign-in">
-    <div id="auth-form-wrapper">
+    <div id="auth-form">
         <div>
             <span>Login</span>
             <input id="auth-username" class="custom-input" type="text" name="username">
         </div>
         <div>
             <span>Password</span>
-            <input id="auth-password" class="custom-input" type="password" name="password">
+            <input id="auth-pass" class="custom-input" type="password" name="password">
         </div>
     </div>
     <div>
         <div>
-            <input id="auth-remember-me" type="checkbox" name="remember" checked>
+            <input id="auth-remember" type="checkbox" name="remember" checked>
             <span>Remember Me</span>
         </div>
         <button class="custom-button blue-button" onclick="Auth.signInByLogPass();">Sign in</button>
@@ -22,6 +22,6 @@
     </div>
 </div>
 <div id="auth-sign-out">
-    <span>You are</span>
+    <span></span>
     <button class="custom-button blue-button" onclick="Auth.signOut();">Sign Out</button>
 </div>

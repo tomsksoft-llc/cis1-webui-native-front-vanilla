@@ -14,8 +14,7 @@
  *                               Variant 'auth.success' (success sign in) ||
  *                               'auth.error.wrong_credentials' (data error) ||
  *                               'auth.logout_success' (success sign out)
- *      @param {object} data  - message (for success sign in)
- *          @param {string} group - request initiator
+ *      @param {object} data  - (optional) message (for success sign in)
  *          @param {string} token - token of user
  */
 
@@ -27,21 +26,30 @@ var Auth = {
         , pass: null
         , remember: null
     }
-    , _token: null
+    , _cook: {
+        token: null
+        , username: null
+    }
     , logged: false
 
     , init: function () {
 
-        this._elements.auth = Selector.id('auth');
-        this._elements.username = Selector.id('auth-username');
-        this._elements.pass = Selector.id('auth-password');
-        this._elements.remember = Selector.id('auth-remember-me');
+        for (var key in this._elements) {
+            if (key === 'auth') {
+                this._elements[key]= Selector.id(key);
+            } else {
+                this._elements[key] = Selector.id('auth-' + key);
+            }
+        }
+        for (var key in this._cook){
+            this._cook[key] = decodeURIComponent(Cookie.get(key));
+        }
 
         Socket.send({
             event: 'auth.token'
             , transactionId: (new Date()).getTime()
             , data: {
-                token: decodeURIComponent(Cookie.get('cis_token'))
+                token: this._cook.token
             }
         });
     }
@@ -81,7 +89,7 @@ var Auth = {
             event: 'auth.logout'
             , transactionId: (new Date()).getTime()
             , data: {
-                token: this._token
+                token: this._cook.token
             }
         });
     }
@@ -90,19 +98,23 @@ var Auth = {
 
         if (message.event === 'auth.success') {
 
-            this._token = message.data.token;
             this.logged = true;
+            this._cook.token = message.data.token;
 
-            if (this._elements.remember.checked && this._elements.username.value) {
-                Cookie.set('cis_token', encodeURIComponent(this._token));
-                Cookie.set('cis_username ', encodeURIComponent(this._elements.username.value));
+            // to log/pass
+            if (this._elements.username.value) {
+                this._cook.username = this._elements.username.value;
+                if (this._elements.remember.checked) {
+                    for (var key in this._cook) {
+                        Cookie.set(key, encodeURIComponent(this._cook[key]));
+                    }
+                }
             }
 
-            var username = this._elements.username.value || decodeURIComponent(Cookie.get('cis_username'));
-            Selector.query('#auth-sign-out > span').textContent += ' ' + username;
+            Selector.query('#auth-sign-out > span').innerHTML = 'You are ' + this._cook.username;
             Toast.open({
                 type: 'success'
-                , text: 'authentication was successful. You are ' + username
+                , text: 'authentication was successful. You are ' + this._cook.username
                 , delay: 2
             });
 
@@ -122,11 +134,10 @@ var Auth = {
 
         } else if (message.event === 'auth.logout_success') {
 
-            this._token = null;
             this.logged = false;
-
-            Cookie.delete('cis_token');
-            Cookie.delete('cis_username');
+            for (var key in this._cook) {
+                Cookie.delete(key);
+            }
 
             this._elements.auth.className = 'sign-in';
 
