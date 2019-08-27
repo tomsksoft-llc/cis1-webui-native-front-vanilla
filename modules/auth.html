@@ -1,31 +1,27 @@
-<div id="auth-form-name">Login</div>
+<div id="auth-form-name">
+    <span>Login</span>
+</div>
 <div id="auth-sign-in">
     <div id="auth-form-wrapper">
         <div>
-            Login
-            <input id="auth-username" class="custom-input" type="text" name="username" autocomplete="on">
+            <span>Login</span>
+            <input id="auth-username" class="custom-input" type="text" name="username">
         </div>
         <div>
-            Password
+            <span>Password</span>
             <input id="auth-password" class="custom-input" type="password" name="password">
         </div>
     </div>
     <div>
         <div>
             <input id="auth-remember-me" type="checkbox" name="remember" checked>
-            Remember Me
+            <span>Remember Me</span>
         </div>
-        <button class="custom-button blue-button" onclick="Auth.signInByLogPass();">
-            Sign in
-        </button>
-        <a href="#">
-            Forgot Your Password?
-        </a>
+        <button class="custom-button blue-button" onclick="Auth.signInByLogPass();">Sign in</button>
+        <a href="#">Forgot Your Password?</a>
     </div>
 </div>
 <div id="auth-sign-out">
-    You are <span></span>
-    <button class="custom-button blue-button" onclick="Auth.signOut();">
-        Sign Out
-    </button>
+    <span>You are</span>
+    <button class="custom-button blue-button" onclick="Auth.signOut();">Sign Out</button>
 </div>

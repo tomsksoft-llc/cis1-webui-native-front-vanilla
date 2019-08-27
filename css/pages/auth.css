@@ -4,8 +4,7 @@
     text-align: right;
     cursor: default;
 }
-#auth.auth-sign-in > div,
-#auth.auth-sign-out > div {
+#auth > div{
     display: none;
 }
 #auth > #auth-form-name {
@@ -14,8 +13,8 @@
     border-bottom: 1px solid #a9a9a9;
     text-align: left;
 }
-#auth.auth-sign-in > #auth-sign-in,
-#auth.auth-sign-out > #auth-sign-out {
+#auth.sign-in > #auth-sign-in,
+#auth.sign-out > #auth-sign-out {
     display: block;
 }
 #auth-sign-in {
