@@ -26,7 +26,7 @@ var Auth = {
         , pass: null
         , remember: null
     }
-    , _cook: {
+    , _cookie: {
         token: null
         , username: null
     }
@@ -35,21 +35,21 @@ var Auth = {
     , init: function () {
 
         for (var key in this._elements) {
-            if (key === 'auth') {
+            if (key == 'auth') {
                 this._elements[key]= Selector.id(key);
             } else {
                 this._elements[key] = Selector.id('auth-' + key);
             }
         }
-        for (var key in this._cook){
-            this._cook[key] = decodeURIComponent(Cookie.get(key));
+        for (var key in this._cookie){
+            this._cookie[key] = decodeURIComponent(Cookie.get(key));
         }
 
         Socket.send({
             event: 'auth.token'
             , transactionId: (new Date()).getTime()
             , data: {
-                token: this._cook.token
+                token: this._cookie.token
             }
         });
     }
@@ -89,38 +89,38 @@ var Auth = {
             event: 'auth.logout'
             , transactionId: (new Date()).getTime()
             , data: {
-                token: this._cook.token
+                token: this._cookie.token
             }
         });
     }
 
     , onmessage: function(message) {
 
-        if (message.event === 'auth.success') {
+        if (message.event == 'auth.success') {
 
             this.logged = true;
-            this._cook.token = message.data.token;
+            this._cookie.token = message.data.token;
 
             // to log/pass
             if (this._elements.username.value) {
-                this._cook.username = this._elements.username.value;
+                this._cookie.username = this._elements.username.value;
                 if (this._elements.remember.checked) {
-                    for (var key in this._cook) {
-                        Cookie.set(key, encodeURIComponent(this._cook[key]));
+                    for (var key in this._cookie) {
+                        Cookie.set(key, encodeURIComponent(this._cookie[key]));
                     }
                 }
             }
 
-            Selector.query('#auth-sign-out > span').innerHTML = 'You are ' + this._cook.username;
+            Selector.query('#auth-sign-out > span').innerHTML = 'Logged in as ' + this._cookie.username;
             Toast.open({
                 type: 'success'
-                , text: 'authentication was successful. You are ' + this._cook.username
+                , text: 'authentication was successful'
                 , delay: 2
             });
 
             this._elements.auth.className = 'sign-out';
 
-        } else if (message.event === 'auth.error.wrong_credentials') {
+        } else if (message.event == 'auth.error.wrong_credentials') {
 
             if (this._elements.username.value) {
                 Toast.open({
@@ -132,10 +132,10 @@ var Auth = {
 
             this._elements.auth.className = 'sign-in';
 
-        } else if (message.event === 'auth.logout_success') {
+        } else if (message.event == 'auth.logout_success') {
 
             this.logged = false;
-            for (var key in this._cook) {
+            for (var key in this._cookie) {
                 Cookie.delete(key);
             }
 

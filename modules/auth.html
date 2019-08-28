@@ -1,6 +1,4 @@
-<div id="auth-form-name">
-    <span>Login</span>
-</div>
+<h2>Login</h2>
 <div id="auth-sign-in">
     <div id="auth-form">
         <div>
@@ -12,14 +10,11 @@
             <input id="auth-pass" class="custom-input" type="password" name="password">
         </div>
     </div>
-    <div>
-        <div>
-            <input id="auth-remember" type="checkbox" name="remember" checked>
-            <span>Remember Me</span>
-        </div>
-        <button class="custom-button blue-button" onclick="Auth.signInByLogPass();">Sign in</button>
-        <a href="#">Forgot Your Password?</a>
+    <div id="auth-checkbox">
+        <label><input id="auth-remember" type="checkbox" name="remember">Remember Me</label>
     </div>
+    <button class="custom-button blue-button" onclick="Auth.signInByLogPass();">Sign in</button>
+    <a href="#">Forgot Your Password?</a>
 </div>
 <div id="auth-sign-out">
     <span></span>

@@ -4,10 +4,10 @@
     text-align: right;
     cursor: default;
 }
-#auth > div:first-child ~ div{
+#auth > div{
     display: none;
 }
-#auth-form-name {
+#auth > h2 {
     padding: 5px 20px;
     border-bottom: 1px solid #a9a9a9;
     text-align: left;
@@ -28,6 +28,7 @@
     padding: 10px;
     text-align: left;
 }
-#auth-remember {
+#auth-checkbox > label,
+#auth-remember{
     cursor: pointer;
 }
