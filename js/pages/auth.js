@@ -4,18 +4,18 @@
  * @param {boolean} logged - user logged in
  *
  * Methods:
- *  init            - variable initialization
- *  signInByLogPass - sign in by login and password
- *  signOut         - log out from account
+ *  init            - Variable initialization
+ *  signInByLogPass - Sign in by login and password
+ *  signOut         - Log out from account
  *
- *  onmessage       - behavior on response from server
- *  @param {object} message - text of response text of response from server(
- *      @param {string} event - success of action
+ *  onmessage       - Behavior on response from server
+ *  @param {object} message - Text of response text of response from server(
+ *      @param {string} event - Success of action
  *                               Variant 'auth.success' (success sign in) ||
  *                               'auth.error.wrong_credentials' (data error) ||
  *                               'auth.logout_success' (success sign out)
- *      @param {object} data  - (optional) message (for success sign in)
- *          @param {string} token - token of user
+ *      @param {object} data  - (optional) Message (for success sign in)
+ *          @param {string} token - Token of user
  */
 
 var Auth = {
@@ -27,7 +27,7 @@ var Auth = {
         , remember: null
     }
     , _cookie: {
-        token: null
+        auth_token: null
         , username: null
     }
     , logged: false
@@ -35,11 +35,7 @@ var Auth = {
     , init: function () {
 
         for (var key in this._elements) {
-            if (key == 'auth') {
-                this._elements[key]= Selector.id(key);
-            } else {
-                this._elements[key] = Selector.id('auth-' + key);
-            }
+            this._elements[key] = (key == 'auth' ? Selector.id(key) : Selector.id('auth-' + key));
         }
         for (var key in this._cookie){
             this._cookie[key] = decodeURIComponent(Cookie.get(key));
@@ -49,7 +45,7 @@ var Auth = {
             event: 'auth.token'
             , transactionId: (new Date()).getTime()
             , data: {
-                token: this._cookie.token
+                token: this._cookie.auth_token
             }
         });
     }
@@ -89,7 +85,7 @@ var Auth = {
             event: 'auth.logout'
             , transactionId: (new Date()).getTime()
             , data: {
-                token: this._cookie.token
+                token: this._cookie.auth_token
             }
         });
     }
@@ -99,7 +95,7 @@ var Auth = {
         if (message.event == 'auth.success') {
 
             this.logged = true;
-            this._cookie.token = message.data.token;
+            this._cookie.auth_token = message && message.data && message.data.token || '';
 
             // to log/pass
             if (this._elements.username.value) {
