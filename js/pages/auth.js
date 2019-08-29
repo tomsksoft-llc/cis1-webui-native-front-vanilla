@@ -92,10 +92,12 @@ var Auth = {
 
     , onmessage: function(message) {
 
+        message = message || {event: ''};
+
         if (message.event == 'auth.success') {
 
+            this._cookie.auth_token = (message.data || {}).token || '';
             this.logged = true;
-            this._cookie.auth_token = message && message.data && message.data.token || '';
 
             // to log/pass
             if (this._elements.username.value) {
@@ -141,7 +143,7 @@ var Auth = {
 
             Toast.open({
                 type: 'error'
-                , text: 'Unexpected message was found' + message
+                , text: 'Unexpected message was found'
                 , button_close: true
             });
         }
