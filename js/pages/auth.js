@@ -20,7 +20,8 @@
 
 var Auth = {
 
-    _elements: {
+    logged: false
+    , _elements: {
         auth: null
         , username: null
         , pass: null
@@ -30,7 +31,6 @@ var Auth = {
         auth_token: null
         , username: null
     }
-    , logged: false
 
     , init: function () {
 
