@@ -73,6 +73,13 @@ addEvent(document, 'ready', function() {
                         html.removeClass('wait');
 
                         item.html(data);
+
+                        setTimeout(function() {
+                            if (typeof window[attr.capitalize()] == 'object' &&
+                                isFunction(window[attr.capitalize()].init)) {
+                                window[attr.capitalize()].init();
+                            }
+                        }, 0);
                     }
                     , error: function() {
                         html.removeClass('wait');

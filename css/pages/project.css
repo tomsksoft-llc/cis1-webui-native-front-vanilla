@@ -1,0 +1,92 @@
+#project {
+    position: relative;
+    line-height: 30px;
+    text-align: justify;
+    cursor: default;
+}
+#project-buttons, #project-menu {
+    display: inline-block;
+    vertical-align: top;
+}
+#project-buttons {
+    width: 150px;
+    padding-top: 50px;
+}
+#project-buttons > button {
+    min-width: 130px;
+    margin-bottom: 15px;
+}
+#project-menu {
+    min-width: 700px;
+}
+#project-path {
+    border: none;
+    padding: 10px;
+    color: #41b7ef;
+}
+#project-path > span:before {
+    content: '/';
+    padding-left: 5px;
+    padding-right: 5px;
+    color: #a9a9a9;
+}
+#project-path > span:first-child:before {
+    content:none;
+}
+#project-path > span:hover {
+    color: #54ccf3;
+    cursor: pointer;
+}
+#project-path > span:last-child {
+    color: #a9a9a9;
+}
+#project-main-info {
+    border: 1px solid #a9a9a9;
+    color: #a9a9a9;
+}
+#project-main-info > ul > li {
+    padding-left: 10px;
+}
+#project-main-info > ul > li:first-child {
+     padding-top: 10px;
+ }
+#project-main-info > ul > li:last-child {
+    padding-bottom: 10px;
+}
+#project-buttons > button,
+#project-lists > div {
+    display: none;
+}
+#project-buttons.project-list > .project-list,
+#project-lists.project-list > .project-list,
+#project-buttons.project-jobs > .project-jobs,
+#project-lists.project-jobs > .project-jobs,
+#project-buttons.project-builds > .project-builds,
+#project-lists.project-builds > .project-builds,
+#project-buttons.project-entry > .project-entry,
+#project-lists.project-entry > .project-entry {
+    display: block;
+}
+#project-lists > div > h2 {
+    padding: 10px 20px;
+    text-align: left;
+    font-size: 16px;
+}
+#project-lists {
+    border: 1px solid #a9a9a9;
+    border-top: none;
+}
+#project-lists > div > table {
+    text-align: left;
+}
+#project-lists > div > table td:last-child,
+#project-lists > div > table th:last-child {
+    text-align: right;
+}
+#project-lists > div > table td:first-child,
+#project-lists > div > table th:first-child {
+    text-align: left;
+}
+#project-lists > div > table > tbody > tr > td > span:hover {
+    text-decoration: underline;
+}

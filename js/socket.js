@@ -3,6 +3,7 @@ var Socket = {
     data: {}
     , ws: null
     , opened: false
+    , _events: []
 
     , init: function(data) {
         this.data = data || {};
@@ -32,6 +33,10 @@ var Socket = {
 
             self.opened = true;
 
+            while(self._events.length) {
+                self.send(self._events.shift());
+            }
+
             if (typeof callback == 'function') {
                 callback();
             }
@@ -56,7 +61,12 @@ var Socket = {
                     }
                 });
             } else {
-                // App.message(message);
+                console.log(JSON.stringify(message));
+                if (message.event.indexOf('auth') === 0) {
+                    Auth.onmessage(message);
+                } else {
+                    Project.onmessage(message);
+                }
             }
         };
 
@@ -80,10 +90,12 @@ var Socket = {
     , send: function(obj) {
         if ( ! this.ws
             || this.ws.readyState == this.ws.CLOSED
-            || this.ws.readyState == this.ws.CLOSING ) {
+            || this.ws.readyState == this.ws.CLOSING)
+            return false;
+        if ( ! this.opened) {
+            this._events.push(obj);
             return false;
         }
-
         this.ws.send(JSON.stringify(obj));
         return true;
     }

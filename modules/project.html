@@ -1,0 +1,39 @@
+<div id="project-buttons" class="">
+    <button class="project-list custom-button blue-button">New project</button>
+    <button class="project-jobs custom-button blue-button">New job</button>
+    <button class="project-builds custom-button blue-button">Start</button>
+    <button class="project-builds custom-button blue-button">Add file</button>
+    <button class="project-builds custom-button blue-button">Add params</button>
+    <button class="project-builds custom-button blue-button">Add readme</button>
+</div>
+<div id="project-menu">
+    <div id="project-path">
+        <span onclick="Project._comeBack();">jobs</span>
+    </div>
+    <div id="project-main-info">
+        <ul></ul>
+    </div>
+    <div id="project-lists" class="">
+        <div id="project-block" class="project-list">
+            <h2>Project list:</h2>
+            <table class="custom-table" id="project-list"></table>
+        </div>
+        <div id="project-jobs-block" class="project-jobs">
+            <table class="custom-table" id="project-jobs"></table>
+        </div>
+        <div id="project-builds-block" class="project-builds">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th colspan="2">Builds:</th>
+                        <th>Properties:</th>
+                    </tr>
+                </thead>
+                <tbody id="project-builds"></tbody>
+            </table>
+        </div>
+        <div id="project-entry-block" class="project-entry">
+            <table class="custom-table" id="project-entry"></table>
+        </div>
+    </div>
+</div>
