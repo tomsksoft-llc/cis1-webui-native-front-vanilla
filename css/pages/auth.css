@@ -1,7 +1,8 @@
 #auth {
+    width: 340px;
     border: 1px solid #a9a9a9;
     line-height: 30px;
-    text-align: right;
+    text-align: left;
     cursor: default;
 }
 #auth > h2 {
@@ -21,8 +22,14 @@
     margin: auto;
     padding: 20px;
 }
-#auth-sign-in > #auth-form > div > input {
+#auth-sign-in > #auth-form > div > input{
+    width: 100%;
     margin-bottom: 5px;
+}
+#auth-sign-in > button,
+#auth-sign-out > button{
+    width: 100%;
+    margin: 5px 0px;
 }
 #auth-sign-out {
     padding: 10px;
