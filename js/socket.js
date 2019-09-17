@@ -68,6 +68,7 @@ var Socket = {
                     Project.onmessage(message);
                 }
             }
+            removeSpiner()
         };
 
         this.ws.onerror = function(error) {

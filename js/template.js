@@ -120,6 +120,13 @@ var Page = {
     }
 };
 
+function addSpiner() {
+    body.addClass('spinner');
+}
+function removeSpiner() {
+    body.removeClass('spinner');
+}
+
 /**
  * Toast messages
  *

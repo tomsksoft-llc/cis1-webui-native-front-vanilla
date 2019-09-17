@@ -1,15 +1,14 @@
 <div id="project-buttons" class="">
-    <button class="project-list custom-button blue-button">New project</button>
-    <button class="project-jobs custom-button blue-button">New job</button>
-    <button class="project-builds custom-button blue-button">Start</button>
+    <button class="project-list custom-button blue-button" onclick="Project.entryMethod.openFormToNew();">New project</button>
+    <button class="project-jobs custom-button blue-button" onclick="Project.entryMethod.openFormToNew()">New job</button>
+    <button class="project-builds custom-button blue-button" onclick="Project.jobMethod.start('start');">Start</button>
     <button class="project-builds custom-button blue-button">Add file</button>
     <button class="project-builds custom-button blue-button">Add params</button>
     <button class="project-builds custom-button blue-button">Add readme</button>
+    <button class="project-property custom-button blue-button">Save</button>
 </div>
 <div id="project-menu">
-    <div id="project-path">
-        <span onclick="Project._comeBack();">jobs</span>
-    </div>
+    <div id="project-path"></div>
     <div id="project-main-info">
         <ul></ul>
     </div>
@@ -22,18 +21,77 @@
             <table class="custom-table" id="project-jobs"></table>
         </div>
         <div id="project-builds-block" class="project-builds">
-            <table class="custom-table">
-                <thead>
-                    <tr>
-                        <th colspan="2">Builds:</th>
-                        <th>Properties:</th>
-                    </tr>
-                </thead>
-                <tbody id="project-builds"></tbody>
-            </table>
+            <div id="project-build-name">
+                <div>Builds:</div>
+                <div>Properties:</div>
+            </div>
+            <table class="custom-table" id="project-builds"></table>
         </div>
         <div id="project-entry-block" class="project-entry">
             <table class="custom-table" id="project-entry"></table>
         </div>
+        <div id="project-property" class="project-property"></div>
     </div>
 </div>
+<div id="project-form-external-input">
+    <div id="project-form">
+        <div id="project-form-name">
+            <div>headline</div>
+            <div id="project-form-close" onclick="Project.formMethod.changeForm();">Close</div>
+        </div>
+        <div>
+            <div id="project-form-params-block"></div>
+            <div id="project-form-button"></div>
+        </div>
+    </div>
+</div>
+
+<!--template for path-->
+<script type="text/html" id="template-project-path">
+    <a %%onclick%% href="%%url%%">%%part_path%%</a>
+</script>
+
+<!--template main info-->
+<script type="text/html" id="template-project-main-info">
+    <li>%%key%%: %%value%%</li>
+</script>
+
+<script type="text/html" id="template-project-list">
+    <tr>
+        <td onclick="Project.getList.getJobList('%%item_name%%');"><a href="#project=%%item_name%%">%%item_name%%</a></td>
+    </tr>
+</script>
+
+<script type="text/html" id="template-project-jobs">
+    <tr>
+        <td onclick="Project.getList.getBuildList('%%item_name%%');"><a href="%%url%%&job=%%item_name%%">%%item_name%%</a></td>
+        <td><span>Change name</span></td>
+    </tr>
+</script>
+
+<script type="text/html" id="template-project-builds">
+    <tr>
+        <td %%onclick_build%%><a %%href_build%%>%%builds_name%%</a></td>
+        <td %%onclick_build%%><a %%href_build%%>%%Start date: %%builds_metainfo_date%%%%</a></td>
+        <td %%onclick_prop%%><a %%href_prop%%>%%properties_name%%</a></td>
+    </tr>
+</script>
+
+<script type="text/html" id="template-project-entry">
+    <tr>
+        <td><a href="%%url%%&entry=%%item_name%%">%%item_name%%</a></td>
+        <td><a href="%%path_download%%" download="">download</a></td>
+    </tr>
+</script>
+
+<!--template for param-->
+<script type="text/html" id="template-project-form-params-block">
+    <div>
+        <span>%%name_param%%</span>
+        <input class="custom-input" type="text" value="%%param%%">
+    </div>
+</script>
+
+<script type="text/html" id="template-project-form-button">
+    <button class="custom-button blue-button" %%method%%>%%value%%</button>
+</script>

@@ -20,25 +20,28 @@
     min-width: 700px;
 }
 #project-path {
-    border: none;
     padding: 10px;
+    border: none;
     color: #41b7ef;
 }
-#project-path > span:before {
+#project-path > a {
+    color: #41b7ef;
+    cursor: pointer;
+}
+#project-path > a:before {
     content: '/';
     padding-left: 5px;
     padding-right: 5px;
     color: #a9a9a9;
 }
-#project-path > span:first-child:before {
+#project-path > a:first-child:before {
     content:none;
 }
-#project-path > span:hover {
-    color: #54ccf3;
-    cursor: pointer;
-}
-#project-path > span:last-child {
+#project-path > a:last-child {
     color: #a9a9a9;
+}
+#project-path > a:hover {
+    color: #54ccf3;
 }
 #project-main-info {
     border: 1px solid #a9a9a9;
@@ -57,27 +60,27 @@
 #project-lists > div {
     display: none;
 }
-#project-buttons.project-list > .project-list,
-#project-lists.project-list > .project-list,
-#project-buttons.project-jobs > .project-jobs,
-#project-lists.project-jobs > .project-jobs,
-#project-buttons.project-builds > .project-builds,
-#project-lists.project-builds > .project-builds,
-#project-buttons.project-entry > .project-entry,
-#project-lists.project-entry > .project-entry {
+#project.project-list .project-list,
+#project.project-jobs .project-jobs,
+#project.project-builds .project-builds,
+#project.project-entry .project-entry,
+#project.project-property .project-property {
     display: block;
 }
 #project-lists > div > h2 {
     padding: 10px 20px;
-    text-align: left;
     font-size: 16px;
+    text-align: left;
 }
 #project-lists {
     border: 1px solid #a9a9a9;
     border-top: none;
 }
 #project-lists > div > table {
-    text-align: left;
+    text-align: center;
+}
+#project-lists > div > table td {
+    padding: 0px;
 }
 #project-lists > div > table td:last-child,
 #project-lists > div > table th:last-child {
@@ -87,6 +90,100 @@
 #project-lists > div > table th:first-child {
     text-align: left;
 }
-#project-lists > div > table > tbody > tr > td > span:hover {
-    text-decoration: underline;
+#project-lists > div > table tr > td > a,
+#project-lists > div > table tr > td > span {
+    display: block;
+    height: 100%;
+    padding: 15px;
+    color: #54ccf3;
+}
+#project-lists > div > table tr:hover > td > a,
+#project-lists > div > table tr:hover > td > span {
+    color: #ffffff;
+}
+
+/*style for build-block*/
+#project-build-name {
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    line-height: 0px;
+    text-align: justify;
+}
+#project-build-name > div {
+    display: inline-block;
+    padding: 25px 20px;
+    color: rgba(0, 0, 0, 0.6);
+}
+#project-build-name:after {
+    content: "";
+    display: inline-block;
+    height: 0;
+    width: 100%;
+    visibility: hidden;
+    overflow: hidden;
+}
+
+/*style for form block*/
+
+#project-form-external-input{
+    display: none;
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    top: 0px;
+    left: 0px;
+    padding-top: 100px;
+    background: rgba(255, 255, 255, 0.5);
+}
+#project-form-external-input.project-param {
+    display: block;
+}
+#project-form {
+    min-width: 400px;
+    max-width: 450px;
+    top: 100px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid #a9a9a9;
+    background: #ffffff;
+    text-align: center;
+    color: #a9a9a9;
+}
+#project-form > div {
+     padding: 20px;
+}
+div#project-form-name {
+    height: 30px;
+    padding: 10px;
+    border-bottom: 1px solid #a9a9a9;
+    font-size: 16px;
+    text-align: justify;
+}
+#project-form-name > div {
+    display: inline-block;
+}
+#project-form-name:after {
+    content: '';
+    display: inline-block;
+    width: 100%;
+}
+#project-form-name > #project-form-close {
+    font-size: 12px;
+    cursor: pointer;
+}
+#project-form-name > #project-form-close:hover {
+    color: #54ccf3;
+}
+#project-form-params-block > div {
+    text-align: right;
+}
+#project-form-params-block > div > span {
+    font-weight: bold;
+}
+#project-form-params-block > div > input {
+    width: 250px;
+    margin: 0px 0px 5px 5px;
+}
+#project-form-button > button {
+    width: 100%;
+    margin-top: 10px;
 }
