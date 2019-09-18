@@ -519,7 +519,7 @@ var Project = {
 
                 Project.formMethod.changeForm(false);
 
-            } else if (this.params.length !=0) {
+            } else if (this.params.length != 0) {
 
                 Project.formMethod.clear();
 
@@ -578,14 +578,14 @@ var Project = {
 
         , onmessage: function(message){
 
-            if (message.event == 'fs.entry.new_dir.success'){
+            if (message.event == 'fs.entry.new_dir.success') {
                 Toast.open({
                     type: 'info'
                     , text: 'create success'
                     , delay: 2
                 });
 
-            } else if (message.event == 'fs.entry.remove.success'){
+            } else if (message.event == 'fs.entry.remove.success') {
                 Toast.open({
                     type: 'info'
                     , text: 'remove success'
@@ -695,11 +695,8 @@ var Project = {
             }
             this._elements.name = Selector.query('#project-form-name > div:first-child');
 
-            for (var key in this._templates){
-                this._templates[key] =
-                    Selector.id('template-project-form-' + key.replaceAll('_','-',true))
-                        .innerHTML.trim()
-            }
+            this._templates.params_block = Selector.id('template-project-form-params-block').innerHTML.trim();
+            this._templates.button = Project._templates.button;
         }
 
         , assignTitle: function (title_name, onclick, button_value) {
@@ -707,8 +704,8 @@ var Project = {
             this._elements.name.innerHTML = title_name || '';
 
             this._elements.button.html(this._templates.button
-                    .replacePHs('method', (onclick || ''), true)
-                    .replacePHs('value', (button_value || ''), true)
+                    .replacePHs('onclick', (onclick || ''), true)
+                    .replacePHs('name', (button_value || ''), true)
                 , true);
         }
 
