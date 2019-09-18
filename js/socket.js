@@ -68,7 +68,7 @@ var Socket = {
                     Project.onmessage(message);
                 }
             }
-            removeSpiner()
+            Spiner.remove();
         };
 
         this.ws.onerror = function(error) {
@@ -89,6 +89,8 @@ var Socket = {
     }
 
     , send: function(obj) {
+        Spiner.add();
+
         if ( ! this.ws
             || this.ws.readyState == this.ws.CLOSED
             || this.ws.readyState == this.ws.CLOSING)
@@ -98,6 +100,7 @@ var Socket = {
             return false;
         }
         this.ws.send(JSON.stringify(obj));
+
         return true;
     }
 

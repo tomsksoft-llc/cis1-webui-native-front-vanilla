@@ -1,12 +1,4 @@
-<div id="project-buttons" class="">
-    <button class="project-list custom-button blue-button" onclick="Project.entryMethod.openFormToNew();">New project</button>
-    <button class="project-jobs custom-button blue-button" onclick="Project.entryMethod.openFormToNew()">New job</button>
-    <button class="project-builds custom-button blue-button" onclick="Project.jobMethod.start('start');">Start</button>
-    <button class="project-builds custom-button blue-button">Add file</button>
-    <button class="project-builds custom-button blue-button">Add params</button>
-    <button class="project-builds custom-button blue-button">Add readme</button>
-    <button class="project-property custom-button blue-button">Save</button>
-</div>
+<div id="project-buttons" class=""></div>
 <div id="project-menu">
     <div id="project-path"></div>
     <div id="project-main-info">
@@ -46,6 +38,11 @@
     </div>
 </div>
 
+<!--template for button-->
+<script type="text/html" id="template-project-button">
+    <button class="custom-button blue-button" %%onclick%%>%%name%%</button>
+</script>
+
 <!--template for path-->
 <script type="text/html" id="template-project-path">
     <a %%onclick%% href="%%url%%">%%part_path%%</a>
@@ -72,7 +69,7 @@
 <script type="text/html" id="template-project-builds">
     <tr>
         <td %%onclick_build%%><a %%href_build%%>%%builds_name%%</a></td>
-        <td %%onclick_build%%><a %%href_build%%>%%Start date: %%builds_metainfo_date%%%%</a></td>
+        <td %%onclick_build%%><a %%href_build%%>%%Start date: %%builds_date%%%%</a></td>
         <td %%onclick_prop%%><a %%href_prop%%>%%properties_name%%</a></td>
     </tr>
 </script>

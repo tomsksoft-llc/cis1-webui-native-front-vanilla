@@ -120,12 +120,15 @@ var Page = {
     }
 };
 
-function addSpiner() {
-    body.addClass('spinner');
-}
-function removeSpiner() {
-    body.removeClass('spinner');
-}
+var Spiner = {
+    add: function () {
+        body.addClass('spinner');
+    }
+
+    , remove: function () {
+        body.removeClass('spinner');
+    }
+};
 
 /**
  * Toast messages
