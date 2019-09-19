@@ -58,13 +58,9 @@ var Project = {
         , buttons: null
         , path: null
         , info: null
-        , menu: {
-            list: null
-            , jobs: null
-            , builds: null
-            , entry: null
-            , property:null
-        }
+        , table: null
+        , title: null
+        , header: null
     }
 
     , _event: {
@@ -76,7 +72,7 @@ var Project = {
 
     , _templates: {
         path: null
-        , main_info: null
+        , info: null
         , list: null
         , jobs: null
         , builds: null
@@ -89,23 +85,11 @@ var Project = {
         this._url = Hash.get();
 
         for (var key in this._elements) {
-            if (key == 'buttons' || key == 'path' || key == 'info') {
-                this._elements[key] = Selector.id('project-' + key);
-            }
-            if (key == 'project'){
-                this._elements[key] = Selector.id('project');
-            }
-        }
-        this._elements.info = Selector.query('#project-main-info > ul');
-
-        for (var key in this._elements.menu) {
-            this._elements.menu[key] = Selector.id('project-' + key);
+            this._elements[key] = (key == 'project') ? Selector.id('project') : Selector.id('project-' + key);
         }
 
         for (var key in this._templates) {
-            this._templates[key] = Selector.id(
-                    'template-project-' + key.replaceAll('_','-',true))
-                .innerHTML.trim();
+            this._templates[key] = Selector.id('template-project-' + key).innerHTML.trim();
         }
 
         this.getList.setPath(this._url);
@@ -288,7 +272,7 @@ var Project = {
             for (var key in self._url) {
 
                 var template_path = Project._templates.path;
-                var template_info = Project._templates.main_info;
+                var template_info = Project._templates.info;
 
                 // ??
                 url += ((first_part_url) ? '' : '&') + key + '=' + self._url[key];
@@ -308,17 +292,21 @@ var Project = {
                     , false);
             }
 
+
+            self._elements.title.className = '';
+            self._elements.header.className = '';
+
             Hash.set(self._url);
         }
 
-        function createTable(elem, template, message) {
+        function createTable(template, message) {
 
-            elem.innerHTML = '';
+            self._elements.table.innerHTML = '';
 
             message.data.fs_entries
                 .forEach(function (item) {
 
-                    elem.htmlTable(
+                    self._elements.table.htmlTable(
                         template
                             .replacePHs('item_name', item.name, true)
                             .replacePHs('url', window.location.hash, true)
@@ -330,20 +318,19 @@ var Project = {
         if (message.event == 'cis.project_list.get.success') {
 
             changeEnvironment(button.list);
-            createTable(self._elements.menu.list, self._templates.list , message);
-            self._elements.project.className = 'project-list';
+            createTable(self._templates.list , message);
+            self._elements.title.className = 'project-list';
 
         } else if (message.event == 'cis.project.info.success') {
 
             changeEnvironment(button.job);
-            createTable(self._elements.menu.jobs, self._templates.jobs, message);
-            self._elements.project.className = 'project-jobs';
+            createTable(self._templates.jobs, message);
 
         } else if (message.event == 'cis.job.info.success') {
 
             changeEnvironment(button.build);
 
-            self._elements.menu.builds.innerHTML = '';
+            self._elements.table.innerHTML = '';
 
             var url = window.location.hash;
 
@@ -416,23 +403,20 @@ var Project = {
 
                     template = template.replaceAll('%%', '', true);
 
-                    self._elements.menu.builds.htmlTable(template, false);
+                    self._elements.table.htmlTable(template, false);
                 });
 
-            self._elements.project.className = 'project-builds';
-
+            self._elements.header.className = 'project-list';
             this.jobMethod.init(message);
 
         } else if (message.event == 'fs.entry.list.success') {
 
             changeEnvironment(button.entry);
-            createTable(self._elements.menu.entry, self._templates.entry, message);
-            self._elements.project.className = 'project-entry';
+            createTable(self._templates.entry, message);
 
         } else if (message.event == 'project.property') {
 
             changeEnvironment(button.property);
-            self._elements.project.className = 'project-property';
 
         } else if (message.event.indexOf('doesnt_exist') != -1) {
 
@@ -566,7 +550,7 @@ var Project = {
      *
      *  openFormToNew   - Create and open form to new folder
      *  createNewFolder - Send a request to create a new file
-     *  remove -        - Remove folser
+     *  remove -        - Remove folder
      */
 
     , entryMethod:{
@@ -761,3 +745,4 @@ Element.prototype.htmlTable = function(html, replace) {
     var result = empty_div.innerHTML;
     return result;
 };
+

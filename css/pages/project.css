@@ -1,19 +1,24 @@
+/* Begin base project style */
 #project {
     position: relative;
     line-height: 30px;
     text-align: justify;
     cursor: default;
 }
-#project-buttons, #project-menu {
+#project-buttons,
+#project-menu {
     display: inline-block;
     vertical-align: top;
 }
+/* End base project style */
+
+/* Begin button */
 #project-buttons {
     width: 130px;
     padding-top: 50px;
     margin-right: 20px;
 }
-div#project-buttons > button {
+#project-buttons > button {
     width: 130px;
     min-width: 130px;
     height: auto;
@@ -21,9 +26,13 @@ div#project-buttons > button {
     padding: 10px;
     line-height: 18px;
 }
+/* End button */
+
 #project-menu {
     min-width: 700px;
 }
+
+/* Begin path */
 #project-path {
     padding: 10px;
     border: none;
@@ -48,87 +57,92 @@ div#project-buttons > button {
 #project-path > a:hover {
     color: #54ccf3;
 }
-#project-main-info {
+/* End path */
+
+/* Begin main info */
+#project-info-parent {
     border: 1px solid #a9a9a9;
     color: #a9a9a9;
 }
-#project-main-info > ul > li {
+#project-info > li {
     padding-left: 10px;
 }
-#project-main-info > ul > li:first-child {
+#project-info > li:first-child {
      padding-top: 10px;
- }
-#project-main-info > ul > li:last-child {
+}
+#project-info > li:last-child {
     padding-bottom: 10px;
 }
-/*#project-buttons > button,*/
-#project-lists > div {
+/* End main info */
+
+/* Begin title table and header table*/
+#project-title,
+#project-header {
     display: none;
 }
-#project.project-list .project-list,
-#project.project-jobs .project-jobs,
-#project.project-builds .project-builds,
-#project.project-entry .project-entry,
-#project.project-property .project-property {
+#project-title.project-list,
+#project-header.project-list {
     display: block;
 }
-#project-lists > div > h2 {
+#project-title {
     padding: 10px 20px;
+    color:rgba(0, 0, 0, .6);
     font-size: 16px;
     text-align: left;
 }
-#project-lists {
-    border: 1px solid #a9a9a9;
-    border-top: none;
-}
-#project-lists > div > table {
-    text-align: center;
-}
-#project-lists > div > table td {
-    padding: 0px;
-}
-#project-lists > div > table td:last-child,
-#project-lists > div > table th:last-child {
-    text-align: right;
-}
-#project-lists > div > table td:first-child,
-#project-lists > div > table th:first-child {
-    text-align: left;
-}
-#project-lists > div > table tr > td > a,
-#project-lists > div > table tr > td > span {
-    display: block;
-    height: 100%;
-    padding: 15px;
-    color: #54ccf3;
-}
-#project-lists > div > table tr:hover > td > a,
-#project-lists > div > table tr:hover > td > span {
-    color: #ffffff;
-}
-
-/*style for build-block*/
-#project-build-name {
-    border: 1px solid rgba(0, 0, 0, 0.125);
+#project-header {
+    border: 1px solid rgba(0, 0, 0, .125);
     line-height: 0px;
     text-align: justify;
 }
-#project-build-name > div {
+#project-header > div {
     display: inline-block;
     padding: 25px 20px;
-    color: rgba(0, 0, 0, 0.6);
+    color: rgba(0, 0, 0, .6);
 }
-#project-build-name:after {
-    content: "";
+#project-header:after {
+    content: '';
     display: inline-block;
     height: 0;
     width: 100%;
     visibility: hidden;
     overflow: hidden;
 }
+/* End title table and header table*/
 
-/*style for form block*/
+/* Begin table*/
+#project-list {
+    border: 1px solid #a9a9a9;
+    border-top: none;
+}
+#project-table {
+    text-align: center;
+}
+#project-table td {
+    padding: 0px;
+}
+#project-table td:last-child,
+#project-table th:last-child {
+    text-align: right;
+}
+#project-table td:first-child,
+#project-table th:first-child {
+    text-align: left;
+}
+#project-table tr > td > a,
+#project-table tr > td > span {
+    display: block;
+    height: 100%;
+    padding: 15px;
+    color: #54ccf3;
+}
+#project-table tr:hover > td > a,
+#project-table tr:hover > td > span {
+    color: #ffffff;
+}
+/* End table*/
 
+/* Begin data entry form */
 #project-form-external-input{
     display: none;
     position: absolute;
@@ -137,7 +151,7 @@ div#project-buttons > button {
     top: 0px;
     left: 0px;
     padding-top: 100px;
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, .5);
 }
 #project-form-external-input.project-param {
     display: block;
@@ -182,7 +196,7 @@ div#project-form-name {
     text-align: right;
 }
 #project-form-params-block > div > span {
-    font-weight: bold;
+    font-weight: 900;
 }
 #project-form-params-block > div > input {
     width: 250px;
@@ -192,3 +206,4 @@ div#project-form-name {
     width: 100%;
     margin-top: 10px;
 }
+/* Begin data entry form */
