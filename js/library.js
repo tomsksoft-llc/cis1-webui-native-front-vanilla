@@ -405,7 +405,7 @@ function redirectWithForm(params) {
  */
 Element.prototype.html = function(html, replace) {
     var self = this;
-    var empty_div = document.createElement('div');
+    var empty_div = document.createElement(this.tagName.toLowerCase());
 
     if (html) {
         if (replace) {
@@ -607,7 +607,7 @@ String.prototype.decode = function(raw_url_encode) {
  *
  * @param {string}  reg_exp       - Regular expression pattern
  * @param {string}  new_substring - New substring
- * @param {boolean} escape	      - Escape string
+ * @param {boolean} escape	      - (optional) Escape string
  * @returns {string} - Replaced string
  */
 String.prototype.replaceAll = function(reg_exp, new_substring, escape) {
@@ -622,7 +622,7 @@ String.prototype.replaceAll = function(reg_exp, new_substring, escape) {
  *
  * @param {string}  reg_exp       - Regular expression pattern
  * @param {string}  new_substring - New substring
- * @param {boolean} escape	      - Escape string
+ * @param {boolean} escape	      - (optional) Escape string
  * @returns {string} - Replaced string
  */
 String.prototype.replacePHs = function(reg_exp, new_substring, escape) {
@@ -1046,6 +1046,7 @@ function AJAX(params) {
     }
 
     xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+	xhr.withCredentials = true;
     xhr.send(data);
 
     library_data.xhr = xhr;

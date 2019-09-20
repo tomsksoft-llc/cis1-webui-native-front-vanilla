@@ -29,12 +29,12 @@
 
 <!--template for button-->
 <script type="text/html" id="template-project-button">
-    <button class="custom-button blue-button" %%onclick%%>%%name%%</button>
+    <button class="custom-button blue-button" onclick="%%onclick%%;">%%name%%</button>
 </script>
 
 <!--template for path-->
 <script type="text/html" id="template-project-path">
-    <a %%onclick%% href="%%url%%">%%part_path%%</a>
+    <a onclick=Project.sendDataServer('%%url%%'); href="#%%url%%">%%part_path%%</a>
 </script>
 
 <!--template main info-->
@@ -45,28 +45,28 @@
 <!--template tables-->
 <script type="text/html" id="template-project-list">
     <tr>
-        <td onclick="Project.getList.getJobList('%%item_name%%');"><a href="#project=%%item_name%%">%%item_name%%</a></td>
+        <td onclick="Project.sendDataServer('project=%%item_name%%');"><a href="#project=%%item_name%%">%%item_name%%</a></td>
     </tr>
 </script>
 
 <script type="text/html" id="template-project-jobs">
     <tr>
-        <td onclick="Project.getList.getBuildList('%%item_name%%');"><a href="%%url%%&job=%%item_name%%">%%item_name%%</a></td>
+        <td onclick="Project.sendDataServer('%%url%%&job=%%item_name%%');"><a href="#%%url%%&job=%%item_name%%">%%item_name%%</a></td>
         <td><span>Change name</span></td>
     </tr>
 </script>
 
 <script type="text/html" id="template-project-builds">
     <tr>
-        <td %%onclick_build%%><a %%href_build%%>%%builds_name%%</a></td>
-        <td %%onclick_build%%><a %%href_build%%>%%Start date: %%builds_date%%%%</a></td>
-        <td %%onclick_prop%%><a %%href_prop%%>%%properties_name%%</a></td>
+        <td %%onclick="Project.sendDataServer('%%href_build%%&build=%%build_name%%');"><a href="#%%href_build%%&build=%%build_name%%">%%build_name%%</a>%%</td>
+        <td %%onclick="Project.sendDataServer('%%href_build%%&build=%%build_name%%');"><a href="#%%href_build%%&build=%%build_name%%">%%build_date%%</a>%%</td>
+        <td %%onclick="Project.sendDataServer('%%href_prop%%&name=%%prop_name%%');"%%>%%<a href="#%%href_prop%%&name=%%prop_name%%">%%prop_name%%</a>%%</td>
     </tr>
 </script>
 
 <script type="text/html" id="template-project-entry">
     <tr>
-        <td><a href="%%url%%&entry=%%item_name%%">%%item_name%%</a></td>
+        <td><a>%%item_name%%</a></td>
         <td><a href="%%path_download%%" download="">download</a></td>
     </tr>
 </script>
