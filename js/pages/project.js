@@ -158,7 +158,6 @@ var Project = {
 
             Hash.set(self._url);
         }
-
         function createTable(template, message) {
 
             var path = self._url.serialize();
@@ -268,8 +267,6 @@ var Project = {
                 table_row
                     .forEach(function (item) {
 
-                        var template = self._templates.builds || '';
-
                         var colspan_name = 0;
                         var colspan_date = 0;
 
@@ -288,7 +285,7 @@ var Project = {
                             }
                         }
 
-                        template = template
+                        self._elements.table.html((self._templates.builds || '')
                             .replacePHs('url', path)
                             .replacePHs('build_name', item.build_name || '')
                             .replacePHs('build_date', (item.build_data) ? 'Start date: ' + item.build_data : '')
@@ -297,9 +294,7 @@ var Project = {
                             .replacePHs('class_date', (item.build_data) ? '' : 'template-builds-td')
                             .replacePHs('class_prop', (item.properties) ? '' : 'template-builds-td')
                             .replacePHs('colspan_name', colspan_name)
-                            .replacePHs('colspan_date', colspan_date);
-
-                        self._elements.table.html(template);
+                            .replacePHs('colspan_date', colspan_date));
                     });
 
                 this._elements.header.className = 'project-list';
@@ -333,11 +328,12 @@ var Project = {
         } else if (name_message.inArray('job')) {
 
             this.actionsJob('onmessage', message);
-//?
+
+        //?
         } else if (name_message.inArray('entry')) {
 
             this.actionsEntry('onmessage', message);
-//?
+
         } else {
             console.warn('not processed message');
         }
@@ -375,13 +371,13 @@ var Project = {
 
         if (name_function == 'init') {
 
-            var obj = {};
+            var obj_param = {};
             arg
                 .forEach(function (item) {
-                    obj[item.name] = item.value;
+                    obj_param[item.name] = item.value;
                 });
 
-            Cookie.set('param_start_job', encodeURIComponent(obj.serialize()));
+            Cookie.set('param_start_job', encodeURIComponent(obj_param.serialize()));
 
         } else if (name_function == 'start') {
 
@@ -396,7 +392,7 @@ var Project = {
                     };
                 }) || [];
 
-            if (!arg || Cookie.get('param_start_job').length == 0) {
+            if (!arg || params.length == 0) {
 
                 this._sendReqest(event.job_run, {
                     project: this._url.project,
@@ -480,7 +476,6 @@ var Project = {
                     ]
                     , replace: true
                 });
-
             this.formInputData('setTitleAndButton',
                 {
                     title_name: 'New ' + title_form
@@ -492,7 +487,6 @@ var Project = {
         } else if (name_function == 'createNewFolder') {
 
             var title_form = arg;
-
             this._url[title_form] = this.formInputData('getParam')[0];
             this._sendReqest(events.new_dir, {path: this._getPath()});
             this.formInputData('changeForm');
@@ -502,7 +496,6 @@ var Project = {
             if (confirm('are you sure you want to delete the file ' + this._getPath())) {
 
                 this._sendReqest(events.remove, {path: this._getPath()});
-
                 delete this._url[Object.keys(this._url).pop()];
                 Hash.set(this._url);
             }
@@ -597,6 +590,7 @@ var Project = {
         }
 
         if (name_function == 'setTitleAndButton') {
+            // arg:
             // title_name
             // onclick
             // button_value
@@ -612,6 +606,7 @@ var Project = {
                 , true);
 
         } else if (name_function == 'createParam'){
+            // arg:
             //param
             //replace
 
@@ -639,6 +634,7 @@ var Project = {
                 });
 
         } else if (name_function == 'changeForm') {
+            // arg:
             //is_param
 
             setElements(_elements);
@@ -654,7 +650,6 @@ var Project = {
             data: data || {}
         });
     }
-
     , _getPath: function () {
         return '/' + Object.keys(this._url)
             .map(function (item) {
