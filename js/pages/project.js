@@ -269,20 +269,24 @@ var Project = {
 
                         var colspan_name = 0;
                         var colspan_date = 0;
+                        var colspan_prop = 0;
 
                         if (item.build_name) {
                             colspan_name++;
-                            if (!item.build_data) {
+                            if ( !item.build_data) {
                                 colspan_name++;
-                                if (!item.properties) {
+                                if ( !item.properties) {
                                     colspan_name++;
                                 }
                             } else {
                                 colspan_date++;
-                                if (!item.properties) {
+                                if ( !item.properties) {
                                     colspan_date++;
                                 }
                             }
+                            colspan_prop = 1;
+                        } else {
+                            colspan_prop = 3;
                         }
 
                         self._elements.table.html((self._templates.builds || '')
@@ -294,7 +298,8 @@ var Project = {
                             .replacePHs('class_date', (item.build_data) ? '' : 'template-builds-td')
                             .replacePHs('class_prop', (item.properties) ? '' : 'template-builds-td')
                             .replacePHs('colspan_name', colspan_name)
-                            .replacePHs('colspan_date', colspan_date));
+                            .replacePHs('colspan_date', colspan_date)
+                            .replacePHs('colspan_prop', colspan_prop))
                     });
 
                 this._elements.header.className = 'project-list';
@@ -381,18 +386,25 @@ var Project = {
 
         } else if (name_function == 'start') {
 
-            var params = decodeURIComponent(Cookie.get('param_start_job'))
-                .split('&')
-                .map(function (item) {
+            var params = [];
 
-                    var part_param = item.split('=');
-                    return {
-                        name: decodeURIComponent(part_param[0])
-                        , value: decodeURIComponent(part_param[1])
-                    };
-                }) || [];
+            if (decodeURIComponent(Cookie.get('param_start_job'))) {
+                params = decodeURIComponent(Cookie.get('param_start_job'))
+                    .split('&')
+                    .map(function (item) {
 
-            if (!arg || params.length == 0) {
+                        var part_param = item.split('=');
+                        return {
+                            name: decodeURIComponent(part_param[0])
+                            , value: decodeURIComponent(part_param[1])
+                        };
+                    });
+            }
+            // arg = 'false' then if click from form
+            //       'true' then click from main table
+            // params.length == 0 then parameters aren't required to run
+
+            if ( !arg || params.length == 0) {
 
                 this._sendReqest(event.job_run, {
                     project: this._url.project,
@@ -467,15 +479,7 @@ var Project = {
 
             var title_form = arg;
 
-            this.formInputData('createParam',
-                {
-                    param: [
-                        {
-                            name: 'name of New ' + title_form
-                        }
-                    ]
-                    , replace: true
-                });
+            this.formInputData('createParam',{param: [{name: 'name of New ' + title_form}], replace: true});
             this.formInputData('setTitleAndButton',
                 {
                     title_name: 'New ' + title_form
@@ -493,7 +497,7 @@ var Project = {
 
         } else if (name_function == 'remove') {
 
-            if (confirm('are you sure you want to delete the file ' + this._getPath())) {
+            if (confirm('are you sure, that you want to delete file ' + this._getPath())) {
 
                 this._sendReqest(events.remove, {path: this._getPath()});
                 delete this._url[Object.keys(this._url).pop()];
@@ -509,6 +513,7 @@ var Project = {
                 this._sendReqest(events.refresh, {path: this._getPath()});
 
             } else if (message.event == 'fs.entry.remove.success') {
+
                 Toast.open({
                     type: 'info'
                     , text: 'remove success'
@@ -524,13 +529,14 @@ var Project = {
                     , text: 'create success'
                     , delay: 2
                 });
+
                 this.sendDataServer();
             }
         }
     }
 
     /**
-     * form
+     * Form
      *
      * @param {string} name_function - Key to action selection
      * @param arg - parameter for further actions
@@ -575,7 +581,6 @@ var Project = {
                     Selector.id('project-form-' + key.replaceAll('_','-',true))
             }
         }
-
         function setTemplates(template) {
             var selector_name = 'template-project-form-';
 
@@ -584,7 +589,7 @@ var Project = {
                     template[item.id
                         .replaceAll(selector_name,'')
                         .replaceAll('-','_')
-                        ] = item.innerHTML.trim();
+                    ] = item.innerHTML.trim();
                 });
             template.button = self._templates.button || '';
         }
@@ -607,8 +612,8 @@ var Project = {
 
         } else if (name_function == 'createParam'){
             // arg:
-            //param
-            //replace
+            // param
+            // replace
 
             setTemplates(_templates);
             setElements(_elements);
