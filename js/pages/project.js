@@ -76,8 +76,23 @@ var Project = {
 
     , sendDataServer: function(path) {
 
-        path = path || this._url.serialize();
-        this._url = this._toObj((path == 'project_list') ? '' : path);
+        var self = this;
+
+        if (typeof path == 'string') {
+            this._url = {};
+        }
+
+        if (path) {
+
+            path.split('&')
+                .forEach(function (item) {
+
+                    var part_string = item.split('=');
+                    if (part_string[0] && part_string[1]) {
+                        self._url[part_string[0]] = part_string[1];
+                    }
+                });
+        }
 
         if (this._url.project &&
             this._url.job &&
@@ -164,7 +179,6 @@ var Project = {
             self._elements.buttons.innerHTML = '';
             self._elements.info.innerHTML = '';
             self._elements.path.innerHTML = (self._templates.path || '')
-                .replace('(\'%%url%%\')', '(\'project_list\')')
                 .replacePHs('url', '')
                 .replacePHs('part_path', 'job') ;
 
@@ -643,19 +657,4 @@ var Project = {
                 return Project._url[item];
             }).join('/');
     }
-
-    , _toObj: function(string, isEmptyValues){
-
-        var obj = {};
-        string.split('&')
-            .forEach(function (item) {
-
-                var part_string = item.split('=');
-                if (part_string[0] && part_string[1] || isEmptyValues) {
-                    obj[part_string[0]] = part_string[1];
-                }
-            });
-        return obj;
-    }
-
 };
