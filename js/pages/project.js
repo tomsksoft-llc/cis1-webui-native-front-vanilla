@@ -18,7 +18,7 @@
  *                          'cis.project.info.success' (success get jobs list) ||
  *                          'cis.job.info.success' (success get builds list) ||
  *                          'fs.entry.list.success' (success get entry list) ||
- *                          'project.property' (go to properties section) ||
+ *                          'cis.property.info.success' (go to properties section) ||
  *                          'cis.job.run.success' (success job run) ||
  *                          'user.job.error.invalid_params' (invalid parameters specified at startup of job)
  *         @param {obj} data            - Message data
@@ -87,10 +87,8 @@ var Project = {
             path.split('&')
                 .forEach(function (item) {
 
-                    var part_string = item.split('=');
-                    if (part_string[0] && part_string[1]) {
-                        self._url[part_string[0]] = part_string[1];
-                    }
+                    var part = item.split('=');
+                    self._url[part[0]] = part[1];
                 });
         }
 
@@ -101,13 +99,13 @@ var Project = {
             this._sendReqest(this._events.get_entry_list, {path: this._getPath()});
 
         } else if (this._url.project &&
-                   this._url.job &&
-                   this._url.name) {
+                    this._url.job &&
+                    this._url.name) {
 
-            this.onmessage({event: 'project.property'});
+            this.onmessage({event: 'cis.property.info.success'});
 
         } else if (this._url.project &&
-                   this._url.job) {
+                    this._url.job) {
 
             this._sendReqest(this._events.get_build_list, this._url);
 
@@ -117,24 +115,75 @@ var Project = {
 
         } else {
 
-            this._sendReqest(this._events.get_project_list, {});
+            this._sendReqest(this._events.get_project_list);
         }
-
     }
 
     , onmessage: function (message) {
+
+        function changeEnvironment(button) {
+
+            button = button || [];
+            var url = {};
+
+            self._elements.buttons.innerHTML = '';
+            self._elements.info.innerHTML = '';
+            self._elements.path.innerHTML = (self._templates.path || '')
+                .replacePHs('url', '')
+                .replacePHs('part_path', 'job') ;
+
+            button
+                .forEach(function (item) {
+                    self._elements.buttons.html((self._templates.button || '')
+                        .replacePHs('onclick', item.onclick, true)
+                        .replacePHs('name', item.name, true));
+                });
+
+            for (var key in self._url) {
+
+                url[key] = self._url[key];
+
+                self._elements.path.html((self._templates.path || '')
+                    .replacePHs('url', url.serialize())
+                    .replacePHs('part_path', self._url[key]));
+
+                self._elements.info.html((self._templates.info || '')
+                    .replacePHs('key', key.capitalize())
+                    .replacePHs('value', self._url[key]));
+            }
+
+            self._elements.title.className = '';
+            self._elements.header.className = '';
+            self._elements.table.innerHTML = '';
+
+            Hash.set(self._url);
+        }
+
+        function createTable(template, message) {
+
+            var path = self._url.serialize();
+
+            message.data.fs_entries
+                .forEach(function (item) {
+
+                    self._elements.table.html(template
+                        .replacePHs('url', path, true)
+                        .replacePHs('item_name', item.name, true)
+                        .replacePHs('path_download', item.link, true));
+                });
+        }
 
         var button = {
             list: [
                 {
                     name: 'New project'
-                    , onclick: 'Project.actionsEntry("openFormToNew","project")'
+                    , onclick: 'Project.actionsEntry(\'openFormToNew\',\'project\')'
                 }
             ]
             , job: [
                 {
                     name: 'New job'
-                    , onclick: 'Project.actionsEntry("openFormToNew", "job")'
+                    , onclick: 'Project.actionsEntry(\'openFormToNew\', \'job\')'
                 }
                 , {
                     name: 'Remove project'
@@ -159,162 +208,117 @@ var Project = {
                 //     , onclick: ''
                 // }
             ]
-                , entry: []
-                , property: [
+            , entry: []
+            , property: [
                 // {
                 //     name: 'Save'
                 //     , onclick: ''
                 // }
             ]
         };
-
         var self = this;
-        Hash.set(self._url);
+        var name_message = message.event.split('.');
 
-        function changeEnvironment(button) {
+        //?
+        if (name_message.inArray('get') ||
+            name_message.inArray('info') ||
+            name_message.inArray('list')) {
 
-            button = button || [];
-            var url = {};
+            if (message.event == 'cis.project_list.get.success') {
 
-            self._elements.buttons.innerHTML = '';
-            self._elements.info.innerHTML = '';
-            self._elements.path.innerHTML = (self._templates.path || '')
-                .replacePHs('url', '')
-                .replacePHs('part_path', 'job') ;
+                changeEnvironment(button.list);
+                createTable(this._templates.list || '', message);
+                this._elements.title.className = 'project-list';
 
-            button
-                .forEach(function (item) {
-                    self._elements.buttons.html((self._templates.button || '')
-                            .replacePHs('onclick', item.onclick, true)
-                            .replacePHs('name', item.name, true));
-                });
+            } else if (message.event == 'cis.project.info.success') {
 
-            for (var key in self._url) {
+                changeEnvironment(button.job);
+                createTable(this._templates.jobs || '', message);
 
-                url[key] = self._url[key];
+            } else if (message.event == 'cis.job.info.success') {
 
-                self._elements.path.html((self._templates.path || '')
-                        .replacePHs('url', url.serialize())
-                        .replacePHs('part_path', self._url[key]));
+                changeEnvironment(button.build);
 
+                this._elements.table.innerHTML = '';
 
-                self._elements.info.html((self._templates.info || '')
-                        .replacePHs('key', key.capitalize())
-                        .replacePHs('value', self._url[key]));
+                var path = self._url.serialize();
+
+                var properties = [];
+                var builds = [];
+                var table_row = [];
+
+                message.data.fs_entries
+                    .forEach(function (item) {
+                        (item.directory) ? builds.push(item) : properties.push(item);
+                    });
+
+                for (var i = 0; i < [properties.length, builds.length].max(); i++) {
+
+                    table_row.push({
+                        build_name: builds[i] &&
+                                    builds[i].name
+                        , build_data: builds[i] &&
+                                    builds[i].metainfo &&
+                                    builds[i].metainfo.date
+                        , properties: properties[i] &&
+                                    properties[i].name
+                        });
+                }
+
+                table_row
+                    .forEach(function (item) {
+
+                        var template = self._templates.builds || '';
+
+                        var colspan_name = 0;
+                        var colspan_date = 0;
+
+                        if (item.build_name) {
+                            colspan_name++;
+                            if (!item.build_data) {
+                                colspan_name++;
+                                if (!item.properties) {
+                                    colspan_name++;
+                                }
+                            } else {
+                                colspan_date++;
+                                if (!item.properties) {
+                                    colspan_date++;
+                                }
+                            }
+                        }
+
+                        template = template
+                            .replacePHs('url', path)
+                            .replacePHs('build_name', item.build_name || '')
+                            .replacePHs('build_date', (item.build_data) ? 'Start date: ' + item.build_data : '')
+                            .replacePHs('prop_name', item.properties || '')
+                            .replacePHs('class_build', (item.build_name) ? '' : 'template-builds-td')
+                            .replacePHs('class_date', (item.build_data) ? '' : 'template-builds-td')
+                            .replacePHs('class_prop', (item.properties) ? '' : 'template-builds-td')
+                            .replacePHs('colspan_name', colspan_name)
+                            .replacePHs('colspan_date', colspan_date);
+
+                        self._elements.table.html(template);
+                    });
+
+                this._elements.header.className = 'project-list';
+                this.actionsJob('init', message.data.params);
+
+            } else if (message.event == 'fs.entry.list.success') {
+
+                changeEnvironment(button.entry);
+                createTable(this._templates.entry || '', message);
+
+            }
+            else if (message.event == 'cis.property.info.success') {
+
+                changeEnvironment(button.property);
+                this._elements.table.innerHTML = '';
             }
 
-            self._elements.title.className = '';
-            self._elements.header.className = '';
-            self._elements.table.innerHTML = '';
-        }
-
-        function createTable(template, message) {
-
-            var path = self._url.serialize();
-
-            message.data.fs_entries
-                .forEach(function (item) {
-
-                    self._elements.table.html(template
-                        .replacePHs('url', path, true)
-                        .replacePHs('item_name', item.name, true)
-                        .replacePHs('path_download', item.link, true));
-                });
-        }
-
-        if (message.event == 'cis.project_list.get.success') {
-
-            changeEnvironment(button.list);
-            createTable(this._templates.list || '', message);
-            this._elements.title.className = 'project-list';
-
-        } else if (message.event == 'cis.project.info.success') {
-
-            changeEnvironment(button.job);
-            createTable(this._templates.jobs || '', message);
-
-        } else if (message.event == 'cis.job.info.success') {
-
-            changeEnvironment(button.build);
-
-            this._elements.table.innerHTML = '';
-
-            var path = self._url.serialize();
-
-            var properties = [];
-            var builds = [];
-            var table_row = [];
-
-            message.data.fs_entries
-                .forEach(function (item) {
-                    (item.directory) ? builds.push(item) : properties.push(item);
-                });
-
-            for (var i = 0; i < [properties.length, builds.length].max(); i++) {
-
-                var table_cell = {};
-
-                table_cell.build_name = builds[i] &&
-                                        builds[i].name;
-                table_cell.build_data = builds[i] &&
-                                        builds[i].metainfo &&
-                                        builds[i].metainfo.date;
-                table_cell.properties = properties[i] &&
-                                        properties[i].name;
-
-                table_row.push(table_cell);
-            }
-
-            table_row
-                .forEach(function (item) {
-
-                    var template = self._templates.builds || '';
-
-                    if (item.build_name) {
-                        template = template
-                            .replacePHs('href_build', path,true)
-                            .replacePHs('build_name', item.build_name, true)
-                    } else {
-                        template = template //??
-                            .replacePHs('onclick=["A-Za-z.%_&=;<>#\\ \(\)\']{70,120}build[_a-z%]{5,15}<\/a>','>');
-                    }
-
-                    if (item.build_data) {
-                        template = template
-                            .replacePHs('build_date', 'Start date: ' + item.build_data, true)
-                    } else {
-                        template = template
-                            .replacePHs('build_date','',true);
-                    }
-
-                    if (item.properties) {
-                        template = template
-                            .replacePHs('href_prop', path,true)
-                            .replacePHs('prop_name', item.properties, true)
-                    } else {
-                        template = template //??
-                            .replacePHs('onclick=["A-Za-z.%_&=;<>#\\ \(\)\']{70,120}prop[_a-z%]{5,15}<\/a>','>');
-                    }
-
-                    template = template.replaceAll('%%', '', true);
-
-                    self._elements.table.html(template);
-                });
-
-            this._elements.header.className = 'project-list';
-            this.actionsJob('init', message.data.params);
-
-        } else if (message.event == 'fs.entry.list.success') {
-
-            changeEnvironment(button.entry);
-            createTable(this._templates.entry || '', message);
-
-        } else if (message.event == 'project.property') {
-
-            changeEnvironment(button.property);
-            this._elements.table.innerHTML = '';
-
-        } else if (message.event.indexOf('doesnt_exist') != -1) {
+            //?
+        } else if (name_message.inArray('doesnt_exist')) {
 
             changeEnvironment();
 
@@ -325,15 +329,15 @@ var Project = {
                 , delay: 2
             });
 
-        } else if (message.event == 'cis.job.run.success' ||
-            message.event == 'user.job.error.invalid_params') {
+            //?
+        } else if (name_message.inArray('job')) {
 
             this.actionsJob('onmessage', message);
-
-        } else if (message.event.indexOf('fs.entry') != -1) {
+//?
+        } else if (name_message.inArray('entry')) {
 
             this.actionsEntry('onmessage', message);
-
+//?
         } else {
             console.warn('not processed message');
         }
@@ -374,7 +378,7 @@ var Project = {
             var obj = {};
             arg
                 .forEach(function (item) {
-                   obj[item.name] = item.value;
+                    obj[item.name] = item.value;
                 });
 
             Cookie.set('param_start_job', encodeURIComponent(obj.serialize()));
@@ -416,21 +420,21 @@ var Project = {
 
         } else if (name_function == 'onmessage') {
 
-                if (arg.event == 'cis.job.run.success') {
-                    Toast.open({
-                        type: 'info'
-                        , text: 'job run success'
-                        , delay: 2
-                    });
+            if (arg.event == 'cis.job.run.success') {
+                Toast.open({
+                    type: 'info'
+                    , text: 'job run success'
+                    , delay: 2
+                });
 
-                } else if (arg.event == 'user.job.error.invalid_params') {
-                    Toast.open({
-                        type: 'error'
-                        , text: 'error in params'
-                        , delay: 2
-                    });
-                }
+            } else if (arg.event == 'user.job.error.invalid_params') {
+                Toast.open({
+                    type: 'error'
+                    , text: 'error in params'
+                    , delay: 2
+                });
             }
+        }
     }
 
     /**
@@ -482,23 +486,23 @@ var Project = {
                     title_name: 'New ' + title_form
                     , onclick: 'onclick=Project.actionsEntry(\'createNewFolder\',\'' + title_form + '\')'
                     , button_value: 'Add'
-            });
+                });
             this.formInputData('changeForm', true);
 
         } else if (name_function == 'createNewFolder') {
 
             var title_form = arg;
-            
+
             this._url[title_form] = this.formInputData('getParam')[0];
             this._sendReqest(events.new_dir, {path: this._getPath()});
-            this.formInputData('changeForm'); 
+            this.formInputData('changeForm');
 
         } else if (name_function == 'remove') {
 
             if (confirm('are you sure you want to delete the file ' + this._getPath())) {
 
                 this._sendReqest(events.remove, {path: this._getPath()});
-                
+
                 delete this._url[Object.keys(this._url).pop()];
                 Hash.set(this._url);
             }
@@ -571,7 +575,7 @@ var Project = {
             , name: null
         };
         _templates = {};
-    
+
         function setElements(elements) {
             for (var key in elements) {
                 elements[key] =
@@ -647,7 +651,7 @@ var Project = {
         Socket.send({
             event: event,
             transactionId: (new Date()).getTime(),
-            data: data
+            data: data || {}
         });
     }
 

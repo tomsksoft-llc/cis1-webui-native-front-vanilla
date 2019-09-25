@@ -140,6 +140,10 @@
 #project-table tr:hover > td > span {
     color: #ffffff;
 }
+
+#project-table tr > td.template-builds-td {
+    display: none;
+}
 /* End table*/
 
 /* Begin data entry form */
