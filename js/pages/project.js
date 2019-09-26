@@ -175,13 +175,13 @@ var Project = {
             list: [
                 {
                     name: 'New project'
-                    , onclick: 'Project.actionsEntry(\'openFormToNew\',\'project\')'
+                    , onclick: 'Project.actionsEntry(\'createNewFolder\',{title_form: \'project\'})'
                 }
             ]
             , job: [
                 {
                     name: 'New job'
-                    , onclick: 'Project.actionsEntry(\'openFormToNew\', \'job\')'
+                    , onclick: 'Project.actionsEntry(\'createNewFolder\',{title_form:\'job\'})'
                 }
                 , {
                     name: 'Remove project'
@@ -338,7 +338,8 @@ var Project = {
                     , delay: 2
                 });
 
-            } else if (message.event == 'user.job.error.invalid_params') {
+            } else if (message.event == 'user.job.error.invalid_params'
+            || message.event == 'user.job.error.invalid_params') { //error in protocol
                 Toast.open({
                     type: 'error'
                     , text: 'error in params'
@@ -447,13 +448,12 @@ var Project = {
      *  Entry
      *
      * @param {string} name_function - Key to action selection
-     * @param arg - parameter for further actions
+     * @param {obj} arg              - Parameter for further actions
      *     Variant
-     *         name_function = 'openFormToNew' (Create and open form to new folder)
-     *         @param {string} arg - Title form; what will be created ('Project' || 'Job')
-     *
      *         init_function = 'createNewFolder' (Send a request to create a new file)
-     *         @param {string} arg - Title form; what will be created ('Project' || 'Job')
+     *         arg - Options for adding a new folder
+     *             @param {string} title_form - Title form; what will be created ('Project' || 'Job')
+     *             @param {bool} is_name      - Is there a name for the new folder
      *
      *         init_function = 'remove' (Remove folder)
      *
@@ -466,25 +466,31 @@ var Project = {
             , remove: 'fs.entry.remove'
         };
 
-        if (name_function == 'openFormToNew') {
+        if (name_function == 'createNewFolder') {
+            //arg:
+            // title_form
+            // is_name
 
-            var title_form = arg;
+            // arg.is_name = 'true' then if the shape can accept parameters, that is, open and visible input
+            //               'false' then if the shape can't accept parameters, that is, isn't visible input
+            if (arg.is_name) {
+
+                this._url[arg.title_form] = this.formInputData('getParam')[0];
+                this._sendReqest(events.new_dir, {path: this._getPath()});
+                this.formInputData('showForm');
+
+            } else {
 
             this.formInputData('createForm',
                 {
-                    title_name: 'New ' + title_form
-                    , onclick: 'onclick=Project.actionsEntry(\'createNewFolder\',\'' + title_form + '\')'
+                    title_name: 'New ' + arg.title_form
+                    , onclick: 'onclick=Project.actionsEntry(\'createNewFolder\',' +
+                        '{title_form: \'' + arg.title_form + '\'' +
+                        ', is_name: true })'
                     , button_value: 'Add'
-                    , param: [{name: 'name of New ' + title_form}]
+                    , param: [{name: 'name of New ' + arg.title_form}]
                 });
-
-        } else if (name_function == 'createNewFolder') {
-
-            var title_form = arg;
-
-            this._url[title_form] = this.formInputData('getParam')[0];
-            this._sendReqest(events.new_dir, {path: this._getPath()});
-            this.formInputData('showForm');
+            }
 
         } else if (name_function == 'remove') {
 
@@ -512,7 +518,7 @@ var Project = {
      *                  @param {obj}
      *                      @param {string} name  - (Optional) Field name
      *                      @param {string} value - (Optional) Field value
-
+     *
      *         @param name_function = 'getParam' (Get params from form)
      *             @returns {array} - Field values
      *
