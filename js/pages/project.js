@@ -96,7 +96,7 @@ var Project = {
             this._url.job &&
             this._url.build) {
 
-            this._sendReqest(this._events.get_entry_list, {path: this._getPath()});
+            this._sendRequest(this._events.get_entry_list, {path: this._getPath()});
 
         } else if (this._url.project &&
                     this._url.job &&
@@ -107,15 +107,15 @@ var Project = {
         } else if (this._url.project &&
                     this._url.job) {
 
-            this._sendReqest(this._events.get_build_list, this._url);
+            this._sendRequest(this._events.get_build_list, this._url);
 
         } else if (this._url.project) {
 
-            this._sendReqest(this._events.get_job_list, this._url);
+            this._sendRequest(this._events.get_job_list, this._url);
 
         } else {
 
-            this._sendReqest(this._events.get_project_list);
+            this._sendRequest(this._events.get_project_list);
         }
     }
 
@@ -241,7 +241,6 @@ var Project = {
 
                 var properties = [];
                 var builds = [];
-                var table_row = [];
 
                 message.data.fs_entries
                     .forEach(function (item) {
@@ -250,57 +249,53 @@ var Project = {
 
                 for (var i = 0; i < [properties.length, builds.length].max(); i++) {
 
-                    table_row.push({
+                    var table_row = {
                         build_name: builds[i] &&
-                                    builds[i].name
+                            builds[i].name
                         , build_data: builds[i] &&
-                                    builds[i].metainfo &&
-                                    builds[i].metainfo.date
+                            builds[i].metainfo &&
+                            builds[i].metainfo.date
                         , properties: properties[i] &&
-                                    properties[i].name
-                        });
-                }
+                            properties[i].name
+                    };
 
-                table_row
-                    .forEach(function (item) {
+                    var colspan = {
+                        name: 0
+                        , date: 0
+                        , prop: 0
+                    };
 
-                        var colspan = {
-                            name: 0
-                            , date: 0
-                            , prop: null
-                        };
-
-                        if (item.build_name) {
-                            colspan.name++;
-                            if ( item.build_data) {
+                    if (table_row.build_name) {
+                        colspan.name++;
+                        if (table_row.build_data) {
+                            colspan.date++;
+                            if ( !table_row.properties) {
                                 colspan.date++;
-                                if ( !item.properties) {
-                                    colspan.date++;
-                                }
-                            } else {
+                            }
+                        } else {
+                            colspan.name++;
+                            if (!table_row.properties) {
                                 colspan.name++;
-                                if ( !item.properties) {
-                                    colspan.name++;
-                                }
                             }
                         }
-                        colspan.prop = colspan.length() - (colspan.name + colspan.date);
+                    }
+                    colspan.prop = colspan.length() - (colspan.name + colspan.date);
 
-                        self._elements.table.html((self._templates.build || '')
-                            .replacePHs('url', self._url.serialize())
+                    self._elements.table.html((self._templates.build || '')
+                        .replacePHs('url', this._url.serialize())
 
-                            .replacePHs('prop_name', item.properties || '')
-                            .replacePHs('build_name', item.build_name || '')
-                            .replacePHs('build_date', (item.build_data) ? 'Start date: ' + item.build_data : '')
+                        .replacePHs('prop_name', table_row.properties || '')
+                        .replacePHs('build_name', table_row.build_name || '')
+                        .replacePHs('build_date', (table_row.build_data) ? 'Start date: ' + table_row.build_data : '')
 
-                            .replacePHs('class_build', (item.build_name) ? '' : 'template-builds-td')
-                            .replacePHs('class_date', (item.build_data) ? '' : 'template-builds-td')
-                            .replacePHs('class_prop', (item.properties) ? '' : 'template-builds-td')
+                        .replacePHs('class_build', (table_row.build_name) ? '' : 'template-builds-td')
+                        .replacePHs('class_date', (table_row.build_data) ? '' : 'template-builds-td')
+                        .replacePHs('class_prop', (table_row.properties) ? '' : 'template-builds-td')
 
-                            .replacePHs('colspan_name', colspan.name)
-                            .replacePHs('colspan_date', colspan.date)
-                            .replacePHs('colspan_prop', colspan.prop))
-                    });
+                        .replacePHs('colspan_name', colspan.name)
+                        .replacePHs('colspan_date', colspan.date)
+                        .replacePHs('colspan_prop', colspan.prop))
+                }
 
                 this._elements.header.className = 'project-list';
                 this.actionsJob('init', message.data.params);
@@ -309,8 +304,8 @@ var Project = {
 
                 changeEnvironment(button.entry);
                 createTable(this._templates.entry || '', message);
-            }
-            else if (message.event == 'cis.property.info.success') {
+
+            } else if (message.event == 'cis.property.info.success') {
 
                 changeEnvironment(button.property);
                 this._elements.table.innerHTML = '';
@@ -338,8 +333,7 @@ var Project = {
                     , delay: 2
                 });
 
-            } else if (message.event == 'user.job.error.invalid_params'
-            || message.event == 'user.job.error.invalid_params') { //error in protocol
+            } else if (message.event == 'cis.job.error.invalid_params') {
                 Toast.open({
                     type: 'error'
                     , text: 'error in params'
@@ -356,7 +350,7 @@ var Project = {
 
             if (message.event == 'fs.entry.new_dir.success') {
 
-                this._sendReqest(event.refresh, {path: this._getPath()});
+                this._sendRequest(event.refresh, {path: this._getPath()});
 
             } else if (message.event == 'fs.entry.remove.success') {
 
@@ -424,7 +418,7 @@ var Project = {
             // params.length == 0 then parameters aren't required to run
             if ( !arg || params.length == 0) {
 
-                this._sendReqest(event.job_run, {
+                this._sendRequest(event.job_run, {
                     project: this._url.project,
                     job: this._url.job,
                     params: params
@@ -478,8 +472,8 @@ var Project = {
 
             if (name_folder && name_folder != '') {
 
-                this._url[arg.title_form] = this.formInputData('getParam')[0];
-                this._sendReqest(events.new_dir, {path: this._getPath()});
+                this._url[arg.title_form] = name_folder;
+                this._sendRequest(events.new_dir, {path: this._getPath()});
                 this.formInputData('showForm');
 
             } else if (name_folder == '') {
@@ -505,8 +499,10 @@ var Project = {
 
             if (confirm('are you sure, that you want to delete file ' + this._getPath())) {
 
-                this._sendReqest(events.remove, {path: this._getPath()});
-                delete this._url[Object.keys(this._url).pop()];
+                this._sendRequest(events.remove, {path: this._getPath()});
+                delete this._url[
+                    Object.keys(this._url).pop()
+                ];
                 Hash.set(this._url);
             }
         }
@@ -516,61 +512,47 @@ var Project = {
      * Form
      *
      * @param {string} name_function - Key to action selection
-     * @param arg - parameter for further actions
+     * @param arg - parameter for form actions
      *     Variant
      *         name_function = 'createForm' (Set the name of the form, button, onclick event, default param)
      *         @param {obj} arg
      *             @param {string} title_name   - (Optional) Name of form
-     *             @param {string} onclick      - (Optional) Click action
-     *             @param {string} button_value - (Optional) Text on buttons
-     *              @param {array} param - (Optional) Array with obj param
+     *             @param {array} param         - (Optional) Array with obj param
      *                  @param {obj}
      *                      @param {string} name  - (Optional) Field name
      *                      @param {string} value - (Optional) Field value
+     *             @param {string} button_value - (Optional) Text on buttons
+     *             @param {string} onclick      - (Optional) Click action
      *
      *         @param name_function = 'getParam' (Get params from form)
      *             @returns {array} - Field values
      *
      *         @param name_function = 'showForm' (close form)
-     *
      */
 
     , formInputData: function(name_function, arg) {
 
         var self = this;
 
-        _elements = {
+        var _elements = {
             params_block: null
-            , external_input: null
+            , form: null
             , button: null
             , name: null
         };
-        _templates = {};
 
-        function setElements(elements) {
-            for (var key in elements) {
-                elements[key] =
-                    Selector.id('project-form-' + key.replaceAll('_','-',true))
-            }
+        for (var key in _elements) {
+            _elements[key] = (key == 'form')
+                ? Selector.id('project-form')
+                : Selector.id('project-form-' + key.replaceAll('_','-',true))
         }
-        function setTemplates(template) {
-            var selector_name = 'template-project-form-';
 
-            Selector.queryAll('script[id^="' + selector_name + '"]')
-                .forEach(function (item) {
-                    template[item.id
-                        .replaceAll(selector_name,'')
-                        .replaceAll('-','_')
-                    ] = item.innerHTML.trim();
-                });
-            template.button = self._templates.button || '';
-        }
         function showForm(is_show) {
-            setElements(_elements);
+
             if (is_show) {
-                _elements.external_input.className = 'project-param';
+                _elements.form.className = 'project-param';
             } else {
-                _elements.external_input.className = '';
+                _elements.form.className = '';
                 _elements.params_block.innerHTML = '';
             }
         }
@@ -582,20 +564,17 @@ var Project = {
             // onclick
             // button_value
 
-            setTemplates(_templates);
-            setElements(_elements);
-
             _elements.params_block.innerHTML = '';
             _elements.name.innerHTML = arg.title_name || '';
 
             (arg.param || [])
                 .forEach(function (item) {
-                    _elements.params_block.html((_templates.params_block || '')
+                    _elements.params_block.html((self._templates.form_params_block || '')
                         .replacePHs('param', (item.value || ''), true)
                         .replacePHs('name_param', (item.name || ''), true))
                 });
 
-            _elements.button.html((_templates.button || '')
+            _elements.button.html((this._templates.button || '')
                     .replacePHs('onclick', (arg.onclick || ''), true)
                     .replacePHs('name', (arg.button_value || ''), true)
                 , true);
@@ -614,15 +593,16 @@ var Project = {
         }
     }
 
-    , _sendReqest: function (event, data) {
+    , _sendRequest: function (event, data) {
 
         Socket.send({
-            event: event,
+            event: event || '',
             transactionId: (new Date()).getTime(),
             data: data || {}
         });
     }
     , _getPath: function () {
+        // get the path of the form /<project.name>/<job.name>/..
         return '/' + Object.keys(this._url)
             .map(function (item) {
                 return Project._url[item];

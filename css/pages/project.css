@@ -147,7 +147,7 @@
 /* End table*/
 
 /* Begin data entry form */
-#project-form-external-input{
+#project-form{
     display: none;
     position: absolute;
     height: 100%;
@@ -157,10 +157,10 @@
     padding-top: 100px;
     background: rgba(255, 255, 255, .5);
 }
-#project-form-external-input.project-param {
+#project-form.project-param {
     display: block;
 }
-#project-form {
+#project-form > div{
     min-width: 400px;
     max-width: 450px;
     top: 100px;
@@ -170,9 +170,6 @@
     background: #ffffff;
     text-align: center;
     color: #a9a9a9;
-}
-#project-form > div {
-     padding: 20px;
 }
 div#project-form-header {
     height: 30px;
@@ -195,6 +192,9 @@ div#project-form-header {
 }
 #project-form-close:hover {
     color: #54ccf3;
+}
+#project-form-param {
+    padding: 20px;
 }
 #project-form-params-block > div {
     text-align: right;
