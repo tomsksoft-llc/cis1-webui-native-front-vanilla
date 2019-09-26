@@ -49,14 +49,14 @@
     </tr>
 </script>
 
-<script type="text/html" id="template-project-jobs">
+<script type="text/html" id="template-project-job">
     <tr>
         <td onclick="Project.sendDataServer('%%url%%&job=%%item_name%%');"><a href="#%%url%%&job=%%item_name%%">%%item_name%%</a></td>
         <td><span>Change name</span></td>
     </tr>
 </script>
 
-<script type="text/html" id="template-project-builds">
+<script type="text/html" id="template-project-build">
     <tr>
         <td class="%%class_build%%" onclick="Project.sendDataServer('%%url%%&build=%%build_name%%');" colspan="%%colspan_name%%"><a href="#%%url%%&build=%%build_name%%">%%build_name%%</a></td>
         <td class="%%class_date%%" onclick="Project.sendDataServer('%%url%%&build=%%build_name%%');" colspan="%%colspan_date%%"><a href="#%%url%%&build=%%build_name%%">%%build_date%%</a></td>

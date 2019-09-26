@@ -122,9 +122,7 @@ var Project = {
     , onmessage: function (message) {
 
         function changeEnvironment(button) {
-
-            button = button || [];
-            var url = {};
+            //change button, path, info
 
             self._elements.buttons.innerHTML = '';
             self._elements.info.innerHTML = '';
@@ -132,24 +130,25 @@ var Project = {
                 .replacePHs('url', '')
                 .replacePHs('part_path', 'job') ;
 
-            button
+            (button || [])
                 .forEach(function (item) {
                     self._elements.buttons.html((self._templates.button || '')
                         .replacePHs('onclick', item.onclick, true)
                         .replacePHs('name', item.name, true));
                 });
 
+            var url = {};
             for (var key in self._url) {
 
                 url[key] = self._url[key];
 
                 self._elements.path.html((self._templates.path || '')
                     .replacePHs('url', url.serialize())
-                    .replacePHs('part_path', self._url[key]));
+                    .replacePHs('part_path', url[key]));
 
                 self._elements.info.html((self._templates.info || '')
                     .replacePHs('key', key.capitalize())
-                    .replacePHs('value', self._url[key]));
+                    .replacePHs('value', url[key]));
             }
 
             self._elements.title.className = '';
@@ -218,7 +217,7 @@ var Project = {
         var self = this;
         var name_message = message.event.split('.');
 
-        //?
+        //? message for create table
         if (name_message.inArray('get') ||
             name_message.inArray('info') ||
             name_message.inArray('list')) {
@@ -232,15 +231,13 @@ var Project = {
             } else if (message.event == 'cis.project.info.success') {
 
                 changeEnvironment(button.job);
-                createTable(this._templates.jobs || '', message);
+                createTable(this._templates.job || '', message);
 
             } else if (message.event == 'cis.job.info.success') {
 
                 changeEnvironment(button.build);
 
                 this._elements.table.innerHTML = '';
-
-                var path = self._url.serialize();
 
                 var properties = [];
                 var builds = [];
@@ -267,39 +264,42 @@ var Project = {
                 table_row
                     .forEach(function (item) {
 
-                        var colspan_name = 0;
-                        var colspan_date = 0;
-                        var colspan_prop = 0;
+                        var colspan = {
+                            name: 0
+                            , date: 0
+                            , prop: null
+                        };
 
                         if (item.build_name) {
-                            colspan_name++;
-                            if ( !item.build_data) {
-                                colspan_name++;
+                            colspan.name++;
+                            if ( item.build_data) {
+                                colspan.date++;
                                 if ( !item.properties) {
-                                    colspan_name++;
+                                    colspan.date++;
                                 }
                             } else {
-                                colspan_date++;
+                                colspan.name++;
                                 if ( !item.properties) {
-                                    colspan_date++;
+                                    colspan.name++;
                                 }
                             }
-                            colspan_prop = 1;
-                        } else {
-                            colspan_prop = 3;
                         }
+                        colspan.prop = colspan.length() - (colspan.name + colspan.date);
 
-                        self._elements.table.html((self._templates.builds || '')
-                            .replacePHs('url', path)
+                        self._elements.table.html((self._templates.build || '')
+                            .replacePHs('url', self._url.serialize())
+
+                            .replacePHs('prop_name', item.properties || '')
                             .replacePHs('build_name', item.build_name || '')
                             .replacePHs('build_date', (item.build_data) ? 'Start date: ' + item.build_data : '')
-                            .replacePHs('prop_name', item.properties || '')
+
                             .replacePHs('class_build', (item.build_name) ? '' : 'template-builds-td')
                             .replacePHs('class_date', (item.build_data) ? '' : 'template-builds-td')
                             .replacePHs('class_prop', (item.properties) ? '' : 'template-builds-td')
-                            .replacePHs('colspan_name', colspan_name)
-                            .replacePHs('colspan_date', colspan_date)
-                            .replacePHs('colspan_prop', colspan_prop))
+
+                            .replacePHs('colspan_name', colspan.name)
+                            .replacePHs('colspan_date', colspan.date)
+                            .replacePHs('colspan_prop', colspan.prop))
                     });
 
                 this._elements.header.className = 'project-list';
@@ -309,7 +309,6 @@ var Project = {
 
                 changeEnvironment(button.entry);
                 createTable(this._templates.entry || '', message);
-
             }
             else if (message.event == 'cis.property.info.success') {
 
@@ -317,7 +316,7 @@ var Project = {
                 this._elements.table.innerHTML = '';
             }
 
-            //?
+        //? message for error
         } else if (name_message.inArray('doesnt_exist')) {
 
             changeEnvironment();
@@ -329,16 +328,55 @@ var Project = {
                 , delay: 2
             });
 
-            //?
+        //? message for job
         } else if (name_message.inArray('job')) {
 
-            this.actionsJob('onmessage', message);
+            if (message.event == 'cis.job.run.success') {
+                Toast.open({
+                    type: 'info'
+                    , text: 'job run success'
+                    , delay: 2
+                });
 
-        //?
+            } else if (message.event == 'user.job.error.invalid_params') {
+                Toast.open({
+                    type: 'error'
+                    , text: 'error in params'
+                    , delay: 2
+                });
+            }
+
+        //? message for entry
         } else if (name_message.inArray('entry')) {
 
-            this.actionsEntry('onmessage', message);
+            var event = {
+                refresh: 'fs.entry.refresh'
+            };
 
+            if (message.event == 'fs.entry.new_dir.success') {
+
+                this._sendReqest(event.refresh, {path: this._getPath()});
+
+            } else if (message.event == 'fs.entry.remove.success') {
+
+                Toast.open({
+                    type: 'info'
+                    , text: 'remove success'
+                    , delay: 2
+                });
+                this.sendDataServer();
+
+            } else if (message.event == 'fs.entry.refresh.success') {
+
+                Toast.open({
+                    type: 'info'
+                    , text: 'create success'
+                    , delay: 2
+                });
+                this.sendDataServer();
+            }
+
+        //? unidentified message
         } else {
             console.warn('not processed message');
         }
@@ -361,11 +399,6 @@ var Project = {
      *             Variant 'true' (function called from the main block) ||
      *             'false' (the function is called from the block with the entered parameters)
      *
-     *         name_function = 'onmessage' (Behavior on response from server)
-     *         @param {object} arg - Text of response text of response from server
-     *             @param {string} event - Success of action
-     *                 Variant 'cis.job.run.success' (success job run) ||
-     *                 'user.job.error.invalid_params' (invalid parameters specified at startup of job)
      */
 
     , actionsJob: function(name_function, arg) {
@@ -389,6 +422,7 @@ var Project = {
             var params = [];
 
             if (decodeURIComponent(Cookie.get('param_start_job'))) {
+
                 params = decodeURIComponent(Cookie.get('param_start_job'))
                     .split('&')
                     .map(function (item) {
@@ -400,10 +434,10 @@ var Project = {
                         };
                     });
             }
+
             // arg = 'false' then if click from form
             //       'true' then click from main table
             // params.length == 0 then parameters aren't required to run
-
             if ( !arg || params.length == 0) {
 
                 this._sendReqest(event.job_run, {
@@ -411,36 +445,17 @@ var Project = {
                     job: this._url.job,
                     params: params
                 });
-
-                this.formInputData('changeForm');
+                this.formInputData('showForm');
 
             } else if (params.length != 0) {
 
-                this.formInputData('createParam', {param: params});
-                this.formInputData('setTitleAndButton',
+                this.formInputData('createForm',
                     {
                         title_name: 'Set params'
                         , onclick: 'onclick=Project.actionsJob(\'start\')'
                         , button_value: 'Start'
+                        , param: params
                     });
-                this.formInputData('changeForm', true);
-            }
-
-        } else if (name_function == 'onmessage') {
-
-            if (arg.event == 'cis.job.run.success') {
-                Toast.open({
-                    type: 'info'
-                    , text: 'job run success'
-                    , delay: 2
-                });
-
-            } else if (arg.event == 'user.job.error.invalid_params') {
-                Toast.open({
-                    type: 'error'
-                    , text: 'error in params'
-                    , delay: 2
-                });
             }
         }
     }
@@ -459,12 +474,6 @@ var Project = {
      *
      *         init_function = 'remove' (Remove folder)
      *
-     *         init_function = 'onmessage' (Behavior on response from server)
-     *         @param {object} arg - Text of response text of response from server
-     *             @param {string} event - Success of action
-     *                 Variant 'fs.entry.new_dir.success' (success create new dir) ||
-     *                 'fs.entry.refresh.success' (success refresh new entry) ||
-     *                 'fs.entry.remove.success'(success remove folder)
      */
 
     , actionsEntry: function(name_function, arg) {
@@ -472,28 +481,27 @@ var Project = {
         var events = {
             new_dir : 'fs.entry.new_dir'
             , remove: 'fs.entry.remove'
-            , refresh: 'fs.entry.refresh'
         };
 
         if (name_function == 'openFormToNew') {
 
             var title_form = arg;
 
-            this.formInputData('createParam',{param: [{name: 'name of New ' + title_form}], replace: true});
-            this.formInputData('setTitleAndButton',
+            this.formInputData('createForm',
                 {
                     title_name: 'New ' + title_form
                     , onclick: 'onclick=Project.actionsEntry(\'createNewFolder\',\'' + title_form + '\')'
                     , button_value: 'Add'
+                    , param: [{name: 'name of New ' + title_form}]
                 });
-            this.formInputData('changeForm', true);
 
         } else if (name_function == 'createNewFolder') {
 
             var title_form = arg;
+
             this._url[title_form] = this.formInputData('getParam')[0];
             this._sendReqest(events.new_dir, {path: this._getPath()});
-            this.formInputData('changeForm');
+            this.formInputData('showForm');
 
         } else if (name_function == 'remove') {
 
@@ -502,35 +510,6 @@ var Project = {
                 this._sendReqest(events.remove, {path: this._getPath()});
                 delete this._url[Object.keys(this._url).pop()];
                 Hash.set(this._url);
-            }
-
-        } else if (name_function == 'onmessage') {
-
-            var message = arg;
-
-            if (message.event == 'fs.entry.new_dir.success') {
-
-                this._sendReqest(events.refresh, {path: this._getPath()});
-
-            } else if (message.event == 'fs.entry.remove.success') {
-
-                Toast.open({
-                    type: 'info'
-                    , text: 'remove success'
-                    , delay: 2
-                });
-
-                this.sendDataServer();
-
-            } else if (message.event == 'fs.entry.refresh.success') {
-
-                Toast.open({
-                    type: 'info'
-                    , text: 'create success'
-                    , delay: 2
-                });
-
-                this.sendDataServer();
             }
         }
     }
@@ -541,25 +520,20 @@ var Project = {
      * @param {string} name_function - Key to action selection
      * @param arg - parameter for further actions
      *     Variant
-     *         name_function = 'setTitleAndButton' (Set the name of the form, button and onclick event)
+     *         name_function = 'createForm' (Set the name of the form, button, onclick event, default param)
      *         @param {obj} arg
      *             @param {string} title_name   - (Optional) Name of form
      *             @param {string} onclick      - (Optional) Click action
      *             @param {string} button_value - (Optional) Text on buttons
-     *
-     *         @param name_function = 'createParam' (Create a block with fields to fill)
-     *         @param {obj} arg
-     *             @param {array} param - (Optional) Array with obj param
+     *              @param {array} param - (Optional) Array with obj param
      *                  @param {obj}
      *                      @param {string} name  - (Optional) Field name
      *                      @param {string} value - (Optional) Field value
-     *             @param {bool} replace - (Optional) Replace param or add new param
-     *
+
      *         @param name_function = 'getParam' (Get params from form)
      *             @returns {array} - Field values
      *
-     *         @param name_function = 'changeForm' (Change display form)
-     *         @param {obj} arg - is form show
+     *         @param name_function = 'showForm' (close form)
      *
      */
 
@@ -593,36 +567,23 @@ var Project = {
                 });
             template.button = self._templates.button || '';
         }
+        function showForm(is_show) {
+            setElements(_elements);
+            _elements.external_input.className = (is_show) ? 'project-param' : '';
+        }
 
-        if (name_function == 'setTitleAndButton') {
+        if (name_function == 'createForm') {
             // arg:
             // title_name
+            // param
             // onclick
             // button_value
 
             setTemplates(_templates);
             setElements(_elements);
 
+            _elements.params_block.innerHTML = '';
             _elements.name.innerHTML = arg.title_name || '';
-
-            _elements.button.html((_templates.button || '')
-                    .replacePHs('onclick', (arg.onclick || ''), true)
-                    .replacePHs('name', (arg.button_value || ''), true)
-                , true);
-
-        } else if (name_function == 'createParam'){
-            // arg:
-            // param
-            // replace
-
-            setTemplates(_templates);
-            setElements(_elements);
-
-            Selector.id('project-form-params-block').innerHTML = '';
-
-            if (arg.replace) {
-                _elements.params_block.innerHTML = '';
-            }
 
             (arg.param || [])
                 .forEach(function (item) {
@@ -631,19 +592,22 @@ var Project = {
                         .replacePHs('param', (item.value || ''), true));
                 });
 
+            _elements.button.html((_templates.button || '')
+                    .replacePHs('onclick', (arg.onclick || ''), true)
+                    .replacePHs('name', (arg.button_value || ''), true)
+                , true);
+
+            showForm(true);
 
         } else if (name_function == 'getParam') {
+
             return Selector.queryAll('#project-form-params-block > div > input')
                 .map(function (item) {
                     return item.value;
                 });
 
-        } else if (name_function == 'changeForm') {
-            // arg:
-            //is_param
-
-            setElements(_elements);
-            _elements.external_input.className = (arg) ? 'project-param' : '';
+        } else  if (name_function == 'showForm') {
+            showForm();
         }
     }
 
