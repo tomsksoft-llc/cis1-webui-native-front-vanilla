@@ -436,7 +436,7 @@ var Project = {
                 this.formInputData('createForm',
                     {
                         title_name: 'Set params'
-                        , onclick: 'onclick=Project.actionsJob(\'start\')'
+                        , onclick: 'Project.actionsJob(\'start\')'
                         , button_value: 'Start'
                         , param: params
                     });
@@ -473,22 +473,31 @@ var Project = {
 
             // arg.is_name = 'true' then if the shape can accept parameters, that is, open and visible input
             //               'false' then if the shape can't accept parameters, that is, isn't visible input
-            if (arg.is_name) {
+
+            var name_folder = this.formInputData('getParam')[0];
+
+            if (name_folder && name_folder != '') {
 
                 this._url[arg.title_form] = this.formInputData('getParam')[0];
                 this._sendReqest(events.new_dir, {path: this._getPath()});
                 this.formInputData('showForm');
+
+            } else if (name_folder == '') {
+                Toast.open({
+                    type: 'warning'
+                    , text: 'Please, enter a ' + arg.title_form + ' name'
+                    , delay: 2
+                });
 
             } else {
 
             this.formInputData('createForm',
                 {
                     title_name: 'New ' + arg.title_form
-                    , onclick: 'onclick=Project.actionsEntry(\'createNewFolder\',' +
-                        '{title_form: \'' + arg.title_form + '\'' +
-                        ', is_name: true })'
-                    , button_value: 'Add'
                     , param: [{name: 'name of New ' + arg.title_form}]
+                    , onclick: 'Project.actionsEntry(\'createNewFolder\',' +
+                        '{title_form: \'' + arg.title_form + '\'})'
+                    , button_value: 'Add'
                 });
             }
 
@@ -558,7 +567,12 @@ var Project = {
         }
         function showForm(is_show) {
             setElements(_elements);
-            _elements.external_input.className = (is_show) ? 'project-param' : '';
+            if (is_show) {
+                _elements.external_input.className = 'project-param';
+            } else {
+                _elements.external_input.className = '';
+                _elements.params_block.innerHTML = '';
+            }
         }
 
         if (name_function == 'createForm') {
@@ -577,8 +591,8 @@ var Project = {
             (arg.param || [])
                 .forEach(function (item) {
                     _elements.params_block.html((_templates.params_block || '')
-                        .replacePHs('name_param', (item.name || ''), true)
-                        .replacePHs('param', (item.value || ''), true));
+                        .replacePHs('param', (item.value || ''), true)
+                        .replacePHs('name_param', (item.name || ''), true))
                 });
 
             _elements.button.html((_templates.button || '')
@@ -592,7 +606,7 @@ var Project = {
 
             return Selector.queryAll('#project-form-params-block > div > input')
                 .map(function (item) {
-                    return item.value;
+                    return item.value.trim() || '';
                 });
 
         } else  if (name_function == 'showForm') {
