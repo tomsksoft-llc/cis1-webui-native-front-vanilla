@@ -409,30 +409,13 @@ var Project = {
 
         if (name_function == 'init') {
 
-            var obj_param = {};
-            arg
-                .forEach(function (item) {
-                    obj_param[item.name] = item.value;
-                });
-
-            Cookie.set('param_start_job', encodeURIComponent(obj_param.serialize()));
+            Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(arg)));
 
         } else if (name_function == 'start') {
 
             var params = [];
-
-            if (decodeURIComponent(Cookie.get('param_start_job'))) {
-
-                params = decodeURIComponent(Cookie.get('param_start_job'))
-                    .split('&')
-                    .map(function (item) {
-
-                        var part_param = item.split('=');
-                        return {
-                            name: decodeURIComponent(part_param[0])
-                            , value: decodeURIComponent(part_param[1])
-                        };
-                    });
+            if (Cookie.get('param_start_job')) {
+                params = JSON.parse(Cookie.get('param_start_job').decode(true));
             }
 
             // arg = 'false' then if click from form
