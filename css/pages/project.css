@@ -180,6 +180,7 @@ div#project-form-header {
 }
 #project-form-header > div {
     display: inline-block;
+    vertical-align: top;
 }
 #project-form-header:after {
     content: '';
@@ -187,8 +188,12 @@ div#project-form-header {
     width: 100%;
 }
 #project-form-close {
-    font-size: 12px;
+    font-size: 30px;
+    transform: rotate(45deg);
     cursor: pointer;
+}
+#project-form-close:after {
+    content: '+';
 }
 #project-form-close:hover {
     color: #54ccf3;

@@ -191,7 +191,7 @@ var Project = {
             , build: [
                 {
                     name: 'Start'
-                    , onclick: 'Project.actionsJob(\'start\', true)'
+                    , onclick: 'Project.actionsJob(\'start\')'
                 }
                 // , {
                 //     name: 'Add file'
@@ -391,8 +391,8 @@ var Project = {
      *
      *         name_function = 'start' (Run job)
      *         @param {bool} arg - Pointer to where the function was called
-     *             Variant 'true' (function called from the main block) ||
-     *             'false' (the function is called from the block with the entered parameters)
+     *             Variant 'true' (function called from the block with the entered parameters) ||
+     *             'false' (the function is called from the main block)
      *
      */
 
@@ -404,19 +404,18 @@ var Project = {
 
         if (name_function == 'init') {
 
-            Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(arg)));
+            var param = arg;
+            Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(param)));
 
         } else if (name_function == 'start') {
 
+            var is_form = arg;
             var params = [];
             if (Cookie.get('param_start_job')) {
                 params = JSON.parse(Cookie.get('param_start_job').decode(true));
             }
 
-            // arg = 'false' then if click from form
-            //       'true' then click from main table
-            // params.length == 0 then parameters aren't required to run
-            if ( !arg || params.length == 0) {
+            if ( is_form || params.length == 0) {
 
                 this._sendRequest(event.job_run, {
                     project: this._url.project,
@@ -430,7 +429,7 @@ var Project = {
                 this.formInputData('createForm',
                     {
                         title_name: 'Set params'
-                        , onclick: 'Project.actionsJob(\'start\')'
+                        , onclick: 'Project.actionsJob(\'start\', true)'
                         , button_value: 'Start'
                         , param: params
                     });
@@ -602,7 +601,7 @@ var Project = {
         });
     }
     , _getPath: function () {
-        // get the path of the form /<project.name>/<job.name>/..
+        // get the path of the form '/<project.name>/<job.name>/..'
         return '/' + Object.keys(this._url)
             .map(function (item) {
                 return Project._url[item];
