@@ -10,7 +10,7 @@
             <div>Builds:</div>
             <div>Properties:</div>
         </div>
-        <table class="custom-table" id="project-table"></table>
+        <div class="custom-table" id="project-table"></div>
     </div>
 </div>
 
@@ -18,7 +18,7 @@
     <div>
         <div id="project-form-header">
             <div id="project-form-name">headline</div>
-            <div id="project-form-close" onclick="Project.formInputData('showForm');"></div>
+            <div id="project-form-close" onclick="Project.formInputData('visible');"></div>
         </div>
         <div id="project-form-param">
             <div id="project-form-params-block"></div>
@@ -34,7 +34,7 @@
 
 <!--template for path-->
 <script type="text/html" id="template-project-path">
-    <a onclick=Project.sendDataServer('%%url%%'); href="#%%url%%">%%part_path%%</a>
+    <a onclick=Project.sendDataServer('%%url%%'); href="#%%url%%">%%part%%</a>
 </script>
 
 <!--template main info-->
@@ -42,39 +42,53 @@
     <li>%%key%%: %%value%%</li>
 </script>
 
-<!--template tables-->
+<!--template main info-->
 <script type="text/html" id="template-project-list">
-    <tr>
-        <td onclick="Project.sendDataServer('project=%%item_name%%');"><a href="#project=%%item_name%%">%%item_name%%</a></td>
-    </tr>
+    <div  class="%%class%%">
+        <div onclick="Project.sendDataServer('project=%%item_name%%');">
+            <a href="#project=%%item_name%%">%%item_name%%</a>
+        </div>
+    </div>
 </script>
 
 <script type="text/html" id="template-project-job">
-    <tr>
-        <td onclick="Project.sendDataServer('%%url%%&job=%%item_name%%');"><a href="#%%url%%&job=%%item_name%%">%%item_name%%</a></td>
-        <td><span>Change name</span></td>
-    </tr>
+    <div class="%%class%%">
+        <div onclick="Project.sendDataServer('%%url%%&job=%%item_name%%');">
+            <a href="#%%url%%&job=%%item_name%%">%%item_name%%</a>
+        </div>
+        <div><span>Change name</span></div>
+    </div>
 </script>
 
 <script type="text/html" id="template-project-build">
-    <tr>
-        <td class="%%class_build%%" onclick="Project.sendDataServer('%%url%%&build=%%build_name%%');" colspan="%%colspan_name%%"><a href="#%%url%%&build=%%build_name%%">%%build_name%%</a></td>
-        <td class="%%class_date%%" onclick="Project.sendDataServer('%%url%%&build=%%build_name%%');" colspan="%%colspan_date%%"><a href="#%%url%%&build=%%build_name%%">%%build_date%%</a></td>
-        <td class="%%class_prop%%" onclick="Project.sendDataServer('%%url%%&name=%%prop_name%%');" colspan="%%colspan_prop%%"><a href="#%%url%%&name=%%prop_name%%">%%prop_name%%</a></td>
-    </tr>
+    <div class="%%class%%">
+        <div class="%%class_build%%" onclick="Project.sendDataServer('%%url%%&build=%%build_name%%');">
+            <a href="#%%url%%&build=%%build_name%%">%%build_name%%</a>
+        </div>
+        <div class="%%class_date%%" onclick="Project.sendDataServer('%%url%%&build=%%build_name%%');">
+            <a href="#%%url%%&build=%%build_name%%">%%build_date%%</a>
+        </div>
+        <div class="%%class_prop%%" onclick="Project.sendDataServer('%%url%%&name=%%prop_name%%');">
+            <a href="#%%url%%&name=%%prop_name%%">%%prop_name%%</a>
+        </div>
+    </div>
 </script>
 
 <script type="text/html" id="template-project-entry">
-    <tr>
-        <td><a>%%item_name%%</a></td>
-        <td><a href="%%path_download%%" download="">download</a></td>
-    </tr>
+    <div class="%%class%%">
+        <div>
+            <a>%%item_name%%</a>
+        </div>
+        <div>
+            <a href="%%path_download%%" download="">download</a>
+        </div>
+    </div>
 </script>
 
 <!--template for param-->
 <script type="text/html" id="template-project-form-params-block">
     <div>
-        <span>%%name_param%%</span>
-        <input class="custom-input" type="text" value="%%param%%">
+        <span>%%param_name%%</span>
+        <input class="custom-input %%class_input%%" type="text" value="%%param_value%%">
     </div>
 </script>

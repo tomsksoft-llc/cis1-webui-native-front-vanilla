@@ -818,21 +818,26 @@ textarea.custom-input:focus {
     width: 100%;
     table-layout: auto;
 }
-.custom-table > tbody > tr {
+.custom-table > tbody > tr,
+.custom-table > div {
     width: 100%;
+    text-align: left;
     border: 1px solid rgba(0, 0, 0, 0.125);
 }
-.custom-table > thead tr > th{
+.custom-table > thead tr > th,
+.custom-table > div > div {
     padding: 0.5rem 1.25rem;
     color: rgba(0, 0, 0, 0.6);
 }
-.custom-table > tbody  tr > td {
+.custom-table > tbody  tr > td,
+.custom-table > div > div {
     padding: 0.75rem 1.25rem;
     color: #41b7ef;
     text-align: left;
     cursor: pointer;
 }
-.custom-table > tbody tr:hover > td {
+.custom-table > tbody tr:hover > td,
+.custom-table > div:hover {
     color: #fff;
     background-color: #41b7ef;
 }

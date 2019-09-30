@@ -43,17 +43,25 @@ var Project = {
         , title: null
         , header: null
     }
-
     , _events: {
-        get_project_list: 'cis.project_list.get'
-        , get_job_list: 'cis.project.info'
-        , get_build_list: 'cis.job.info'
-        , get_entry_list: 'fs.entry.list'
+        create_table: {
+            project: 'cis.project_list.get'
+            , job: 'cis.project.info'
+            , build: 'cis.job.info'
+            , entry: 'fs.entry.list'
+        }
+        , entry_refresh: 'fs.entry.refresh'
+        , action_job: {
+            job_run: 'cis.job.run'
+        }
+        , action_entry: {
+                new_dir : 'fs.entry.new_dir'
+                , remove: 'fs.entry.remove'
+            }
     }
-
     , _templates: {}
 
-    , init: function () {
+    , init: function() {
 
         this._url = Hash.get();
 
@@ -62,9 +70,8 @@ var Project = {
         }
 
         var selector_name = 'template-project-';
-
         Selector.queryAll('script[id^="' + selector_name + '"]')
-            .forEach(function (item) {
+            .forEach(function(item) {
                 Project._templates[item.id
                     .replaceAll(selector_name,'')
                     .replaceAll('-','_')
@@ -83,12 +90,16 @@ var Project = {
         }
 
         if (path) {
-
             path.split('&')
-                .forEach(function (item) {
-
-                    var part = item.split('=');
-                    self._url[part[0]] = part[1];
+                .forEach(function(item) {
+                    if ( ! item) {
+                        return;
+                    }
+                    var parts = item.split('=');
+                    if ( ! parts) {
+                        return;
+                    }
+                    self._url[parts[0]] = parts[1];
                 });
         }
 
@@ -96,7 +107,7 @@ var Project = {
             this._url.job &&
             this._url.build) {
 
-            this._sendRequest(this._events.get_entry_list, {path: this._getPath()});
+            this._sendRequest(this._events.create_table.entry, {path: this._serialize()});
 
         } else if (this._url.project &&
                     this._url.job &&
@@ -107,34 +118,35 @@ var Project = {
         } else if (this._url.project &&
                     this._url.job) {
 
-            this._sendRequest(this._events.get_build_list, this._url);
+            this._sendRequest(this._events.create_table.build, this._url);
 
         } else if (this._url.project) {
 
-            this._sendRequest(this._events.get_job_list, this._url);
+            this._sendRequest(this._events.create_table.job, this._url);
 
         } else {
 
-            this._sendRequest(this._events.get_project_list);
+            this._sendRequest(this._events.create_table.project);
         }
     }
 
-    , onmessage: function (message) {
+    , onmessage: function(message) {
 
-        function changeEnvironment(button) {
+        function changeEnvironment(buttons) {
             //change button, path, info
 
             self._elements.buttons.innerHTML = '';
             self._elements.info.innerHTML = '';
             self._elements.path.innerHTML = (self._templates.path || '')
                 .replacePHs('url', '')
-                .replacePHs('part_path', 'job') ;
+                .replacePHs('part', 'job') ;
 
-            (button || [])
-                .forEach(function (item) {
-                    self._elements.buttons.html((self._templates.button || '')
-                        .replacePHs('onclick', item.onclick, true)
-                        .replacePHs('name', item.name, true));
+            (buttons || [])
+                .forEach(function(item) {
+                    self._elements.buttons.html(
+                        (self._templates.button || '')
+                            .replacePHs('onclick', item.onclick, true)
+                            .replacePHs('name', item.name, true));
                 });
 
             var url = {};
@@ -142,13 +154,15 @@ var Project = {
 
                 url[key] = self._url[key];
 
-                self._elements.path.html((self._templates.path || '')
-                    .replacePHs('url', url.serialize())
-                    .replacePHs('part_path', url[key]));
+                self._elements.path.html(
+                    (self._templates.path || '')
+                        .replacePHs('url', url.serialize())
+                        .replacePHs('part', url[key]));
 
-                self._elements.info.html((self._templates.info || '')
-                    .replacePHs('key', key.capitalize())
-                    .replacePHs('value', url[key]));
+                self._elements.info.html(
+                    (self._templates.info || '')
+                        .replacePHs('key', key.capitalize())
+                        .replacePHs('value', url[key]));
             }
 
             self._elements.title.className = '';
@@ -157,221 +171,256 @@ var Project = {
 
             Hash.set(self._url);
         }
-        function createTable(template, message) {
 
-            var path = self._url.serialize();
+        function createTable(template, message, class_columns) {
 
             message.data.fs_entries
-                .forEach(function (item) {
+                .forEach(function(item) {
 
-                    self._elements.table.html(template
-                        .replacePHs('url', path, true)
-                        .replacePHs('item_name', item.name, true)
-                        .replacePHs('path_download', item.link, true));
+                    self._elements.table.html(
+                        template
+                            .replacePHs('url', self._url.serialize(), true)
+                            .replacePHs('class', class_columns, true)
+                            .replacePHs('item_name', item.name, true)
+                            .replacePHs('path_download', item.link, true));
                 });
         }
 
-        var button = {
-            list: [
+        var buttons = {
+            project: [
                 {
                     name: 'New project'
-                    , onclick: 'Project.actionsEntry(\'createNewFolder\',{title_form: \'project\'})'
+                    , onclick: "Project.actionsEntry('createNewFolder','project')"
                 }
             ]
             , job: [
                 {
                     name: 'New job'
-                    , onclick: 'Project.actionsEntry(\'createNewFolder\',{title_form:\'job\'})'
+                    , onclick: "Project.actionsEntry('createNewFolder','job')"
                 }
                 , {
                     name: 'Remove project'
-                    , onclick: 'Project.actionsEntry(\'remove\')'
+                    , onclick: "Project.actionsEntry('remove')"
                 }
             ]
             , build: [
                 {
                     name: 'Start'
-                    , onclick: 'Project.actionsJob(\'start\')'
+                    , onclick: "Project.actionsJob('start')"
                 }
-                // , {
-                //     name: 'Add file'
-                //     , onclick: ''
-                // }
-                // , {
-                //     name: 'Add params'
-                //     , onclick: ''
-                // }
-                // , {
-                //     name: 'Add readme'
-                //     , onclick: ''
-                // }
             ]
             , entry: []
-            , property: [
-                // {
-                //     name: 'Save'
-                //     , onclick: ''
-                // }
-            ]
+            , property: []
         };
         var self = this;
         var name_message = message.event.split('.');
 
-        //? message for create table
-        if (name_message.inArray('get') ||
-            name_message.inArray('info') ||
-            name_message.inArray('list')) {
+        // cis. ...
+        if (name_message[0] == 'cis') {
 
-            if (message.event == 'cis.project_list.get.success') {
+            // cis.project...
+            if (name_message[1].indexOf('project') == 0) {
 
-                changeEnvironment(button.list);
-                createTable(this._templates.list || '', message);
-                this._elements.title.className = 'project-list';
+                // cis.project... .get.
+                if (name_message[2] == 'get') {
 
-            } else if (message.event == 'cis.project.info.success') {
+                    // cis.project... .get.success
+                    if (name_message[3] == 'success') {
 
-                changeEnvironment(button.job);
-                createTable(this._templates.job || '', message);
-
-            } else if (message.event == 'cis.job.info.success') {
-
-                changeEnvironment(button.build);
-
-                this._elements.table.innerHTML = '';
-
-                var properties = [];
-                var builds = [];
-
-                message.data.fs_entries
-                    .forEach(function (item) {
-                        (item.directory) ? builds.push(item) : properties.push(item);
-                    });
-
-                for (var i = 0; i < [properties.length, builds.length].max(); i++) {
-
-                    var table_row = {
-                        build_name: builds[i] &&
-                            builds[i].name
-                        , build_data: builds[i] &&
-                            builds[i].metainfo &&
-                            builds[i].metainfo.date
-                        , properties: properties[i] &&
-                            properties[i].name
-                    };
-
-                    var colspan = {
-                        name: 0
-                        , date: 0
-                        , prop: 0
-                    };
-
-                    if (table_row.build_name) {
-                        colspan.name++;
-                        if (table_row.build_data) {
-                            colspan.date++;
-                            if ( !table_row.properties) {
-                                colspan.date++;
-                            }
-                        } else {
-                            colspan.name++;
-                            if (!table_row.properties) {
-                                colspan.name++;
-                            }
-                        }
+                        changeEnvironment(buttons.project);
+                        createTable((this._templates.list || ''), message, 'one-columns');
+                        this._elements.title.className = 'project-list';
                     }
-                    colspan.prop = colspan.length() - (colspan.name + colspan.date);
 
-                    self._elements.table.html((self._templates.build || '')
-                        .replacePHs('url', this._url.serialize())
+                // cis.project.info
+                } else if (name_message[2] == 'info') {
 
-                        .replacePHs('prop_name', table_row.properties || '')
-                        .replacePHs('build_name', table_row.build_name || '')
-                        .replacePHs('build_date', (table_row.build_data) ? 'Start date: ' + table_row.build_data : '')
+                    // cis.project.info.success
+                    if (name_message[3] == 'success') {
 
-                        .replacePHs('class_build', (table_row.build_name) ? '' : 'template-builds-td')
-                        .replacePHs('class_date', (table_row.build_data) ? '' : 'template-builds-td')
-                        .replacePHs('class_prop', (table_row.properties) ? '' : 'template-builds-td')
+                        changeEnvironment(buttons.job);
+                        createTable((this._templates.job || ''), message, 'two-columns');
+                    }
 
-                        .replacePHs('colspan_name', colspan.name)
-                        .replacePHs('colspan_date', colspan.date)
-                        .replacePHs('colspan_prop', colspan.prop))
+                // cis.project.error
+                } else if (name_message[2] == 'error') {
+
+                    // cis.project.error.doesnt_exist
+                    if (name_message[3] == 'doesnt_exist') {
+
+                        changeEnvironment();
+                        this._toastOpen('warning', 'project not found');
+                    }
                 }
 
-                this._elements.header.className = 'project-list';
-                this.actionsJob('init', message.data.params);
+            // cis.job
+            } else if (name_message[1] == 'job') {
 
-            } else if (message.event == 'fs.entry.list.success') {
+                // cis.job.info
+                if (name_message[2] == 'info') {
 
-                changeEnvironment(button.entry);
-                createTable(this._templates.entry || '', message);
+                    // cis.job.info.success
+                    if (name_message[3] == 'success') {
 
-            } else if (message.event == 'cis.property.info.success') {
+                        changeEnvironment(buttons.build);
 
-                changeEnvironment(button.property);
-                this._elements.table.innerHTML = '';
+                        this._elements.table.innerHTML = '';
+
+                        var properties = [];
+                        var builds = [];
+
+                        message.data.fs_entries
+                            .forEach(function(item) {
+
+                                if (item.directory) {
+                                    builds.push(item)
+                                } else {
+                                    properties.push(item);
+                                }
+                            });
+
+                        for (var i = 0; i < [properties.length, builds.length].max(); i++) {
+
+                            var table_row = {
+                                build_name: builds[i] && builds[i].name
+                                , build_data: builds[i] && builds[i].metainfo && builds[i].metainfo.date
+                                , properties: properties[i] && properties[i].name
+                            };
+
+                            self._elements.table.html(
+                                (self._templates.build || '')
+                                    .replacePHs('class', 'tree-columns')
+                                    .replacePHs('url', this._url.serialize())
+
+                                    .replacePHs('prop_name', (table_row.properties || ''))
+                                    .replacePHs('build_name', (table_row.build_name || ''))
+                                    .replacePHs('build_date', ((table_row.build_data) ? ('Start date: ' + table_row.build_data) : ''))
+
+                                    .replacePHs('class_build', ((table_row.build_name) ? '' : 'template-builds-td'))
+                                    .replacePHs('class_date', ((table_row.build_data) ? '' : 'template-builds-td'))
+                                    .replacePHs('class_prop', ((table_row.properties) ? '' : 'template-builds-td')))
+                        }
+
+                        this._elements.header.className = 'project-list';
+                        this.actionsJob('init', message.data.params);
+                    }
+
+                // cis.job.run
+                } else if (name_message[2] == 'run') {
+
+                    // cis.job.run.success
+                    if (name_message[3] == 'success') {
+
+                        this._toastOpen('info', 'job run success');
+                    }
+
+                // cis.job.error
+                } else if (name_message[2] == 'error') {
+
+                    // cis.job.error.doesnt_exist
+                    if (name_message[3] == 'doesnt_exist') {
+
+                        changeEnvironment();
+                        this._toastOpen('warning', 'job not found');
+
+                    // cis.job.error.invalid_params
+                    } else if (name_message[3] == 'invalid_params') {
+
+                        this._toastOpen('error', 'error in params');
+                    }
+                }
+
+            // cis.build
+            } else if (name_message[1] == 'build') {
+
+                // cis.build.error
+                if (name_message[2] == 'error') {
+
+                    // cis.build.error.doesnt_exist
+                    if (name_message[3] = 'doesnt_exist') {
+
+                        changeEnvironment();
+                        this._toastOpen('warning', 'build not found');
+                    }
+                }
+
+            // cis.entry
+            } else if (name_message[1] == 'entry') {
+
+                // cis.entry.error
+                if (name_message[2] == 'error') {
+
+                    // cis.entry.error.doesnt_exist
+                    if (name_message[3] = 'doesnt_exist') {
+
+                        changeEnvironment();
+                        this._toastOpen('warning', 'entry not found');
+                    }
+                }
+
+            // cis.property
+            } else if (name_message[1] == 'property') {
+
+                // cis.property.info
+                if (name_message[2] == 'info') {
+
+                    // cis.property.info.success
+                    if (name_message[3] == 'success') {
+
+                        changeEnvironment(buttons.property);
+                        this._elements.table.innerHTML = '';
+                    }
+                }
             }
 
-        //? message for error
-        } else if (name_message.inArray('doesnt_exist')) {
+        // fs.entry.list.success
+        } else if (name_message[0] == 'fs') {
 
-            changeEnvironment();
+            // fs.entry
+            if (name_message[1] == 'entry') {
 
-            Toast.open({
-                type: 'warning'
-                , text: message.errorMessage
-                , button_close: true
-                , delay: 2
-            });
+                // fs.entry.list
+                if (name_message[2] == 'list') {
 
-        //? message for job
-        } else if (name_message.inArray('job')) {
+                    // fs.entry.list.success
+                    if (name_message[3] == 'success') {
 
-            if (message.event == 'cis.job.run.success') {
-                Toast.open({
-                    type: 'info'
-                    , text: 'job run success'
-                    , delay: 2
-                });
+                        changeEnvironment(buttons.entry);
+                        createTable((this._templates.entry || ''), message, 'two-columns');
+                    }
 
-            } else if (message.event == 'cis.job.error.invalid_params') {
-                Toast.open({
-                    type: 'error'
-                    , text: 'error in params'
-                    , delay: 2
-                });
+                // fs.entry.new_dir
+                } else if (name_message[2] == 'new_dir') {
+
+                    // fs.entry.new_dir.success
+                    if (name_message[3] == 'success') {
+
+                        this._sendRequest(this._events.entry_refresh, {path: this._serialize()});
+                    }
+
+                // fs.entry.remove
+                } else if (name_message[2] == 'remove') {
+
+                    // fs.entry.remove.success
+                    if (name_message[3] == 'success') {
+
+                        this._toastOpen('info', 'remove success');
+                        this.sendDataServer();
+                    }
+
+                // fs.entry.refresh
+                } else if (name_message[2] == 'refresh') {
+
+                    // fs.entry.refresh.success
+                    if (name_message[3] == 'success') {
+
+                        this._toastOpen('info', 'create success');
+                        this.sendDataServer();
+                    }
+                }
             }
 
-        //? message for entry
-        } else if (name_message.inArray('entry')) {
-
-            var event = {
-                refresh: 'fs.entry.refresh'
-            };
-
-            if (message.event == 'fs.entry.new_dir.success') {
-
-                this._sendRequest(event.refresh, {path: this._getPath()});
-
-            } else if (message.event == 'fs.entry.remove.success') {
-
-                Toast.open({
-                    type: 'info'
-                    , text: 'remove success'
-                    , delay: 2
-                });
-                this.sendDataServer();
-
-            } else if (message.event == 'fs.entry.refresh.success') {
-
-                Toast.open({
-                    type: 'info'
-                    , text: 'create success'
-                    , delay: 2
-                });
-                this.sendDataServer();
-            }
-
-        //? unidentified message
+        //unidentified message
         } else {
             console.warn('not processed message');
         }
@@ -380,58 +429,57 @@ var Project = {
     /**
      * Job
      *
-     * @param {string} name_function - Key to action selection
-     * @param arg - parameter for further actions
+     * @param {string} event - Key to action selection
+     * @param params - parameter for further actions
      *     Variant
-     *         name_function = 'init' (Initialization of values)
-     *         @param {array} arg - Default values for request 'run job'
+     *         event = 'init' (Initialization of values)
+     *         @param {array} params - Default values for request 'run job'
      *             @param {object} - Pair 'key-value'
      *                 @param {string} name  - name of param
      *                 @param {string} value - Default value received from server
      *
-     *         name_function = 'start' (Run job)
-     *         @param {bool} arg - Pointer to where the function was called
+     *         event = 'start' (Run job)
+     *         @param {bool} params - Pointer to where the function was called
      *             Variant 'true' (function called from the block with the entered parameters) ||
      *             'false' (the function is called from the main block)
-     *
      */
 
-    , actionsJob: function(name_function, arg) {
+    , actionsJob: function(event, params) {
 
-        var event = {
-            job_run: 'cis.job.run'
-        };
+        if (event == 'init') {
 
-        if (name_function == 'init') {
+            Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(params)));
 
-            var param = arg;
-            Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(param)));
+        } else if (event == 'start') {
 
-        } else if (name_function == 'start') {
-
-            var is_form = arg;
-            var params = [];
+            var is_form = params;
+            var fields = [];
             if (Cookie.get('param_start_job')) {
-                params = JSON.parse(Cookie.get('param_start_job').decode(true));
+                fields = JSON.parse(decodeURIComponent(Cookie.get('param_start_job')));
             }
 
-            if ( is_form || params.length == 0) {
+            if ( is_form || fields.length == 0) {
 
-                this._sendRequest(event.job_run, {
+                this._sendRequest(this._events.action_job.job_run, {
                     project: this._url.project,
                     job: this._url.job,
-                    params: params
+                    params: fields
                 });
-                this.formInputData('showForm');
+                this.formInputData('visible');
 
-            } else if (params.length != 0) {
+            } else if (fields.length != 0) {
 
-                this.formInputData('createForm',
+                this.formInputData('init',
                     {
                         title_name: 'Set params'
-                        , onclick: 'Project.actionsJob(\'start\', true)'
-                        , button_value: 'Start'
-                        , param: params
+                        , input: {
+                            is_input: true
+                            , fields: fields
+                        }
+                        , button: {
+                            onclick: "Project.actionsJob('start', true)"
+                            , value: 'Start'
+                        }
                     });
             }
         }
@@ -440,69 +488,80 @@ var Project = {
     /**
      *  Entry
      *
-     * @param {string} name_function - Key to action selection
-     * @param {obj} arg              - Parameter for further actions
+     * @param {string} event - Key to action selection
+     * @param params   - Parameter for actions
      *     Variant
-     *         init_function = 'createNewFolder' (Send a request to create a new file)
-     *         arg - Options for adding a new folder
-     *             @param {string} title_form - Title form; what will be created ('Project' || 'Job')
-     *             @param {bool} is_name      - Is there a name for the new folder
+     *         event = 'createNewFolder' (Send a request to create a new file)
+     *         {string} params - Title form; what will be created ('Project' || 'Job')
      *
-     *         init_function = 'remove' (Remove folder)
-     *
+     *         event = 'remove' (Remove folder)
+     *         {bool} params - Deletion confirmed
      */
 
-    , actionsEntry: function(name_function, arg) {
+    , actionsEntry: function(event, params) {
 
-        var events = {
-            new_dir : 'fs.entry.new_dir'
-            , remove: 'fs.entry.remove'
-        };
+        if (event == 'createNewFolder') {
 
-        if (name_function == 'createNewFolder') {
-            //arg:
-            // title_form
-            // is_name
-
-            // arg.is_name = 'true' then if the shape can accept parameters, that is, open and visible input
-            //               'false' then if the shape can't accept parameters, that is, isn't visible input
-
-            var name_folder = this.formInputData('getParam')[0];
+            var title_form = '';
+            if (params) {
+                title_form = params;
+            } else {
+                return;
+            }
+            var name_folder = this.formInputData('get')[0];
 
             if (name_folder && name_folder != '') {
 
-                this._url[arg.title_form] = name_folder;
-                this._sendRequest(events.new_dir, {path: this._getPath()});
-                this.formInputData('showForm');
+                this._url[title_form] = name_folder;
+                this._sendRequest(this._events.action_entry.new_dir, {path: this._serialize()});
+                this.formInputData('visible');
 
             } else if (name_folder == '') {
-                Toast.open({
-                    type: 'warning'
-                    , text: 'Please, enter a ' + arg.title_form + ' name'
-                    , delay: 2
-                });
+
+                this._toastOpen('warning', 'Please, enter a ' + title_form + ' name');
 
             } else {
 
-            this.formInputData('createForm',
-                {
-                    title_name: 'New ' + arg.title_form
-                    , param: [{name: 'name of New ' + arg.title_form}]
-                    , onclick: 'Project.actionsEntry(\'createNewFolder\',' +
-                        '{title_form: \'' + arg.title_form + '\'})'
-                    , button_value: 'Add'
-                });
+                this.formInputData('init',
+                    {
+                        title_name: 'New ' + title_form
+                        , input: {
+                            is_input: true
+                            , fields: [{name: 'name of New ' + title_form}]
+                        }
+                        , button: {
+                            onclick: "Project.actionsEntry('createNewFolder', '" + title_form + "')"
+                            , value: 'Add'
+                        }
+                    });
             }
 
-        } else if (name_function == 'remove') {
+        } else if (event == 'remove') {
 
-            if (confirm('are you sure, that you want to delete file ' + this._getPath())) {
+            var is_remove = params || null;
 
-                this._sendRequest(events.remove, {path: this._getPath()});
-                delete this._url[
-                    Object.keys(this._url).pop()
-                ];
+            if (is_remove) {
+
+                this._sendRequest(this._events.action_entry.remove, {path: this._serialize()});
+
+                delete this._url[Object.keys(this._url).pop()];
                 Hash.set(this._url);
+
+                this.formInputData('visible');
+
+            } else {
+
+                this.formInputData('init',
+                    {
+                        title_name: 'Remove'
+                        , input: {
+                            fields: [{name: 'Are you sure, that you want to delete file ' + this._serialize()}]
+                        }
+                        , button: {
+                            onclick: "Project.actionsEntry('remove', true)"
+                            , value: 'Remove'
+                        }
+                    });
             }
         }
     }
@@ -510,89 +569,99 @@ var Project = {
     /**
      * Form
      *
-     * @param {string} name_function - Key to action selection
-     * @param arg - parameter for form actions
+     * @param {string} event - Key to action selection
+     * @param params         - parameter for form actions
      *     Variant
-     *         name_function = 'createForm' (Set the name of the form, button, onclick event, default param)
-     *         @param {obj} arg
+     *         event = 'init' (Set the name of the form, button, onclick event, default param)
+     *         @param {obj} params
      *             @param {string} title_name   - (Optional) Name of form
-     *             @param {array} param         - (Optional) Array with obj param
-     *                  @param {obj}
-     *                      @param {string} name  - (Optional) Field name
-     *                      @param {string} value - (Optional) Field value
-     *             @param {string} button_value - (Optional) Text on buttons
-     *             @param {string} onclick      - (Optional) Click action
+     *             @param {obj} input
+     *                 @param {bool} is_input       - (Optional) Is need an input field
+     *                 @param {array} fields        - (Optional) Array with obj param
+     *                     @param {obj}
+     *                         @param {string} name  - (Optional) Field name
+     *                         @param {string} value - (Optional) Field value
+     *             @param {obj} button          - (Optional) Button options
+     *                 @param {string} value       - (Optional) Text on buttons
+     *                 @param {string} onclick     - (Optional) Click action
      *
-     *         @param name_function = 'getParam' (Get params from form)
-     *             @returns {array} - Field values
+     *         event = 'get' (Get params from form)
+     *         @returns {array} - Field values
      *
-     *         @param name_function = 'showForm' (close form)
+     *         event = 'visible' (close form)
      */
 
-    , formInputData: function(name_function, arg) {
+    , formInputData: function(event, params) {
 
         var self = this;
-
         var _elements = {
             params_block: null
             , form: null
             , button: null
             , name: null
         };
+        var is_visible = false;
 
         for (var key in _elements) {
-            _elements[key] = (key == 'form')
-                ? Selector.id('project-form')
-                : Selector.id('project-form-' + key.replaceAll('_','-',true))
+
+            if (key == 'form'){
+                _elements[key] = Selector.id('project-form');
+            } else {
+                _elements[key] = Selector.id('project-form-' + key.replaceAll('_', '-', true));
+            }
         }
 
-        function showForm(is_show) {
+        if (event == 'init') {
+            // params:
+            // title_name
+            // input
+            //     is_input
+            //     fields
+            // button
+            //     onclick
+            //     value
 
-            if (is_show) {
+            _elements.params_block.innerHTML = '';
+            _elements.name.innerHTML = params.title_name || '';
+
+            (params.input && params.input.fields || [])
+                .forEach(function(item) {
+                    _elements.params_block.html(
+                        (self._templates.form_params_block || '')
+                            .replacePHs('param_name', (item.name || ''), true)
+                            .replacePHs('param_value', (item.value || ''), true)
+                            .replacePHs('class_input', (params.input.is_input || item.value) ? '' : 'form-project-list'))
+                });
+
+            _elements.button.html(
+                (this._templates.button || '')
+                    .replacePHs('onclick', (params.button && params.button.onclick || ''), true)
+                    .replacePHs('name', (params.button && params.button.value || ''), true)
+                , true);
+
+            event = 'visible';
+            is_visible = true;
+
+        } else if (event == 'get') {
+
+            return Selector.queryAll('#project-form-params-block > div > input')
+                .map(function(item) {
+                    return item.value.trim() || '';
+                });
+
+        }
+        if (event == 'visible') {
+
+            if (is_visible) {
                 _elements.form.className = 'project-param';
             } else {
                 _elements.form.className = '';
                 _elements.params_block.innerHTML = '';
             }
         }
-
-        if (name_function == 'createForm') {
-            // arg:
-            // title_name
-            // param
-            // onclick
-            // button_value
-
-            _elements.params_block.innerHTML = '';
-            _elements.name.innerHTML = arg.title_name || '';
-
-            (arg.param || [])
-                .forEach(function (item) {
-                    _elements.params_block.html((self._templates.form_params_block || '')
-                        .replacePHs('param', (item.value || ''), true)
-                        .replacePHs('name_param', (item.name || ''), true))
-                });
-
-            _elements.button.html((this._templates.button || '')
-                    .replacePHs('onclick', (arg.onclick || ''), true)
-                    .replacePHs('name', (arg.button_value || ''), true)
-                , true);
-
-            showForm(true);
-
-        } else if (name_function == 'getParam') {
-
-            return Selector.queryAll('#project-form-params-block > div > input')
-                .map(function (item) {
-                    return item.value.trim() || '';
-                });
-
-        } else  if (name_function == 'showForm') {
-            showForm();
-        }
     }
 
-    , _sendRequest: function (event, data) {
+    , _sendRequest: function(event, data) {
 
         Socket.send({
             event: event || '',
@@ -600,11 +669,20 @@ var Project = {
             data: data || {}
         });
     }
-    , _getPath: function () {
+    , _toastOpen: function(type, message) {
+
+        Toast.open({
+            type: type
+            , text: message
+            , delay: 2
+        });
+    }
+    , _serialize: function() {
+        var self = this;
         // get the path of the form '/<project.name>/<job.name>/..'
         return '/' + Object.keys(this._url)
-            .map(function (item) {
-                return Project._url[item];
+            .map(function(item) {
+                return self._url[item];
             }).join('/');
     }
 };
