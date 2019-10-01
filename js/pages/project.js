@@ -287,18 +287,56 @@ var Project = {
                                 , properties: properties[i] && properties[i].name
                             };
 
+                            var class_columns = {
+                                name: ''
+                                , date: ''
+                                , prop: ''
+                            };
+
+                            if (table_row.build_name) {
+
+                                if (table_row.build_data) {
+
+                                    class_columns.name = 'tree-columns';
+
+                                    if (table_row.properties) {
+
+                                        class_columns.date = 'tree-columns';
+                                        class_columns.prop = 'tree-columns';
+
+                                    } else {
+
+                                        class_columns.date = 'tree-columns';
+
+                                    }
+                                } else {
+
+                                    if (table_row.properties) {
+
+                                        class_columns.name = 'two-one-columns';
+                                        class_columns.prop = 'tree-columns';
+
+                                    } else {
+
+                                        class_columns.name = 'one-columns';
+                                    }
+                                }
+
+                            } else {
+                                class_columns.prop = 'one-columns';
+                            }
+
                             self._elements.table.html(
                                 (self._templates.build || '')
-                                    .replacePHs('class', 'tree-columns')
                                     .replacePHs('url', this._url.serialize())
 
                                     .replacePHs('prop_name', (table_row.properties || ''))
                                     .replacePHs('build_name', (table_row.build_name || ''))
                                     .replacePHs('build_date', ((table_row.build_data) ? ('Start date: ' + table_row.build_data) : ''))
 
-                                    .replacePHs('class_build', ((table_row.build_name) ? '' : 'template-builds-td'))
-                                    .replacePHs('class_date', ((table_row.build_data) ? '' : 'template-builds-td'))
-                                    .replacePHs('class_prop', ((table_row.properties) ? '' : 'template-builds-td')))
+                                    .replacePHs('class_build', ((class_columns.name) ? class_columns.name : 'template-builds-td'))
+                                    .replacePHs('class_date', ((class_columns.date) ? class_columns.date : 'template-builds-td'))
+                                    .replacePHs('class_prop', ((class_columns.prop) ? class_columns.prop : 'template-builds-td ')))
                         }
 
                         this._elements.header.className = 'project-list';

@@ -124,14 +124,20 @@
     padding: 0;
     font-size: 14px;
 }
-#project-table > div.one-columns > div {
+#project-table > div.one-columns > div,
+#project-table > div > div.one-columns {
     width: 100%;
 }
-#project-table > div.two-columns > div {
+#project-table > div.two-columns > div,
+#project-table > div > div.two-columns {
     width: 50%;
 }
-#project-table > div.tree-columns > div {
+#project-table > div.tree-columns > div,
+#project-table > div > div.tree-columns {
     width: 33.3%;
+}
+#project-table > div > div.two-one-columns {
+    width: 66.6%;
 }
 #project-table > div > div:last-child {
     text-align: right;
