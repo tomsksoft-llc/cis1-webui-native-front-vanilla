@@ -29,12 +29,12 @@
 
 <!--template for button-->
 <script type="text/html" id="template-project-button">
-    <button class="custom-button blue-button" onclick="%%onclick%%;">%%name%%</button>
+    <div class="custom-button blue-button project-button" onclick="%%onclick%%;">%%name%%</div>
 </script>
 
 <!--template for path-->
 <script type="text/html" id="template-project-path">
-    <a onclick=Project.sendDataServer('%%url%%'); href="%%hash%%%%url%%">%%part%%</a>
+    <a onclick=Project.sendDataServer('%%url%%'); href="#%%url%%">%%part%%</a>
 </script>
 
 <!--template main info-->
@@ -44,7 +44,7 @@
 
 <!--template table-->
 <script type="text/html" id="template-project-list">
-    <div  class="%%class%%">
+    <div class="%%class%%">
         <div onclick="Project.sendDataServer('%%url%%&project=%%item_name%%');">
             <a href="#project=%%item_name%%">%%item_name%%</a>
         </div>

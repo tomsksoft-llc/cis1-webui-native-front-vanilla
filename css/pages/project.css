@@ -18,7 +18,7 @@
     padding-top: 50px;
     margin-right: 20px;
 }
-#project-buttons > button {
+#project-buttons > .project-button {
     width: 130px;
     min-width: 130px;
     height: auto;
@@ -229,7 +229,7 @@ div#project-form-header {
 input.form-project-list {
     display: none;
 }
-#project-form-button > button {
+#project-form-button > .project-button {
     width: 100%;
     margin-top: 10px;
 }

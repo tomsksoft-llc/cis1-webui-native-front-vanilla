@@ -44,25 +44,50 @@ var Project = {
         , header: null
     }
     , _events: {
-        create_table: {
-            project: 'cis.project_list.get'
-            , job: 'cis.project.info'
-            , build: 'cis.job.info'
-            , entry: 'fs.entry.list'
-        }
-        , entry_refresh: 'fs.entry.refresh'
-        , action_job: {
-            job_run: 'cis.job.run'
-        }
-        , action_entry: {
-                new_dir : 'fs.entry.new_dir'
-                , remove: 'fs.entry.remove'
+        response: {
+            cis: {
+                project_list:           'cis.project_list.get.success'
+                , job_list:             'cis.project.info.success'
+                , project_doesnt_exist: 'cis.project.error.doesnt_exist'
+                , build_list:           'cis.job.info.success'
+                , job_run:              'cis.job.run.success'
+                , job_doesnt_exist:     'cis.job.error.doesnt_exist'
+                , job_invalid_params:   'cis.job.error.invalid_params'
+                , build_doesnt_exist:   'cis.build.error.doesnt_exist'
+                , property:             'cis.property.info.success'
+                , entry_doesnt_exist:   'cis.entry.error.doesnt_exist'
             }
+            , fs: {
+                entry_list:      'fs.entry.list.success'
+                , entry_refresh: 'fs.entry.refresh.success'
+                , new_dir :      'fs.entry.new_dir.success'
+                , remove:        'fs.entry.remove.success'
+            }
+        }
+        , request:{
+            cis: {
+                project_list: 'cis.project_list.get'
+                , job_list:   'cis.project.info'
+                , build_list: 'cis.job.info'
+                , job_run:    'cis.job.run'
+            }
+            , fs: {
+                entry_list:      'fs.entry.list'
+                , entry_refresh: 'fs.entry.refresh'
+                , new_dir :      'fs.entry.new_dir'
+                , remove:        'fs.entry.remove'
+            }
+        }
     }
     , _templates: {}
 
     , init: function() {
 
+        var self = this;
+
+        if (window.location.href.substr(-1) == '#') {
+            window.location = window.location.origin;
+        }
         this._url = Hash.get();
 
         for (var key in this._elements) {
@@ -72,7 +97,7 @@ var Project = {
         var selector_name = 'template-project-';
         Selector.queryAll('script[id^="' + selector_name + '"]')
             .forEach(function(item) {
-                Project._templates[item.id
+                self._templates[item.id
                     .replaceAll(selector_name,'')
                     .replaceAll('-','_')
                 ] = item.innerHTML.trim();
@@ -107,7 +132,7 @@ var Project = {
             this._url.job &&
             this._url.build) {
 
-            this._sendRequest(this._events.create_table.entry, {path: this._serialize()});
+            this._sendRequest(this._events.request.fs.entry_list, {path: this._serialize()});
 
         } else if (this._url.project &&
                     this._url.job &&
@@ -118,15 +143,15 @@ var Project = {
         } else if (this._url.project &&
                     this._url.job) {
 
-            this._sendRequest(this._events.create_table.build, this._url);
+            this._sendRequest(this._events.request.cis.build_list, this._url);
 
         } else if (this._url.project) {
 
-            this._sendRequest(this._events.create_table.job, this._url);
+            this._sendRequest(this._events.request.cis.job_list, this._url);
 
         } else {
 
-            this._sendRequest(this._events.create_table.project);
+            this._sendRequest(this._events.request.cis.project_list);
         }
     }
 
@@ -138,7 +163,6 @@ var Project = {
             self._elements.buttons.innerHTML = '';
             self._elements.info.innerHTML = '';
             self._elements.path.innerHTML = (self._templates.path || '')
-                .replacePHs('hash', '')
                 .replacePHs('url', '')
                 .replacePHs('part', 'job') ;
 
@@ -157,7 +181,6 @@ var Project = {
 
                 self._elements.path.html(
                     (self._templates.path || '')
-                        .replacePHs('hash', '#')
                         .replacePHs('url', url.serialize())
                         .replacePHs('part', url[key]));
 
@@ -212,244 +235,155 @@ var Project = {
             , entry: []
             , property: []
         };
+
         var self = this;
-        var name_message = message.event.split('.');
 
         // cis. ...
-        if (name_message[0] == 'cis') {
+        if (message.event.indexOf('cis.') == '0') {
 
-            // cis.project...
-            if (name_message[1].indexOf('project') == 0) {
+            // cis.project_list.get.success
+            if (message.event == this._events.response.cis.project_list) {
 
-                // cis.project... .get.
-                if (name_message[2] == 'get') {
+                changeEnvironment(buttons.project);
+                createTable((this._templates.list || ''), message, 'one-columns');
+                this._elements.title.className = 'project-list';
 
-                    // cis.project... .get.success
-                    if (name_message[3] == 'success') {
+            // cis.project.info.success
+            } else if (message.event == this._events.response.cis.job_list) {
+                changeEnvironment(buttons.job);
+                createTable((this._templates.job || ''), message, 'two-columns');
 
-                        changeEnvironment(buttons.project);
-                        createTable((this._templates.list || ''), message, 'one-columns');
-                        this._elements.title.className = 'project-list';
-                    }
+            // cis.project.error.doesnt_exist
+            } else if (message.event == this._events.response.cis.project_doesnt_exist) {
+                changeEnvironment();
+                this._toastOpen('warning', 'project not found');
 
-                // cis.project.info
-                } else if (name_message[2] == 'info') {
+            // cis.job.info.success
+            } else if (message.event == this._events.response.cis.build_list) {
 
-                    // cis.project.info.success
-                    if (name_message[3] == 'success') {
+                this._elements.table.innerHTML = '';
 
-                        changeEnvironment(buttons.job);
-                        createTable((this._templates.job || ''), message, 'two-columns');
-                    }
+                var properties = [];
+                var builds = [];
 
-                // cis.project.error
-                } else if (name_message[2] == 'error') {
+                message.data.fs_entries
+                    .forEach(function(item) {
 
-                    // cis.project.error.doesnt_exist
-                    if (name_message[3] == 'doesnt_exist') {
-
-                        changeEnvironment();
-                        this._toastOpen('warning', 'project not found');
-                    }
-                }
-
-            // cis.job
-            } else if (name_message[1] == 'job') {
-
-                // cis.job.info
-                if (name_message[2] == 'info') {
-
-                    // cis.job.info.success
-                    if (name_message[3] == 'success') {
-
-                        changeEnvironment(buttons.build);
-
-                        this._elements.table.innerHTML = '';
-
-                        var properties = [];
-                        var builds = [];
-
-                        message.data.fs_entries
-                            .forEach(function(item) {
-
-                                if (item.directory) {
-                                    builds.push(item)
-                                } else {
-                                    properties.push(item);
-                                }
-                            });
-
-                        for (var i = 0; i < [properties.length, builds.length].max(); i++) {
-
-                            var table_row = {
-                                build_name: builds[i] && builds[i].name
-                                , build_data: builds[i] && builds[i].metainfo && builds[i].metainfo.date
-                                , properties: properties[i] && properties[i].name
-                            };
-
-                            var class_columns = {
-                                name: ''
-                                , date: ''
-                                , prop: ''
-                            };
-
-                            if (table_row.build_name) {
-
-                                if (table_row.build_data) {
-                                    class_columns.name = 'tree-columns';
-
-                                    if (table_row.properties) {
-                                        class_columns.date = 'tree-columns';
-                                        class_columns.prop = 'tree-columns';
-
-                                    } else {
-                                        class_columns.date = 'tree-columns';
-                                    }
-                                } else {
-
-                                    if (table_row.properties) {
-                                        class_columns.name = 'two-one-columns';
-                                        class_columns.prop = 'tree-columns';
-
-                                    } else {
-                                        class_columns.name = 'one-columns';
-                                    }
-                                }
-                            } else {
-                                class_columns.prop = 'one-columns';
-                            }
-
-                            self._elements.table.html(
-                                (self._templates.build || '')
-                                    .replacePHs('url', this._url.serialize())
-
-                                    .replacePHs('prop_name', (table_row.properties || ''))
-                                    .replacePHs('build_name', (table_row.build_name || ''))
-                                    .replacePHs('build_date', ((table_row.build_data) ? ('Start date: ' + table_row.build_data) : ''))
-
-                                    .replacePHs('class_build', ((class_columns.name) ? class_columns.name : 'template-builds-td'))
-                                    .replacePHs('class_date', ((class_columns.date) ? class_columns.date : 'template-builds-td'))
-                                    .replacePHs('class_prop', ((class_columns.prop) ? class_columns.prop : 'template-builds-td ')))
+                        if (item.directory) {
+                            builds.push(item)
+                        } else {
+                            properties.push(item);
                         }
+                    });
 
-                        this._elements.header.className = 'project-list';
-                        this.actionsJob('init', message.data.params);
+
+                for (var i = 0; i < [properties.length, builds.length].max(); i++) {
+
+                    var table_row = {
+                        build_name: (builds[i] || {}).name
+                        , build_data: ((builds[i] || {}).metainfo || {}).date
+                        , properties: (properties[i] || {}).name
+                    };
+
+                    var class_columns = {
+                        name: ''
+                        , date: ''
+                        , prop: ''
+                    };
+
+                    if (table_row.build_name) {
+
+                        if (table_row.build_data) {
+                            class_columns.name = 'tree-columns';
+
+                            if (table_row.properties) {
+                                class_columns.date = 'tree-columns';
+                                class_columns.prop = 'tree-columns';
+
+                            } else {
+                                class_columns.date = 'tree-columns';
+                            }
+                        } else {
+
+                            if (table_row.properties) {
+                                class_columns.name = 'two-one-columns';
+                                class_columns.prop = 'tree-columns';
+
+                            } else {
+                                class_columns.name = 'one-columns';
+                            }
+                        }
+                    } else {
+                        class_columns.prop = 'one-columns';
                     }
 
-                // cis.job.run
-                } else if (name_message[2] == 'run') {
+                    self._elements.table.html(
+                        (self._templates.build || '')
+                            .replacePHs('url', this._url.serialize())
 
-                    // cis.job.run.success
-                    if (name_message[3] == 'success') {
+                            .replacePHs('prop_name', (table_row.properties || ''))
+                            .replacePHs('build_name', (table_row.build_name || ''))
+                            .replacePHs('build_date', ((table_row.build_data) ? ('Start date: ' + table_row.build_data) : ''))
 
-                        this._toastOpen('info', 'job run success');
-                        this._sendRequest(this._events.entry_refresh, {path: this._serialize()});
-                    }
-
-                // cis.job.error
-                } else if (name_message[2] == 'error') {
-
-                    // cis.job.error.doesnt_exist
-                    if (name_message[3] == 'doesnt_exist') {
-
-                        changeEnvironment();
-                        this._toastOpen('warning', 'job not found');
-
-                    // cis.job.error.invalid_params
-                    } else if (name_message[3] == 'invalid_params') {
-
-                        this._toastOpen('error', 'error in params');
-                    }
+                            .replacePHs('class_build', ((class_columns.name) ? class_columns.name : 'template-builds-td'))
+                            .replacePHs('class_date', ((class_columns.date) ? class_columns.date : 'template-builds-td'))
+                            .replacePHs('class_prop', ((class_columns.prop) ? class_columns.prop : 'template-builds-td ')))
                 }
 
-            // cis.build
-            } else if (name_message[1] == 'build') {
+                this._elements.header.className = 'project-list';
+                this.actionsJob('init', message.data.params);
 
-                // cis.build.error
-                if (name_message[2] == 'error') {
+            // cis.job.run.success
+            } else if (message.event == this._events.response.cis.job_run) {
+                this._toastOpen('info', 'job run success');
+                this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
 
-                    // cis.build.error.doesnt_exist
-                    if (name_message[3] = 'doesnt_exist') {
+            // cis.job.error.doesnt_exist
+            } else if (message.event == this._events.response.cis.job_doesnt_exist) {
+                changeEnvironment();
+                this._toastOpen('warning', 'job not found');
 
-                        changeEnvironment();
-                        this._toastOpen('warning', 'build not found');
-                    }
-                }
+            // cis.job.error.invalid_params
+            } else if (message.event == this._events.response.cis.job_invalid_params) {
+                this._toastOpen('error', 'error in params');
 
-            // cis.entry
-            } else if (name_message[1] == 'entry') {
+            // cis.build.error.doesnt_exist
+            } else if (message.event == this._events.response.cis.build_doesnt_exist) {
+                changeEnvironment();
+                this._toastOpen('warning', 'build not found');
 
-                // cis.entry.error
-                if (name_message[2] == 'error') {
+            // cis.entry.error.doesnt_exist
+            } else if (message.event == this._events.response.cis.entry_doesnt_exist) {
+                changeEnvironment();
+                this._toastOpen('warning', 'entry not found');
 
-                    // cis.entry.error.doesnt_exist
-                    if (name_message[3] = 'doesnt_exist') {
-
-                        changeEnvironment();
-                        this._toastOpen('warning', 'entry not found');
-                    }
-                }
-
-            // cis.property
-            } else if (name_message[1] == 'property') {
-
-                // cis.property.info
-                if (name_message[2] == 'info') {
-
-                    // cis.property.info.success
-                    if (name_message[3] == 'success') {
-
-                        changeEnvironment(buttons.property);
-                        this._elements.table.innerHTML = '';
-                    }
-                }
+            // cis.property.info.success
+            } else if (message.event == this._events.response.cis.property) {
+                changeEnvironment(buttons.property);
+                this._elements.table.innerHTML = '';
             }
 
-        // fs.entry.list.success
-        } else if (name_message[0] == 'fs') {
+        // fs
+        } else if (message.event.indexOf('fs.') == '0') {
 
-            // fs.entry
-            if (name_message[1] == 'entry') {
+            // fs.entry.list.success
+            if (message.event == this._events.response.fs.entry_list) {
+                changeEnvironment(buttons.entry);
+                createTable((this._templates.entry || ''), message, 'two-columns');
 
-                // fs.entry.list
-                if (name_message[2] == 'list') {
+            // fs.entry.new_dir.success
+            } else if (message.event == this._events.response.fs.new_dir) {
+                this._toastOpen('info', 'create success');
+                this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
 
-                    // fs.entry.list.success
-                    if (name_message[3] == 'success') {
+            // fs.entry.remove.success
+            } else if (message.event == this._events.response.fs.remove) {
+                this._toastOpen('info', 'remove success');
+                this.sendDataServer();
 
-                        changeEnvironment(buttons.entry);
-                        createTable((this._templates.entry || ''), message, 'two-columns');
-                    }
-
-                // fs.entry.new_dir
-                } else if (name_message[2] == 'new_dir') {
-
-                    // fs.entry.new_dir.success
-                    if (name_message[3] == 'success') {
-
-                        this._toastOpen('info', 'create success');
-                        this._sendRequest(this._events.entry_refresh, {path: this._serialize()});
-                    }
-
-                // fs.entry.remove
-                } else if (name_message[2] == 'remove') {
-
-                    // fs.entry.remove.success
-                    if (name_message[3] == 'success') {
-
-                        this._toastOpen('info', 'remove success');
+            // fs.entry.refresh.success
+            } else if (message.event == this._events.response.fs.entry_refresh) {
                         this.sendDataServer();
-                    }
-
-                // fs.entry.refresh
-                } else if (name_message[2] == 'refresh') {
-
-                    // fs.entry.refresh.success
-                    if (name_message[3] == 'success') {
-
-                        this.sendDataServer();
-                    }
-                }
             }
 
         //unidentified message
@@ -461,28 +395,28 @@ var Project = {
     /**
      * Job
      *
-     * @param {string} event - Key to action selection
+     * @param {string} action - Key to action selection
      * @param params - parameter for further actions
      *     Variant
-     *         event = 'init' (Initialization of values)
+     *         action = 'init' (Initialization of values)
      *         @param {array} params - Default values for request 'run job'
      *             @param {object} - Pair 'key-value'
      *                 @param {string} name  - name of param
      *                 @param {string} value - Default value received from server
      *
-     *         event = 'start' (Run job)
+     *         action = 'start' (Run job)
      *         @param {bool} params - Pointer to where the function was called
      *             Variant 'true' (function called from the block with the entered parameters) ||
      *             'false' (the function is called from the main block)
      */
 
-    , actionsJob: function(event, params) {
+    , actionsJob: function(action, params) {
 
-        if (event == 'init') {
+        if (action == 'init') {
 
             Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(params)));
 
-        } else if (event == 'start') {
+        } else if (action == 'start') {
 
             var is_form = params;
             var fields = [];
@@ -492,7 +426,7 @@ var Project = {
 
             if ( is_form || fields.length == 0) {
 
-                this._sendRequest(this._events.action_job.job_run, {
+                this._sendRequest(this._events.request.cis.job_run, {
                     project: this._url.project,
                     job: this._url.job,
                     params: fields
@@ -520,19 +454,19 @@ var Project = {
     /**
      *  Entry
      *
-     * @param {string} event - Key to action selection
+     * @param {string} action - Key to action selection
      * @param params   - Parameter for actions
      *     Variant
-     *         event = 'createNewFolder' (Send a request to create a new file)
+     *         action = 'createNewFolder' (Send a request to create a new file)
      *         {string} params - Title form; what will be created ('Project' || 'Job')
      *
-     *         event = 'remove' (Remove folder)
+     *         action = 'remove' (Remove folder)
      *         {bool} params - Deletion confirmed
      */
 
-    , actionsEntry: function(event, params) {
+    , actionsEntry: function(action, params) {
 
-        if (event == 'createNewFolder') {
+        if (action == 'createNewFolder') {
 
             var title_form = '';
             if (params) {
@@ -545,7 +479,7 @@ var Project = {
             if (name_folder && name_folder != '') {
 
                 this._url[title_form] = name_folder;
-                this._sendRequest(this._events.action_entry.new_dir, {path: this._serialize()});
+                this._sendRequest(this._events.request.fs.new_dir, {path: this._serialize()});
                 this.formInputData('visible');
 
             } else if (name_folder == '') {
@@ -568,13 +502,13 @@ var Project = {
                     });
             }
 
-        } else if (event == 'remove') {
+        } else if (action == 'remove') {
 
             var is_remove = params || null;
 
             if (is_remove) {
 
-                this._sendRequest(this._events.action_entry.remove, {path: this._serialize()});
+                this._sendRequest(this._events.request.fs.remove, {path: this._serialize()});
 
                 delete this._url[Object.keys(this._url).pop()];
 
@@ -600,10 +534,10 @@ var Project = {
     /**
      * Form
      *
-     * @param {string} event - Key to action selection
+     * @param {string} action - Key to action selection
      * @param params         - parameter for form actions
      *     Variant
-     *         event = 'init' (Set the name of the form, button, onclick event, default param)
+     *         action = 'init' (Set the name of the form, button, onclick event, default param)
      *         @param {obj} params
      *             @param {string} title_name   - (Optional) Name of form
      *             @param {obj} input
@@ -616,13 +550,13 @@ var Project = {
      *                 @param {string} value       - (Optional) Text on buttons
      *                 @param {string} onclick     - (Optional) Click action
      *
-     *         event = 'get' (Get params from form)
+     *         action = 'get' (Get params from form)
      *         @returns {array} - Field values
      *
-     *         event = 'visible' (close form)
+     *         action = 'visible' (close form)
      */
 
-    , formInputData: function(event, params) {
+    , formInputData: function(action, params) {
 
         var self = this;
         var _elements = {
@@ -642,7 +576,7 @@ var Project = {
             }
         }
 
-        if (event == 'init') {
+        if (action == 'init') {
             // params:
             // title_name
             // input
@@ -655,7 +589,7 @@ var Project = {
             _elements.params_block.innerHTML = '';
             _elements.name.innerHTML = params.title_name || '';
 
-            (params.input && params.input.fields || [])
+            ((params.input || {}).fields || [])
                 .forEach(function(item) {
                     _elements.params_block.html(
                         (self._templates.form_params_block || '')
@@ -666,14 +600,14 @@ var Project = {
 
             _elements.button.html(
                 (this._templates.button || '')
-                    .replacePHs('onclick', (params.button && params.button.onclick || ''), true)
-                    .replacePHs('name', (params.button && params.button.value || ''), true)
+                    .replacePHs('onclick', ((params.button || {}).onclick || ''), true)
+                    .replacePHs('name', ((params.button || {}).value || ''), true)
                 , true);
 
-            event = 'visible';
+            action = 'visible';
             is_visible = true;
 
-        } else if (event == 'get') {
+        } else if (action == 'get') {
 
             return Selector.queryAll('#project-form-params-block > div > input')
                 .map(function(item) {
@@ -681,7 +615,7 @@ var Project = {
                 });
 
         }
-        if (event == 'visible') {
+        if (action == 'visible') {
 
             if (is_visible) {
                 _elements.form.className = 'project-param';
