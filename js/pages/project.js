@@ -138,6 +138,7 @@ var Project = {
             self._elements.buttons.innerHTML = '';
             self._elements.info.innerHTML = '';
             self._elements.path.innerHTML = (self._templates.path || '')
+                .replacePHs('hash', '')
                 .replacePHs('url', '')
                 .replacePHs('part', 'job') ;
 
@@ -156,6 +157,7 @@ var Project = {
 
                 self._elements.path.html(
                     (self._templates.path || '')
+                        .replacePHs('hash', '#')
                         .replacePHs('url', url.serialize())
                         .replacePHs('part', url[key]));
 
@@ -168,8 +170,6 @@ var Project = {
             self._elements.title.className = '';
             self._elements.header.className = '';
             self._elements.table.innerHTML = '';
-
-            Hash.set(self._url);
         }
 
         function createTable(template, message, class_columns) {
@@ -296,32 +296,25 @@ var Project = {
                             if (table_row.build_name) {
 
                                 if (table_row.build_data) {
-
                                     class_columns.name = 'tree-columns';
 
                                     if (table_row.properties) {
-
                                         class_columns.date = 'tree-columns';
                                         class_columns.prop = 'tree-columns';
 
                                     } else {
-
                                         class_columns.date = 'tree-columns';
-
                                     }
                                 } else {
 
                                     if (table_row.properties) {
-
                                         class_columns.name = 'two-one-columns';
                                         class_columns.prop = 'tree-columns';
 
                                     } else {
-
                                         class_columns.name = 'one-columns';
                                     }
                                 }
-
                             } else {
                                 class_columns.prop = 'one-columns';
                             }
@@ -350,6 +343,7 @@ var Project = {
                     if (name_message[3] == 'success') {
 
                         this._toastOpen('info', 'job run success');
+                        this._sendRequest(this._events.entry_refresh, {path: this._serialize()});
                     }
 
                 // cis.job.error
@@ -433,6 +427,7 @@ var Project = {
                     // fs.entry.new_dir.success
                     if (name_message[3] == 'success') {
 
+                        this._toastOpen('info', 'create success');
                         this._sendRequest(this._events.entry_refresh, {path: this._serialize()});
                     }
 
@@ -452,7 +447,6 @@ var Project = {
                     // fs.entry.refresh.success
                     if (name_message[3] == 'success') {
 
-                        this._toastOpen('info', 'create success');
                         this.sendDataServer();
                     }
                 }
@@ -583,7 +577,6 @@ var Project = {
                 this._sendRequest(this._events.action_entry.remove, {path: this._serialize()});
 
                 delete this._url[Object.keys(this._url).pop()];
-                Hash.set(this._url);
 
                 this.formInputData('visible');
 

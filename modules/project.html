@@ -34,7 +34,7 @@
 
 <!--template for path-->
 <script type="text/html" id="template-project-path">
-    <a onclick=Project.sendDataServer('%%url%%'); href="#%%url%%">%%part%%</a>
+    <a onclick=Project.sendDataServer('%%url%%'); href="%%hash%%%%url%%">%%part%%</a>
 </script>
 
 <!--template main info-->
@@ -45,7 +45,7 @@
 <!--template table-->
 <script type="text/html" id="template-project-list">
     <div  class="%%class%%">
-        <div onclick="Project.sendDataServer('project=%%item_name%%');">
+        <div onclick="Project.sendDataServer('%%url%%&project=%%item_name%%');">
             <a href="#project=%%item_name%%">%%item_name%%</a>
         </div>
     </div>
