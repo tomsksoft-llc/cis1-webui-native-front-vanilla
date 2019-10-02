@@ -2,16 +2,16 @@
  * Project, job, file-system
  *
  * Methods:
- * actionsJob       - Methods that are used when clicking buttons of job
- * actionsEntry     - Methods that are used when clicking buttons of entry
- * formInputData    - Methods that are used to work with the data filling form
- * sendDataServer   - Methods that are used to move from one table to another
+ * actionsJob     - Methods that are used when clicking buttons of job
+ * actionsEntry   - Methods that are used when clicking buttons of entry
+ * formInputData  - Methods that are used to work with the data filling form
+ * sendDataServer - Methods that are used to move from one table to another
  *     @param {string} path - (Optional) Parameter containing url
  *                                   Line of the form 'project=[v1]&job=[v2]...'
  *
- * init            - Variable initialization
+ * init           - Variable initialization
  *
- * onmessage       - Behavior on response from server
+ * onmessage      - Behavior on response from server
  *     @param {object} message - Text of response text of response from server
  *         @param {string} event - Success of action
  *                          Variant 'cis.project_list.get.success' (success get projects list) ||
@@ -554,7 +554,11 @@ var Project = {
      *                 @param {string} onclick     - (Optional) Click action
      *
      *         action = 'get' (Get params from form)
-     *         @returns {array} - Field values
+     *         @returns {array} - Array of objects with input param
+     *             {
+     *                 @param {string} name - Name of value
+     *                 @param {string} value - Input value
+     *             }
      *
      *         action = 'visible' (close form)
      */
