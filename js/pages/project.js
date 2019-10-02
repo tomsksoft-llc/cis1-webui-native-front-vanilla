@@ -35,7 +35,7 @@
  *                 @param {string} link    - URL to download
  *                 @param {bool} directory - Is this property or build
  *                 @param {obj} metainfo   - Record metadata
- *                     @param {string}date - (Optional) Start date
+ *                     @param {string}date     - (Optional) Start date
  */
 
 var Project = {
@@ -509,7 +509,7 @@ var Project = {
 
         } else if (action == 'remove') {
 
-            var is_remove = params || null;
+            var is_remove = params;
 
             if (is_remove) {
 
@@ -619,7 +619,7 @@ var Project = {
             for (var i = 0; i < names.length; i++) {
                 result.push({
                     name: names[i].innerHTML
-                    , value: values[i].value
+                    , value: values[i].value.trim()
                 });
             }
             return result;
@@ -637,8 +637,12 @@ var Project = {
 
     , _sendRequest: function(event, data) {
 
+        if ( ! event) {
+            return;
+        }
+
         Socket.send({
-            event: event || '',
+            event: event,
             transactionId: (new Date()).getTime(),
             data: data || {}
         });
