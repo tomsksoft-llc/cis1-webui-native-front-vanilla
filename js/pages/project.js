@@ -284,7 +284,6 @@ var Project = {
                         }
                     });
 
-
                 for (var i = 0; i < [properties.length, builds.length].max(); i++) {
 
                     var table_row = {
