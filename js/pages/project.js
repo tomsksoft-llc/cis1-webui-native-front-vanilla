@@ -15,20 +15,27 @@
  *     @param {object} message - Text of response text of response from server
  *         @param {string} event - Success of action
  *                          Variant 'cis.project_list.get.success' (success get projects list) ||
- *                          'cis.project.info.success' (success get jobs list) ||
- *                          'cis.job.info.success' (success get builds list) ||
- *                          'fs.entry.list.success' (success get entry list) ||
- *                          'cis.property.info.success' (go to properties section) ||
- *                          'cis.job.run.success' (success job run) ||
- *                          'user.job.error.invalid_params' (invalid parameters specified at startup of job)
- *         @param {obj} data            - Message data
+ *                                  'cis.project.info.success' (success get jobs list) ||
+ *                                  'cis.project.error.doesnt_exist' (project not found) ||
+ *                                  'cis.job.info.success' (success get builds list) ||
+ *                                  'cis.job.run.success' (success job run) ||
+ *                                  'cis.job.error.invalid_params' (invalid parameters specified at startup of job) ||
+ *                                  'cis.job.error.doesnt_exist' (job not found) ||
+ *                                  'cis.build.error.doesnt_exist' (build not found) ||
+ *                                  'cis.property.info.success' (go to properties section) ||
+ *                                  'cis.entry.error.doesnt_exist' (entry not found) ||
+ *                                  'fs.entry.list.success' (success get entry list) ||
+ *                                  'fs.entry.refresh.success' (refresh success) ||
+ *                                  'fs.entry.new_dir.success' (create new dir success) ||
+ *                                  'fs.entry.remove.success' (remove folder success)
+ *
+ *         @param {obj} data     - Message data
  *             @param {array} fs_entries - Array with record objects
  *                 @param {string} name    - Name of entry
  *                 @param {string} link    - URL to download
  *                 @param {bool} directory - Is this property or build
  *                 @param {obj} metainfo   - Record metadata
  *                     @param {string}date - (Optional) Start date
- *         @param {string} errorMessage - request errors
  */
 
 var Project = {
@@ -91,7 +98,7 @@ var Project = {
         this._url = Hash.get();
 
         for (var key in this._elements) {
-            this._elements[key] = (key == 'project') ? Selector.id('project') : Selector.id('project-' + key);
+            this._elements[key] =  Selector.id('project' + ((key == 'project') ? '' : ('-' + key)));
         }
 
         var selector_name = 'template-project-';
@@ -201,11 +208,11 @@ var Project = {
                 .forEach(function(item) {
 
                     self._elements.table.html(
-                        template
+                        (template || '')
                             .replacePHs('url', self._url.serialize(), true)
-                            .replacePHs('class', class_columns, true)
-                            .replacePHs('item_name', item.name, true)
-                            .replacePHs('path_download', item.link, true));
+                            .replacePHs('class', (class_columns || ''), true)
+                            .replacePHs('item_name', (item.name || ''), true)
+                            .replacePHs('path_download', (item.link || ''), true));
                 });
         }
 
@@ -239,7 +246,7 @@ var Project = {
         var self = this;
 
         // cis. ...
-        if (message.event.indexOf('cis.') == 0) {
+        if ( ! message.event.indexOf('cis.')) {
 
             // cis.project_list.get.success
             if (message.event == this._events.response.cis.project_list) {
@@ -282,7 +289,7 @@ var Project = {
 
                     var table_row = {
                         build_name: (builds[i] || {}).name
-                        , build_data: ((builds[i] || {}).metainfo || {}).date
+                        , build_date: ((builds[i] || {}).metainfo || {}).date
                         , properties: (properties[i] || {}).name
                     };
 
@@ -294,7 +301,7 @@ var Project = {
 
                     if (table_row.build_name) {
 
-                        if (table_row.build_data) {
+                        if (table_row.build_date) {
                             class_columns.name = 'tree-columns';
 
                             if (table_row.properties) {
@@ -302,7 +309,7 @@ var Project = {
                                 class_columns.prop = 'tree-columns';
 
                             } else {
-                                class_columns.date = 'tree-columns';
+                                class_columns.date = 'two-one-columns';
                             }
                         } else {
 
@@ -324,11 +331,11 @@ var Project = {
 
                             .replacePHs('prop_name', (table_row.properties || ''))
                             .replacePHs('build_name', (table_row.build_name || ''))
-                            .replacePHs('build_date', ((table_row.build_data) ? ('Start date: ' + table_row.build_data) : ''))
+                            .replacePHs('build_date', ((table_row.build_date) ? ('Start date: ' + table_row.build_date) : ''))
 
-                            .replacePHs('class_build', ((class_columns.name) ? class_columns.name : 'template-builds-td'))
-                            .replacePHs('class_date', ((class_columns.date) ? class_columns.date : 'template-builds-td'))
-                            .replacePHs('class_prop', ((class_columns.prop) ? class_columns.prop : 'template-builds-td ')))
+                            .replacePHs('class_build', ((class_columns.name) ? class_columns.name : 'template-build-td'))
+                            .replacePHs('class_date', ((class_columns.date) ? class_columns.date : 'template-build-td'))
+                            .replacePHs('class_prop', ((class_columns.prop) ? class_columns.prop : 'template-build-td ')))
                 }
 
                 this._elements.header.className = 'project-list';
@@ -365,7 +372,7 @@ var Project = {
             }
 
         // fs
-        } else if (message.event.indexOf('fs.') == 0) {
+        } else if ( ! message.event.indexOf('fs.')) {
 
             // fs.entry.list.success
             if (message.event == this._events.response.fs.entry_list) {
@@ -376,15 +383,18 @@ var Project = {
             } else if (message.event == this._events.response.fs.new_dir) {
                 this._toastOpen('info', 'create success');
                 this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
+                Hash.set(this._url);
 
             // fs.entry.remove.success
             } else if (message.event == this._events.response.fs.remove) {
                 this._toastOpen('info', 'remove success');
+                delete this._url[Object.keys(this._url).pop()];
+                Hash.set(this._url);
                 this.sendDataServer();
 
             // fs.entry.refresh.success
             } else if (message.event == this._events.response.fs.entry_refresh) {
-                        this.sendDataServer();
+                this.sendDataServer();
             }
 
         //unidentified message
@@ -397,18 +407,15 @@ var Project = {
      * Job
      *
      * @param {string} action - Key to action selection
-     * @param params - parameter for further actions
+     * @param params          - Parameter for actions
      *     Variant
      *         action = 'init' (Initialization of values)
      *         @param {array} params - Default values for request 'run job'
      *             @param {object} - Pair 'key-value'
-     *                 @param {string} name  - name of param
-     *                 @param {string} value - Default value received from server
+     *                 @param {string} name  - (Optional) Name of param
+     *                 @param {string} value - (Optional) Default value received from server
      *
      *         action = 'start' (Run job)
-     *         @param {bool} params - Pointer to where the function was called
-     *             Variant 'true' (function called from the block with the entered parameters) ||
-     *             'false' (the function is called from the main block)
      */
 
     , actionsJob: function(action, params) {
@@ -419,32 +426,29 @@ var Project = {
 
         } else if (action == 'start') {
 
-            var is_form = params;
-            var fields = [];
-            if (Cookie.get('param_start_job')) {
-                fields = JSON.parse(decodeURIComponent(Cookie.get('param_start_job')));
-            }
+            var fields_form = this.formInputData('get') || [];
+            var fields_default = JSON.parse(decodeURIComponent(Cookie.get('param_start_job')));
 
-            if ( is_form || fields.length == 0) {
+            if (( ! fields_default.length) || fields_form.length) {
 
-                this._sendRequest(this._events.request.cis.job_run, {
+                this._sendRequest(this._events.request.cis.job_run,{
                     project: this._url.project,
                     job: this._url.job,
-                    params: fields
+                    params: fields_form
                 });
                 this.formInputData('visible');
 
-            } else if (fields.length != 0) {
+            } else {
 
                 this.formInputData('init',
                     {
                         title_name: 'Set params'
                         , input: {
                             is_input: true
-                            , fields: fields
+                            , fields: fields_default
                         }
                         , button: {
-                            onclick: "Project.actionsJob('start', true)"
+                            onclick: "Project.actionsJob('start')"
                             , value: 'Start'
                         }
                     });
@@ -456,7 +460,7 @@ var Project = {
      *  Entry
      *
      * @param {string} action - Key to action selection
-     * @param params   - Parameter for actions
+     * @param params          - Parameter for actions
      *     Variant
      *         action = 'createNewFolder' (Send a request to create a new file)
      *         {string} params - Title form; what will be created ('Project' || 'Job')
@@ -475,7 +479,7 @@ var Project = {
             } else {
                 return;
             }
-            var name_folder = this.formInputData('get')[0];
+            var name_folder = (this.formInputData('get')[0] || {}).value;
 
             if (name_folder && name_folder != '') {
 
@@ -511,8 +515,6 @@ var Project = {
 
                 this._sendRequest(this._events.request.fs.remove, {path: this._serialize()});
 
-                delete this._url[Object.keys(this._url).pop()];
-
                 this.formInputData('visible');
 
             } else {
@@ -536,7 +538,7 @@ var Project = {
      * Form
      *
      * @param {string} action - Key to action selection
-     * @param params         - parameter for form actions
+     * @param params          - Parameter for form actions
      *     Variant
      *         action = 'init' (Set the name of the form, button, onclick event, default param)
      *         @param {obj} params
@@ -561,7 +563,7 @@ var Project = {
 
         var self = this;
         var _elements = {
-            params_block: null
+            params: null
             , form: null
             , button: null
             , name: null
@@ -570,11 +572,7 @@ var Project = {
 
         for (var key in _elements) {
 
-            if (key == 'form'){
-                _elements[key] = Selector.id('project-form');
-            } else {
-                _elements[key] = Selector.id('project-form-' + key.replaceAll('_', '-', true));
-            }
+            _elements[key] = Selector.id('project-form' + ((key == 'form') ?  '' : ('-' + key)));
         }
 
         if (action == 'init') {
@@ -587,13 +585,13 @@ var Project = {
             //     onclick
             //     value
 
-            _elements.params_block.innerHTML = '';
+            _elements.params.innerHTML = '';
             _elements.name.innerHTML = params.title_name || '';
 
             ((params.input || {}).fields || [])
                 .forEach(function(item) {
-                    _elements.params_block.html(
-                        (self._templates.form_params_block || '')
+                    _elements.params.html(
+                        (self._templates.form_params || '')
                             .replacePHs('param_name', (item.name || ''), true)
                             .replacePHs('param_value', (item.value || ''), true)
                             .replacePHs('class_input', (params.input.is_input || item.value) ? '' : 'form-project-list'))
@@ -610,11 +608,17 @@ var Project = {
 
         } else if (action == 'get') {
 
-            return Selector.queryAll('#project-form-params-block > div > input')
-                .map(function(item) {
-                    return item.value.trim() || '';
-                });
+            var names = Selector.queryAll('#project-form-params > div > span');
+            var values = Selector.queryAll('#project-form-params > div > input');
 
+            var result = [];
+            for (var i = 0; i < names.length; i++) {
+                result.push({
+                    name: names[i].innerHTML
+                    , value: values[i].value
+                });
+            }
+            return result;
         }
         if (action == 'visible') {
 
@@ -622,7 +626,7 @@ var Project = {
                 _elements.form.className = 'project-param';
             } else {
                 _elements.form.className = '';
-                _elements.params_block.innerHTML = '';
+                _elements.params.innerHTML = '';
             }
         }
     }

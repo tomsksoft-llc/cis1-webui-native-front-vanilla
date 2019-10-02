@@ -156,7 +156,7 @@
 #project-table > div:hover > div > a {
     color: #ffffff;
 }
-#project-table > div > div.template-builds-td {
+#project-table > div > div.template-build-td {
     display: none;
 }
 /* End table*/
@@ -175,7 +175,7 @@
 #project-form.project-param {
     display: block;
 }
-#project-form > div{
+#project-form > div {
     min-width: 400px;
     max-width: 450px;
     top: 100px;
@@ -186,7 +186,7 @@
     text-align: center;
     color: #a9a9a9;
 }
-div#project-form-header {
+#project-form-header {
     height: 30px;
     padding: 10px;
     border-bottom: 1px solid #a9a9a9;
@@ -214,16 +214,16 @@ div#project-form-header {
 #project-form-close:hover {
     color: #54ccf3;
 }
-#project-form-param {
+#project-form-data {
     padding: 20px;
 }
-#project-form-params-block > div {
+#project-form-params > div {
     text-align: right;
 }
-#project-form-params-block > div > span {
+#project-form-params > div > span {
     font-weight: 900;
 }
-#project-form-params-block > div > input {
+#project-form-params > div > input {
     width: 230px;
     margin: 0 0 5px 5px;
 }

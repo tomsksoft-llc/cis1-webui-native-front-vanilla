@@ -20,8 +20,8 @@
             <div id="project-form-name">headline</div>
             <div id="project-form-close" onclick="Project.formInputData('visible');"></div>
         </div>
-        <div id="project-form-param">
-            <div id="project-form-params-block"></div>
+        <div id="project-form-data">
+            <div id="project-form-params"></div>
             <div id="project-form-button"></div>
         </div>
     </div>
@@ -86,7 +86,7 @@
 </script>
 
 <!--template for param-->
-<script type="text/html" id="template-project-form-params-block">
+<script type="text/html" id="template-project-form-params">
     <div>
         <span>%%param_name%%</span>
         <input class="custom-input %%class_input%%" type="text" value="%%param_value%%">
