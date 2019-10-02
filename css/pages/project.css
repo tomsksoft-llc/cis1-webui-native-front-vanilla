@@ -204,8 +204,9 @@ div#project-form-header {
 }
 #project-form-close {
     font-size: 30px;
-    transform: rotate(45deg);
     cursor: pointer;
+    transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
 }
 #project-form-close:after {
     content: '+';

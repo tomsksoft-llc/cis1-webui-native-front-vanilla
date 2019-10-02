@@ -239,7 +239,7 @@ var Project = {
         var self = this;
 
         // cis. ...
-        if (message.event.indexOf('cis.') == '0') {
+        if (message.event.indexOf('cis.') == 0) {
 
             // cis.project_list.get.success
             if (message.event == this._events.response.cis.project_list) {
@@ -261,6 +261,7 @@ var Project = {
             // cis.job.info.success
             } else if (message.event == this._events.response.cis.build_list) {
 
+                changeEnvironment(buttons.build);
                 this._elements.table.innerHTML = '';
 
                 var properties = [];
@@ -364,7 +365,7 @@ var Project = {
             }
 
         // fs
-        } else if (message.event.indexOf('fs.') == '0') {
+        } else if (message.event.indexOf('fs.') == 0) {
 
             // fs.entry.list.success
             if (message.event == this._events.response.fs.entry_list) {
