@@ -480,15 +480,15 @@ var Project = {
             }
             var name_folder = (this.formInputData('get')[0] || {}).value;
 
-            if (name_folder && name_folder != '') {
+            if (name_folder == '') {
+
+                this._toastOpen('warning', 'Please, enter a ' + title_form + ' name');
+
+            } else if (name_folder) {
 
                 this._url[title_form] = name_folder;
                 this._sendRequest(this._events.request.fs.new_dir, {path: this._serialize()});
                 this.formInputData('visible');
-
-            } else if (name_folder == '') {
-
-                this._toastOpen('warning', 'Please, enter a ' + title_form + ' name');
 
             } else {
 
