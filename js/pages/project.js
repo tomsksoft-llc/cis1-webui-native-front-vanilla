@@ -178,7 +178,7 @@ var Project = {
                     self._elements.buttons.html(
                         (self._templates.button || '')
                             .replacePHs('onclick', item.onclick, true)
-                            .replacePHs('name', item.name, true));
+                            .replacePHs('name', item.name));
                 });
 
             var url = {};
@@ -257,11 +257,13 @@ var Project = {
 
             // cis.project.info.success
             } else if (message.event == this._events.response.cis.job_list) {
+
                 changeEnvironment(buttons.job);
                 createTable((this._templates.job || ''), message, 'two-columns');
 
             // cis.project.error.doesnt_exist
             } else if (message.event == this._events.response.cis.project_doesnt_exist) {
+
                 changeEnvironment();
                 this._toastOpen('warning', 'project not found');
 
@@ -342,30 +344,36 @@ var Project = {
 
             // cis.job.run.success
             } else if (message.event == this._events.response.cis.job_run) {
+
                 this._toastOpen('info', 'job run success');
                 this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
 
             // cis.job.error.doesnt_exist
             } else if (message.event == this._events.response.cis.job_doesnt_exist) {
+
                 changeEnvironment();
                 this._toastOpen('warning', 'job not found');
 
             // cis.job.error.invalid_params
             } else if (message.event == this._events.response.cis.job_invalid_params) {
+
                 this._toastOpen('error', 'error in params');
 
             // cis.build.error.doesnt_exist
             } else if (message.event == this._events.response.cis.build_doesnt_exist) {
+
                 changeEnvironment();
                 this._toastOpen('warning', 'build not found');
 
             // cis.entry.error.doesnt_exist
             } else if (message.event == this._events.response.cis.entry_doesnt_exist) {
+
                 changeEnvironment();
                 this._toastOpen('warning', 'entry not found');
 
             // cis.property.info.success
             } else if (message.event == this._events.response.cis.property) {
+
                 changeEnvironment(buttons.property);
                 this._elements.table.innerHTML = '';
             }
@@ -375,17 +383,20 @@ var Project = {
 
             // fs.entry.list.success
             if (message.event == this._events.response.fs.entry_list) {
+
                 changeEnvironment(buttons.entry);
                 createTable((this._templates.entry || ''), message, 'two-columns');
 
             // fs.entry.new_dir.success
             } else if (message.event == this._events.response.fs.new_dir) {
+
                 this._toastOpen('info', 'create success');
                 this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
                 Hash.set(this._url);
 
             // fs.entry.remove.success
             } else if (message.event == this._events.response.fs.remove) {
+
                 this._toastOpen('info', 'remove success');
                 delete this._url[Object.keys(this._url).pop()];
                 Hash.set(this._url);
@@ -393,6 +404,7 @@ var Project = {
 
             // fs.entry.refresh.success
             } else if (message.event == this._events.response.fs.entry_refresh) {
+
                 this.sendDataServer();
             }
 
@@ -513,7 +525,6 @@ var Project = {
             if (is_remove) {
 
                 this._sendRequest(this._events.request.fs.remove, {path: this._serialize()});
-
                 this.formInputData('visible');
 
             } else {
@@ -603,7 +614,7 @@ var Project = {
             _elements.button.html(
                 (this._templates.button || '')
                     .replacePHs('onclick', ((params.button || {}).onclick || ''), true)
-                    .replacePHs('name', ((params.button || {}).value || ''), true)
+                    .replacePHs('name', ((params.button || {}).value || ''))
                 , true);
 
             action = 'visible';
