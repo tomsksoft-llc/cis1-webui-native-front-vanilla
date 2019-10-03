@@ -152,15 +152,16 @@
     padding: 15px;
     color: #54ccf3;
 }
+#project-table > div.exitcode > div:first-child > a {
+    color: #7b7b7b;
+}
 #project-table > div:hover > div > span,
-#project-table > div:hover > div > a {
+#project-table > div:hover > div > a,
+#project-table > div.exitcode:hover > div > a {
     color: #ffffff;
 }
 #project-table > div > div.template-build-td {
     display: none;
-}
-#project-table > div.exitcode > div:first-child > a {
-    color: #7b7b7b;
 }
 /* End table*/
 
@@ -229,9 +230,6 @@
 #project-form-params > div > input {
     width: 230px;
     margin: 0 0 5px 5px;
-}
-input.form-project-list {
-    display: none;
 }
 #project-form-button > .project-button {
     width: 100%;

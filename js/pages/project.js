@@ -372,7 +372,7 @@ var Project = {
                 if (message.data.date) {
                     this._elements.info.html(
                         (self._templates.info || '')
-                            .replacePHs('key', 'Start date: ')
+                            .replacePHs('key', 'Start date')
                             .replacePHs('value', message.data.date));
                 }
                 if (typeof (message.data.status) == "number") {
@@ -484,10 +484,7 @@ var Project = {
                 this.formInputData('init',
                     {
                         title_name: 'Set params'
-                        , input: {
-                            is_input: true
-                            , fields: fields_default
-                        }
+                        , fields: fields_default
                         , button: {
                             onclick: "Project.actionsJob('start')"
                             , value: 'Start'
@@ -509,13 +506,10 @@ var Project = {
                 this.formInputData('init',
                     {
                         title_name: 'Change name'
-                        , input: {
-                            is_input: true
-                            , fields: [{
-                                name: 'new name:'
-                                , value: params
-                            }]
-                        }
+                        , fields: [{
+                            name: 'new name:'
+                            , value: params
+                        }]
                         , button: {
                             onclick: "Project.actionsJob('changeName','" + params + "')"
                             , value: 'Change (Don\'t work)'
@@ -552,23 +546,23 @@ var Project = {
             var name_folder = (this.formInputData('get')[0] || {}).value;
 
             if (name_folder == '') {
-
                 this._toastOpen('warning', 'Please, enter a ' + title_form + ' name');
 
             } else if (name_folder) {
 
-                this._sendRequest(this._events.request.fs.new_dir, {path: this._serialize() + '/' + name_folder});
-                this.formInputData('visible');
+                if (name_folder != name_folder.encode()) {
+                    this._toastOpen('warning', 'Please, enter ' + title_form + ' name without \' \" & < >');
+
+                } else {
+                    this._sendRequest(this._events.request.fs.new_dir, {path: this._serialize() + '/' + name_folder});
+                    this.formInputData('visible');
+                }
 
             } else {
-
                 this.formInputData('init',
                     {
                         title_name: 'New ' + title_form
-                        , input: {
-                            is_input: true
-                            , fields: [{name: 'name of New ' + title_form}]
-                        }
+                        , fields: [{name: 'name of New ' + title_form}]
                         , button: {
                             onclick: "Project.actionsEntry('createNewFolder', '" + title_form + "')"
                             , value: 'Add'
@@ -587,17 +581,15 @@ var Project = {
 
             } else {
 
-                this.formInputData('init',
-                    {
-                        title_name: 'Remove'
-                        , input: {
-                            fields: [{name: 'Are you sure, that you want to delete file ' + this._serialize()}]
-                        }
-                        , button: {
-                            onclick: "Project.actionsEntry('remove', true)"
-                            , value: 'Remove'
-                        }
-                    });
+                Toast.open({
+                    type: 'warning',
+                    text: 'Are you sure, that you want to remove file ' + this._serialize(),
+                    button_close: true,
+                    button_custom: {
+                        text: 'Remove',
+                        action: function (){Project.actionsEntry('remove', true)}
+                    }
+                });
             }
         }
     }
@@ -611,12 +603,10 @@ var Project = {
      *         action = 'init' (Set the name of the form, button, onclick event, default param)
      *         @param {obj} params
      *             @param {string} title_name   - (Optional) Name of form
-     *             @param {obj} input
-     *                 @param {bool} is_input       - (Optional) Is need an input field
-     *                 @param {array} fields        - (Optional) Array with obj param
-     *                     @param {obj}
-     *                         @param {string} name  - (Optional) Field name
-     *                         @param {string} value - (Optional) Field value
+     *             @param {array} fields        - (Optional) Array with obj param
+     *                 @param {obj}
+     *                     @param {string} name  - (Optional) Field name
+     *                     @param {string} value - (Optional) Field value
      *             @param {obj} button          - (Optional) Button options
      *                 @param {string} value       - (Optional) Text on buttons
      *                 @param {string} onclick     - (Optional) Click action
@@ -650,9 +640,7 @@ var Project = {
         if (action == 'init') {
             // params:
             // title_name
-            // input
-            //     is_input
-            //     fields
+            // fields
             // button
             //     onclick
             //     value
@@ -660,13 +648,12 @@ var Project = {
             _elements.params.innerHTML = '';
             _elements.name.innerHTML = params.title_name || '';
 
-            ((params.input || {}).fields || [])
+            (params.fields || [])
                 .forEach(function(item) {
                     _elements.params.html(
                         (self._templates.form_params || '')
                             .replacePHs('param_name', (item.name || ''), true)
-                            .replacePHs('param_value', (item.value || ''), true)
-                            .replacePHs('class_input', (params.input.is_input || item.value) ? '' : 'form-project-list'))
+                            .replacePHs('param_value', (item.value || ''), true))
                 });
 
             _elements.button.html(
