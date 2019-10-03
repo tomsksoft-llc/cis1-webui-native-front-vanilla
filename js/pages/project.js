@@ -69,10 +69,10 @@ var Project = {
             }
             , fs: {
                 any_entries_list: 'fs.entry.list.success'
-                , entry_refresh:    'fs.entry.refresh.success'
-                , new_dir :         'fs.entry.new_dir.success'
-                , remove:           'fs.entry.remove.success'
-                , error_dir:        'fs.entry.error.cant_create_dir'
+                , entry_refresh:  'fs.entry.refresh.success'
+                , new_dir :       'fs.entry.new_dir.success'
+                , remove:         'fs.entry.remove.success'
+                , error_dir:      'fs.entry.error.cant_create_dir'
             }
         }
         , request:{
@@ -85,10 +85,10 @@ var Project = {
             }
             , fs: {
                 any_entries_list: 'fs.entry.list'
-                , entry_refresh:    'fs.entry.refresh'
-                , new_dir :         'fs.entry.new_dir'
-                , remove:           'fs.entry.remove'
-                , move:             'fs.entry.move'
+                , entry_refresh:  'fs.entry.refresh'
+                , new_dir :       'fs.entry.new_dir'
+                , remove:         'fs.entry.remove'
+                , move:           'fs.entry.move'
             }
         }
     }
@@ -380,7 +380,7 @@ var Project = {
                         (this._templates.entry || '')
                             .replacePHs('class', 'two-columns exitcode', true)
                             .replacePHs('item_name', 'exitcode: ' + message.data.status, true)
-                            .replacePHs('path_download', (message.data.fs_entries.link || ''), true));
+                            .replacePHs('path_download', '', true));
                 }
 
                 createTable((this._templates.entry || ''), message, 'two-columns');
