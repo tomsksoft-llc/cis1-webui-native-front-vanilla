@@ -611,17 +611,15 @@ var Project = {
 
         } else if (action == 'get') {
 
-            var names = Selector.queryAll('#project-form-params > div > span');
             var values = Selector.queryAll('#project-form-params > div > input');
 
-            var result = [];
-            for (var i = 0; i < names.length; i++) {
-                result.push({
-                    name: names[i].innerHTML
-                    , value: values[i].value.trim()
+            return Selector.queryAll('#project-form-params > div > span')
+                .map(function (item, index) {
+                    return {
+                        name: item.innerHTML
+                        , value: values[index].value.trim()
+                    }
                 });
-            }
-            return result;
         }
         if (action == 'visible') {
 
