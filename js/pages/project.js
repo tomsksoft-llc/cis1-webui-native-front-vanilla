@@ -21,13 +21,15 @@
  *                                  'cis.job.run.success' (success job run) ||
  *                                  'cis.job.error.invalid_params' (invalid parameters specified at startup of job) ||
  *                                  'cis.job.error.doesnt_exist' (job not found) ||
+ *                                  'cis.build.info.success' (success get entry list) ||
  *                                  'cis.build.error.doesnt_exist' (build not found) ||
  *                                  'cis.property.info.success' (go to properties section) ||
  *                                  'cis.entry.error.doesnt_exist' (entry not found) ||
- *                                  'fs.entry.list.success' (success get entry list) ||
+ *                                  'fs.entry.list.success' (get any fs_list) ||
  *                                  'fs.entry.refresh.success' (refresh success) ||
  *                                  'fs.entry.new_dir.success' (create new dir success) ||
- *                                  'fs.entry.remove.success' (remove folder success)
+ *                                  'fs.entry.remove.success' (remove folder success) ||
+ *                                  'fs.entry.error.cant_create_dir' (can't create dir)
  *
  *         @param {obj} data     - Message data
  *             @param {array} fs_entries - Array with record objects
@@ -60,15 +62,17 @@ var Project = {
                 , job_run:              'cis.job.run.success'
                 , job_doesnt_exist:     'cis.job.error.doesnt_exist'
                 , job_invalid_params:   'cis.job.error.invalid_params'
+                , entry_list:           'cis.build.info.success'
                 , build_doesnt_exist:   'cis.build.error.doesnt_exist'
                 , property:             'cis.property.info.success'
                 , entry_doesnt_exist:   'cis.entry.error.doesnt_exist'
             }
             , fs: {
-                entry_list:      'fs.entry.list.success'
-                , entry_refresh: 'fs.entry.refresh.success'
-                , new_dir :      'fs.entry.new_dir.success'
-                , remove:        'fs.entry.remove.success'
+                any_entries_list: 'fs.entry.list.success'
+                , entry_refresh:    'fs.entry.refresh.success'
+                , new_dir :         'fs.entry.new_dir.success'
+                , remove:           'fs.entry.remove.success'
+                , error_dir:        'fs.entry.error.cant_create_dir'
             }
         }
         , request:{
@@ -77,12 +81,14 @@ var Project = {
                 , job_list:   'cis.project.info'
                 , build_list: 'cis.job.info'
                 , job_run:    'cis.job.run'
+                , entry_list: 'cis.build.info'
             }
             , fs: {
-                entry_list:      'fs.entry.list'
-                , entry_refresh: 'fs.entry.refresh'
-                , new_dir :      'fs.entry.new_dir'
-                , remove:        'fs.entry.remove'
+                any_entries_list: 'fs.entry.list'
+                , entry_refresh:    'fs.entry.refresh'
+                , new_dir :         'fs.entry.new_dir'
+                , remove:           'fs.entry.remove'
+                , move:             'fs.entry.move'
             }
         }
     }
@@ -139,7 +145,7 @@ var Project = {
             this._url.job &&
             this._url.build) {
 
-            this._sendRequest(this._events.request.fs.entry_list, {path: this._serialize()});
+            this._sendRequest(this._events.request.cis.entry_list, this._url);
 
         } else if (this._url.project &&
                     this._url.job &&
@@ -359,6 +365,26 @@ var Project = {
 
                 this._toastOpen('error', 'error in params');
 
+            // cis.build.info.success
+            } else if (message.event == this._events.response.cis.entry_list) {
+
+                changeEnvironment(buttons.entry);
+                if (message.data.date) {
+                    this._elements.info.html(
+                        (self._templates.info || '')
+                            .replacePHs('key', 'Start date: ')
+                            .replacePHs('value', message.data.date));
+                }
+                if (typeof (message.data.status) == "number") {
+                    this._elements.table.html(
+                        (this._templates.entry || '')
+                            .replacePHs('class', 'two-columns exitcode', true)
+                            .replacePHs('item_name', 'exitcode: ' + message.data.status, true)
+                            .replacePHs('path_download', (message.data.fs_entries.link || ''), true));
+                }
+
+                createTable((this._templates.entry || ''), message, 'two-columns');
+
             // cis.build.error.doesnt_exist
             } else if (message.event == this._events.response.cis.build_doesnt_exist) {
 
@@ -382,17 +408,16 @@ var Project = {
         } else if ( ! message.event.indexOf('fs.')) {
 
             // fs.entry.list.success
-            if (message.event == this._events.response.fs.entry_list) {
-
-                changeEnvironment(buttons.entry);
-                createTable((this._templates.entry || ''), message, 'two-columns');
+            if (message.event == this._events.response.fs.any_entries_list) {
+                //list_entries
 
             // fs.entry.new_dir.success
             } else if (message.event == this._events.response.fs.new_dir) {
 
                 this._toastOpen('info', 'create success');
-                this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
                 Hash.set(this._url);
+                this.sendDataServer();
+                this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
 
             // fs.entry.remove.success
             } else if (message.event == this._events.response.fs.remove) {
@@ -401,11 +426,16 @@ var Project = {
                 delete this._url[Object.keys(this._url).pop()];
                 Hash.set(this._url);
                 this.sendDataServer();
+                this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
 
             // fs.entry.refresh.success
             } else if (message.event == this._events.response.fs.entry_refresh) {
+                //refresh
 
-                this.sendDataServer();
+            // fs.entry.error.cant_create_dir
+            } else if (message.event == this._events.response.fs.error_dir) {
+
+                this._toastOpen('error', 'Please enter a different name');
             }
 
         //unidentified message
@@ -464,6 +494,35 @@ var Project = {
                         }
                     });
             }
+        } else if (action == 'changeName') {
+
+            var new_name = ((this.formInputData('get') || [])[0] || {}).value || '';
+
+            if (new_name) {
+
+                //change_name
+
+                this.formInputData('visible');
+
+            } else {
+
+                this.formInputData('init',
+                    {
+                        title_name: 'Change name'
+                        , input: {
+                            is_input: true
+                            , fields: [{
+                                name: 'new name:'
+                                , value: params
+                            }]
+                        }
+                        , button: {
+                            onclick: "Project.actionsJob('changeName','" + params + "')"
+                            , value: 'Change (Don\'t work)'
+                        }
+                    });
+            }
+
         }
     }
 
@@ -498,8 +557,7 @@ var Project = {
 
             } else if (name_folder) {
 
-                this._url[title_form] = name_folder;
-                this._sendRequest(this._events.request.fs.new_dir, {path: this._serialize()});
+                this._sendRequest(this._events.request.fs.new_dir, {path: this._serialize() + '/' + name_folder});
                 this.formInputData('visible');
 
             } else {

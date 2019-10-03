@@ -62,7 +62,7 @@
 /* Begin main info */
 #project-info-parent {
     border: 1px solid #a9a9a9;
-    color: #a9a9a9;
+    color: #7b7b7b;
 }
 #project-info > li {
     padding-left: 10px;
@@ -158,6 +158,9 @@
 }
 #project-table > div > div.template-build-td {
     display: none;
+}
+#project-table > div.exitcode > div:first-child > a {
+    color: #7b7b7b;
 }
 /* End table*/
 
