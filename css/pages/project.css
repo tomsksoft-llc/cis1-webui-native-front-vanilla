@@ -166,7 +166,7 @@
 /* End table*/
 
 /* Begin data entry form */
-#project-form{
+#project-form {
     display: none;
     position: absolute;
     height: 100%;
@@ -230,6 +230,9 @@
 #project-form-params > div > input {
     width: 230px;
     margin: 0 0 5px 5px;
+}
+input.form-project-list {
+    display: none;
 }
 #project-form-button > .project-button {
     width: 100%;

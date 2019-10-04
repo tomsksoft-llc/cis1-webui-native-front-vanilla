@@ -1,4 +1,7 @@
 var templates = {};
+if (window.location.href.substr(-1) == '#') {
+    window.location = window.location.origin;
+}
 
 Object.defineProperty(Array.prototype, 'addToHead', {
     enumerable: false

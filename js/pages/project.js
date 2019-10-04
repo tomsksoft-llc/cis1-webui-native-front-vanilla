@@ -31,12 +31,14 @@
  *                                  'fs.entry.remove.success' (remove folder success) ||
  *                                  'fs.entry.error.cant_create_dir' (can't create dir)
  *
- *         @param {obj} data     - Message data
- *             @param {array} fs_entries - Array with record objects
+ *         @param {obj} data     - (Optional) Message data
+ *             @param {status} number    - (Optional) Exit code
+ *             @param {string} date      - (Optional) Start date
+ *             @param {array} fs_entries - (Optional) Array with record objects
  *                 @param {string} name    - Name of entry
- *                 @param {string} link    - URL to download
- *                 @param {bool} directory - Is this property or build
- *                 @param {obj} metainfo   - Record metadata
+ *                 @param {string} link    - (Optional) URL to download
+ *                 @param {bool} directory - (Optional) Is this property or build
+ *                 @param {obj} metainfo   - (Optional) Record metadata
  *                     @param {string}date     - (Optional) Start date
  */
 
@@ -75,7 +77,7 @@ var Project = {
                 , error_dir:      'fs.entry.error.cant_create_dir'
             }
         }
-        , request:{
+        , request: {
             cis: {
                 project_list: 'cis.project_list.get'
                 , job_list:   'cis.project.info'
@@ -98,9 +100,6 @@ var Project = {
 
         var self = this;
 
-        if (window.location.href.substr(-1) == '#') {
-            window.location = window.location.origin;
-        }
         this._url = Hash.get();
 
         for (var key in this._elements) {
@@ -210,7 +209,7 @@ var Project = {
 
         function createTable(template, message, class_columns) {
 
-            message.data.fs_entries
+            (message.data || {}).fs_entries
                 .forEach(function(item) {
 
                     self._elements.table.html(
@@ -282,7 +281,7 @@ var Project = {
                 var properties = [];
                 var builds = [];
 
-                message.data.fs_entries
+                (message.data || {}).fs_entries
                     .forEach(function(item) {
 
                         if (item.directory) {
@@ -346,7 +345,7 @@ var Project = {
                 }
 
                 this._elements.header.className = 'project-list';
-                this.actionsJob('init', message.data.params);
+                this.actionsJob('init', (message.data || {}).params);
 
             // cis.job.run.success
             } else if (message.event == this._events.response.cis.job_run) {
@@ -369,17 +368,17 @@ var Project = {
             } else if (message.event == this._events.response.cis.entry_list) {
 
                 changeEnvironment(buttons.entry);
-                if (message.data.date) {
+                if ((message.data || {}).date) {
                     this._elements.info.html(
                         (self._templates.info || '')
                             .replacePHs('key', 'Start date')
                             .replacePHs('value', message.data.date));
                 }
-                if (typeof (message.data.status) == "number") {
+                if (typeof ((message.data || {}).status) == "number") {
                     this._elements.table.html(
                         (this._templates.entry || '')
-                            .replacePHs('class', 'two-columns exitcode', true)
-                            .replacePHs('item_name', 'exitcode: ' + message.data.status, true)
+                            .replacePHs('class', 'two-columns exitcode')
+                            .replacePHs('item_name', 'exitcode: ' + message.data.status)
                             .replacePHs('path_download', '', true));
                 }
 
@@ -448,11 +447,11 @@ var Project = {
      * Job
      *
      * @param {string} action - Key to action selection
-     * @param params          - Parameter for actions
+     * @param params          - (Optional) Parameter for actions
      *     Variant
      *         action = 'init' (Initialization of values)
      *         @param {array} params - Default values for request 'run job'
-     *             @param {object} - Pair 'key-value'
+     *             @param {object}       - Pair 'key-value'
      *                 @param {string} name  - (Optional) Name of param
      *                 @param {string} value - (Optional) Default value received from server
      *
@@ -463,12 +462,12 @@ var Project = {
 
         if (action == 'init') {
 
-            Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(params)));
+            Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(params || [])));
 
         } else if (action == 'start') {
 
             var fields_form = this.formInputData('get') || [];
-            var fields_default = JSON.parse(decodeURIComponent(Cookie.get('param_start_job')));
+            var fields_default = JSON.parse(decodeURIComponent(Cookie.get('param_start_job') || '%5B%5D'));
 
             if (( ! fields_default.length) || fields_form.length) {
 
@@ -484,7 +483,10 @@ var Project = {
                 this.formInputData('init',
                     {
                         title_name: 'Set params'
-                        , fields: fields_default
+                        , input: {
+                            is_input: true
+                            , fields: fields_default
+                        }
                         , button: {
                             onclick: "Project.actionsJob('start')"
                             , value: 'Start'
@@ -506,10 +508,12 @@ var Project = {
                 this.formInputData('init',
                     {
                         title_name: 'Change name'
-                        , fields: [{
-                            name: 'new name:'
-                            , value: params
-                        }]
+                        ,input: {
+                            fields: [{
+                                name: 'new name:'
+                                , value: params
+                            }]
+                        }
                         , button: {
                             onclick: "Project.actionsJob('changeName','" + params + "')"
                             , value: 'Change (Don\'t work)'
@@ -524,13 +528,13 @@ var Project = {
      *  Entry
      *
      * @param {string} action - Key to action selection
-     * @param params          - Parameter for actions
+     * @param params          - (Optional)Parameter for actions
      *     Variant
      *         action = 'createNewFolder' (Send a request to create a new file)
      *         {string} params - Title form; what will be created ('Project' || 'Job')
      *
      *         action = 'remove' (Remove folder)
-     *         {bool} params - Deletion confirmed
+     *         {bool} params   - Deletion confirmed
      */
 
     , actionsEntry: function(action, params) {
@@ -562,7 +566,10 @@ var Project = {
                 this.formInputData('init',
                     {
                         title_name: 'New ' + title_form
-                        , fields: [{name: 'name of New ' + title_form}]
+                        , input: {
+                            is_input: true
+                            , fields: [{name: 'name of New ' + title_form}]
+                        }
                         , button: {
                             onclick: "Project.actionsEntry('createNewFolder', '" + title_form + "')"
                             , value: 'Add'
@@ -572,7 +579,7 @@ var Project = {
 
         } else if (action == 'remove') {
 
-            var is_remove = params;
+            var is_remove = params || false;
 
             if (is_remove) {
 
@@ -581,15 +588,18 @@ var Project = {
 
             } else {
 
-                Toast.open({
-                    type: 'warning',
-                    text: 'Are you sure, that you want to remove file ' + this._serialize(),
-                    button_close: true,
-                    button_custom: {
-                        text: 'Remove',
-                        action: function (){Project.actionsEntry('remove', true)}
-                    }
-                });
+                this.formInputData('init',
+                    {
+                        title_name: 'Remove'
+                        , input: {
+                            fields: [{name: 'Are you sure, that you want to delete file ' + this._serialize()}]
+                        }
+                        , button: {
+                            onclick: "Project.actionsEntry('remove', true)"
+                            , value: 'Remove'
+                        }
+                    });
+                this.formInputData('visible', {is_visible: true});
             }
         }
     }
@@ -602,19 +612,21 @@ var Project = {
      *     Variant
      *         action = 'init' (Set the name of the form, button, onclick event, default param)
      *         @param {obj} params
-     *             @param {string} title_name   - (Optional) Name of form
-     *             @param {array} fields        - (Optional) Array with obj param
-     *                 @param {obj}
-     *                     @param {string} name  - (Optional) Field name
-     *                     @param {string} value - (Optional) Field value
-     *             @param {obj} button          - (Optional) Button options
-     *                 @param {string} value       - (Optional) Text on buttons
-     *                 @param {string} onclick     - (Optional) Click action
+     *             @param {string} title_name - (Optional) Name of form
+     *             @param {obj} input         - (Optional) Input options
+     *                 @param {bool} is_input   - (Optional) Is need input fields
+     *                 @param {array} fields    - (Optional) Array with obj param
+     *                     @param {obj}
+     *                         @param {string} name  - (Optional) Field name
+     *                         @param {string} value - (Optional) Field value
+     *             @param {obj} button        - (Optional) Button options
+     *                 @param {string} value    - (Optional) Text on buttons
+     *                 @param {string} onclick  - (Optional) Click action
      *
      *         action = 'get' (Get params from form)
      *         @returns {array} - Array of objects with input param
      *             {
-     *                 @param {string} name - Name of value
+     *                 @param {string} name  - Name of value
      *                 @param {string} value - Input value
      *             }
      *
@@ -630,30 +642,34 @@ var Project = {
             , button: null
             , name: null
         };
-        var is_visible = false;
+        var is_visible = (params || {}).is_visible || false;
 
         for (var key in _elements) {
-
             _elements[key] = Selector.id('project-form' + ((key == 'form') ?  '' : ('-' + key)));
         }
 
         if (action == 'init') {
             // params:
-            // title_name
-            // fields
-            // button
-            //     onclick
-            //     value
+            //   title_name
+            //   input
+            //       is_input
+            //       fields
+            //   button
+            //       onclick
+            //       value
 
+            params = params || {};
             _elements.params.innerHTML = '';
             _elements.name.innerHTML = params.title_name || '';
 
-            (params.fields || [])
+
+            ((params.input || {}).fields || [])
                 .forEach(function(item) {
                     _elements.params.html(
                         (self._templates.form_params || '')
                             .replacePHs('param_name', (item.name || ''), true)
-                            .replacePHs('param_value', (item.value || ''), true))
+                            .replacePHs('param_value', (item.value || ''), true)
+                            .replacePHs('class_input', ((params.input.is_input || item.value) ? '' : 'form-project-list')))
                 });
 
             _elements.button.html(
@@ -681,6 +697,7 @@ var Project = {
 
             if (is_visible) {
                 _elements.form.className = 'project-param';
+
             } else {
                 _elements.form.className = '';
                 _elements.params.innerHTML = '';
@@ -702,10 +719,22 @@ var Project = {
     }
     , _toastOpen: function(type, message) {
 
+        var delay;
+        var is_close = false;
+
+        if (type == 'error' ||
+            type == 'warning') {
+            is_close = true;
+
+        } else {
+            delay = 2
+        }
+
         Toast.open({
             type: type
             , text: message
-            , delay: 2
+            , delay: delay
+            , button_close: is_close
         });
     }
     , _serialize: function() {
