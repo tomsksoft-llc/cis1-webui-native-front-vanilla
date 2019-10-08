@@ -94,7 +94,7 @@ var Socket = {
         if ( ! this.ws ||
             this.ws.readyState == this.ws.CLOSED ||
             this.ws.readyState == this.ws.CLOSING ||
-            ! this.opened) {
+             ! this.opened) {
 
             this._events.push(obj);
             return false;
