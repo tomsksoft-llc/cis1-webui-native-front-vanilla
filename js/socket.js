@@ -92,9 +92,9 @@ var Socket = {
         Spiner.add();
 
         if ( ! this.ws ||
+             ! this.opened ||
             this.ws.readyState == this.ws.CLOSED ||
-            this.ws.readyState == this.ws.CLOSING ||
-             ! this.opened) {
+            this.ws.readyState == this.ws.CLOSING) {
 
             this._events.push(obj);
             return false;
