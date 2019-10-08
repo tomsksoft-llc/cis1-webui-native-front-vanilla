@@ -53,6 +53,10 @@ addEvent(document, 'ready', function() {
         .forEach(function(item) {
             var attr = item.getAttribute('data-block');
 
+            ([
+                '/css/pages/' + attr + '.css'
+            ]).addToHead('css');
+
             AJAX({
                 url: '/modules/' + attr + '.html'
                 , method: 'POST'
@@ -65,22 +69,9 @@ addEvent(document, 'ready', function() {
 
                         item.html(data);
 
-						[
-							'css'
-							, 'js'
-						]
-							.forEach(function(type) {
-								([
-									'/' + type + '/pages/' +
-									attr +
-									'.' + type
-								]).addToHead(type, (function() {
-									if (type == 'js') {
-										return attr.capitalize() + '.init();'
-									}
-									return '';
-								})());
-							});
+                        ([
+                            '/js/pages/' + attr + '.js'
+                        ]).addToHead('js', (attr.capitalize() + '.init();'));
                     }
                     , error: function() {
                         html.removeClass('wait');
@@ -118,6 +109,16 @@ var Page = {
                     Selector.id(item).innerHTML = params[item];
                 }
             });
+    }
+};
+
+var Spiner = {
+    add: function () {
+        body.addClass('spinner');
+    }
+
+    , remove: function () {
+        body.removeClass('spinner');
     }
 };
 

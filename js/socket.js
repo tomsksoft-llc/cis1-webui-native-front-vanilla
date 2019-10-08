@@ -61,7 +61,7 @@ var Socket = {
                     }
                 });
             } else {
-                console.log(JSON.stringify(message));
+
                 if (message.event.indexOf('auth') === 0) {
                     Auth.onmessage(message);
                 } else {
@@ -91,11 +91,11 @@ var Socket = {
     , send: function(obj) {
         Spiner.add();
 
-        if ( ! this.ws
-            || this.ws.readyState == this.ws.CLOSED
-            || this.ws.readyState == this.ws.CLOSING)
-            return false;
-        if ( ! this.opened) {
+        if ( ! this.ws ||
+            this.ws.readyState == this.ws.CLOSED ||
+            this.ws.readyState == this.ws.CLOSING ||
+            ! this.opened) {
+
             this._events.push(obj);
             return false;
         }
