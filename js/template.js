@@ -1,7 +1,4 @@
 var templates = {};
-if (window.location.href.substr(-1) == '#') {
-    window.location = window.location.origin;
-}
 
 Object.defineProperty(Array.prototype, 'addToHead', {
     enumerable: false
@@ -75,14 +72,30 @@ addEvent(document, 'ready', function() {
                     , success: function(data) {
                         html.removeClass('wait');
 
-                        item.html(data);
+                        item.innerHTML = data;
 
-                        setTimeout(function() {
+                        addEvent(window, 'load', function() {
                             if (typeof window[attr.capitalize()] == 'object' &&
                                 isFunction(window[attr.capitalize()].init)) {
+                                console.info('Init Running');
                                 window[attr.capitalize()].init();
+                            } else {
+                                console.warn('Init NOT Running');
+                                console.log(typeof window[attr.capitalize()]);
+                                console.log(isFunction(window[attr.capitalize()].init));
                             }
-                        }, 0);
+                        });
+                        // setTimeout(function() {
+                        //     if (typeof window[attr.capitalize()] == 'object' &&
+                        //         isFunction(window[attr.capitalize()].init)) {
+                        //         console.info('Init Running');
+                        //         window[attr.capitalize()].init();
+                        //     } else {
+                        //         console.warn('Init NOT Running');
+                        //         console.log(typeof window[attr.capitalize()]);
+                        //         console.log(isFunction(window[attr.capitalize()].init));
+                        //     }
+                        // }, 0);
                     }
                     , error: function() {
                         html.removeClass('wait');
