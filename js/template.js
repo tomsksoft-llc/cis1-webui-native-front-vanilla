@@ -1,17 +1,17 @@
 var templates = {};
-if (window.location.href.substr(-1) == '#') {
-    window.location = window.location.origin;
-}
 
 Object.defineProperty(Array.prototype, 'addToHead', {
     enumerable: false
-    , value: function(type) {
+    , value: function(type, onload_callback) {
         this
             .forEach(function(item) {
                 if (type == 'js') {
                     var script = this.document.createElement('script');
                     script.setAttribute('type', 'text/javascript');
                     script.setAttribute('src', item);
+					if (onload_callback) {
+						script.setAttribute('onload', onload_callback);
+					}
                     document.querySelector('head').appendChild(script);
                 } else if (type == 'css') {
                     var link = this.document.createElement('link');
@@ -53,18 +53,6 @@ addEvent(document, 'ready', function() {
         .forEach(function(item) {
             var attr = item.getAttribute('data-block');
 
-            [
-                'css'
-                , 'js'
-            ]
-                .forEach(function(type) {
-                    ([
-                        '/' + type + '/pages/' +
-                        attr +
-                        '.' + type
-                    ]).addToHead(type);
-                });
-
             AJAX({
                 url: '/modules/' + attr + '.html'
                 , method: 'POST'
@@ -77,12 +65,22 @@ addEvent(document, 'ready', function() {
 
                         item.html(data);
 
-                        setTimeout(function() {
-                            if (typeof window[attr.capitalize()] == 'object' &&
-                                isFunction(window[attr.capitalize()].init)) {
-                                window[attr.capitalize()].init();
-                            }
-                        }, 0);
+						[
+							'css'
+							, 'js'
+						]
+							.forEach(function(type) {
+								([
+									'/' + type + '/pages/' +
+									attr +
+									'.' + type
+								]).addToHead(type, (function() {
+									if (type == 'js') {
+										return attr.capitalize() + '.init();'
+									}
+									return '';
+								})());
+							});
                     }
                     , error: function() {
                         html.removeClass('wait');
@@ -120,16 +118,6 @@ var Page = {
                     Selector.id(item).innerHTML = params[item];
                 }
             });
-    }
-};
-
-var Spiner = {
-    add: function () {
-        body.addClass('spinner');
-    }
-
-    , remove: function () {
-        body.removeClass('spinner');
     }
 };
 
