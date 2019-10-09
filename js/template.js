@@ -2,13 +2,16 @@ var templates = {};
 
 Object.defineProperty(Array.prototype, 'addToHead', {
     enumerable: false
-    , value: function(type) {
+    , value: function(type, onload_callback) {
         this
             .forEach(function(item) {
                 if (type == 'js') {
                     var script = this.document.createElement('script');
                     script.setAttribute('type', 'text/javascript');
                     script.setAttribute('src', item);
+					if (onload_callback) {
+						script.setAttribute('onload', onload_callback);
+					}
                     document.querySelector('head').appendChild(script);
                 } else if (type == 'css') {
                     var link = this.document.createElement('link');
@@ -50,17 +53,9 @@ addEvent(document, 'ready', function() {
         .forEach(function(item) {
             var attr = item.getAttribute('data-block');
 
-            [
-                'css'
-                , 'js'
-            ]
-                .forEach(function(type) {
-                    ([
-                        '/' + type + '/pages/' +
-                        attr +
-                        '.' + type
-                    ]).addToHead(type);
-                });
+            ([
+                '/css/pages/' + attr + '.css'
+            ]).addToHead('css');
 
             AJAX({
                 url: '/modules/' + attr + '.html'
@@ -74,28 +69,9 @@ addEvent(document, 'ready', function() {
 
                         item.innerHTML = data;
 
-                        addEvent(window, 'load', function() {
-                            if (typeof window[attr.capitalize()] == 'object' &&
-                                isFunction(window[attr.capitalize()].init)) {
-                                console.info('Init Running');
-                                window[attr.capitalize()].init();
-                            } else {
-                                console.warn('Init NOT Running');
-                                console.log(typeof window[attr.capitalize()]);
-                                console.log(isFunction(window[attr.capitalize()].init));
-                            }
-                        });
-                        // setTimeout(function() {
-                        //     if (typeof window[attr.capitalize()] == 'object' &&
-                        //         isFunction(window[attr.capitalize()].init)) {
-                        //         console.info('Init Running');
-                        //         window[attr.capitalize()].init();
-                        //     } else {
-                        //         console.warn('Init NOT Running');
-                        //         console.log(typeof window[attr.capitalize()]);
-                        //         console.log(isFunction(window[attr.capitalize()].init));
-                        //     }
-                        // }, 0);
+                        ([
+                            '/js/pages/' + attr + '.js'
+                        ]).addToHead('js', (attr.capitalize() + '.init();'));
                     }
                     , error: function() {
                         html.removeClass('wait');

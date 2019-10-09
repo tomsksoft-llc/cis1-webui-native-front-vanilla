@@ -1,0 +1,22 @@
+<h2>Login</h2>
+<div id="auth-sign-in">
+    <div id="auth-form">
+        <div>
+            <span>Login</span>
+            <input id="auth-username" class="custom-input" type="text" name="username">
+        </div>
+        <div>
+            <span>Password</span>
+            <input id="auth-pass" class="custom-input" type="password" name="password">
+        </div>
+    </div>
+    <div id="auth-checkbox">
+        <label><input id="auth-remember" type="checkbox" name="remember">Remember Me</label>
+    </div>
+    <div class="custom-button blue-button" onclick="Auth.signInByLogPass();">Sign in</div>
+    <a href="#">Forgot Your Password?</a>
+</div>
+<div id="auth-sign-out">
+    <span></span>
+    <div class="custom-button blue-button" onclick="Auth.signOut();">Sign Out</div>
+</div>
