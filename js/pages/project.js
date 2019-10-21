@@ -7,7 +7,7 @@
  * formInputData  - Methods that are used to work with the data filling form
  * sendDataServer - Methods that are used to move from one table to another
  *     @param {string} path - (Optional) Parameter containing url
- *                                   Line of the form 'project=[v1]&job=[v2]...'
+ *                                   Line of the form 'project=[name project]&job=[name job]...'
  *
  * init           - Variable initialization
  *
@@ -99,7 +99,6 @@ var Project = {
     , init: function() {
 
         var self = this;
-
         this._url = Hash.get();
 
         for (var key in this._elements) {
@@ -118,27 +117,10 @@ var Project = {
         this.sendDataServer();
     }
 
-    , sendDataServer: function(path) {
+    , sendDataServer: function() {
 
         var self = this;
-
-        if (typeof path == 'string') {
-            this._url = {};
-        }
-
-        if (path) {
-            path.split('&')
-                .forEach(function(item) {
-                    if ( ! item) {
-                        return;
-                    }
-                    var parts = item.split('=');
-                    if ( ! parts) {
-                        return;
-                    }
-                    self._url[parts[0]] = parts[1];
-                });
-        }
+        this._url = Hash.get();
 
         if (this._url.project &&
             this._url.job &&
@@ -147,13 +129,13 @@ var Project = {
             this._sendRequest(this._events.request.cis.entry_list, this._url);
 
         } else if (this._url.project &&
-                    this._url.job &&
-                    this._url.name) {
+                   this._url.job &&
+                   this._url.name) {
 
             this.onmessage({event: 'cis.property.info.success'});
 
         } else if (this._url.project &&
-                    this._url.job) {
+                   this._url.job) {
 
             this._sendRequest(this._events.request.cis.build_list, this._url);
 
@@ -174,12 +156,14 @@ var Project = {
 
             self._elements.buttons.innerHTML = '';
             self._elements.info.innerHTML = '';
-            self._elements.path.innerHTML = (self._templates.path || '')
-                .replacePHs('url', '')
-                .replacePHs('part', 'job') ;
+            self._elements.path.html(
+                (self._templates.path || '')
+                    .replacePHs('url', '')
+                    .replacePHs('part', 'job'), true) ;
 
             (buttons || [])
                 .forEach(function(item) {
+
                     self._elements.buttons.html(
                         (self._templates.button || '')
                             .replacePHs('onclick', item.onclick, true)
@@ -215,12 +199,13 @@ var Project = {
                     self._elements.table.html(
                         (template || '')
                             .replacePHs('url', self._url.serialize(), true)
-                            .replacePHs('class', (class_columns || ''), true)
+                            .replacePHs('class', (class_columns || ''))
                             .replacePHs('item_name', (item.name || ''), true)
                             .replacePHs('path_download', (item.link || ''), true));
                 });
         }
 
+        var self = this;
         var buttons = {
             project: [
                 {
@@ -230,12 +215,16 @@ var Project = {
             ]
             , job: [
                 {
-                    name: 'New job'
+                    name: 'New dir'
                     , onclick: "Project.actionsEntry('createNewFolder','job')"
                 }
                 , {
                     name: 'Remove project'
                     , onclick: "Project.actionsEntry('remove')"
+                }
+                , {
+                    name: 'New job'
+                    , onclick: ""
                 }
             ]
             , build: [
@@ -243,12 +232,32 @@ var Project = {
                     name: 'Start'
                     , onclick: "Project.actionsJob('start')"
                 }
+                , {
+                    name: 'Add file'
+                    , onclick: "Project.actionsBuild('addBuild', {name: 'file'})"
+                }
+                , {
+                    name: 'Add params'
+                    , onclick: "Project.actionsBuild('addBuild', {name: 'params', accept: '.params'})"
+                }
+                , {
+                    name: 'Add readme'
+                    , onclick: "Project.actionsBuild('addBuild', {name: 'readme', accept: '.md, .txt'})"
+                }
             ]
-            , entry: []
-            , property: []
+            , entry: [
+                {
+                    name: 'Add test'
+                    , onclick: "Project.actionsBuild('addBuild', {name: 'test', accept: '.md, .txt'})"
+                }
+            ]
+            , property: [
+                {
+                    name: 'Save'
+                    , onclick: ""
+                }
+            ]
         };
-
-        var self = this;
 
         // cis. ...
         if ( ! message.event.indexOf('cis.')) {
@@ -269,7 +278,7 @@ var Project = {
             // cis.project.error.doesnt_exist
             } else if (message.event == this._events.response.cis.project_doesnt_exist) {
 
-                changeEnvironment();
+                changeEnvironment(buttons.project);
                 this._toastOpen('warning', 'project not found');
 
             // cis.job.info.success
@@ -294,50 +303,65 @@ var Project = {
                 for (var i = 0; i < [properties.length, builds.length].max(); i++) {
 
                     var table_row = {
-                        build_name: (builds[i] || {}).name
-                        , build_date: ((builds[i] || {}).metainfo || {}).date
-                        , properties: (properties[i] || {}).name
+                        name: (builds[i] || {}).name
+                        , date: ((builds[i] || {}).metainfo || {}).date
+                        , prop: (properties[i] || {}).name
                     };
-
                     var class_columns = {
                         name: ''
                         , date: ''
                         , prop: ''
                     };
 
-                    if (table_row.build_name) {
+                    Object.keys(table_row)
+                        .reduceRight(function (count, item) {
 
-                        if (table_row.build_date) {
-                            class_columns.name = 'tree-columns';
+                            if (table_row[item]) {
 
-                            if (table_row.properties) {
-                                class_columns.date = 'tree-columns';
-                                class_columns.prop = 'tree-columns';
-
-                            } else {
-                                class_columns.date = 'two-one-columns';
-                            }
-                        } else {
-
-                            if (table_row.properties) {
-                                class_columns.name = 'two-one-columns';
-                                class_columns.prop = 'tree-columns';
+                                if (count == 3 || ! table_row.name) {
+                                    class_columns[item] = 'one-columns';
+                                } else if (count == 2) {
+                                    class_columns[item] = 'two-one-columns';
+                                } else if (count == 1) {
+                                    class_columns[item] = 'tree-columns';
+                                }
+                                return 1;
 
                             } else {
-                                class_columns.name = 'one-columns';
+                                return ++count;
                             }
-                        }
-                    } else {
-                        class_columns.prop = 'one-columns';
-                    }
 
+                        }, 1);
+
+                    // or
+                    // var count = 1;
+                    // Object.keys(table_row)
+                    //     .reverse()
+                    //     .forEach(function (item) {
+                    //
+                    //         if (table_row[item]) {
+                    //
+                    //             if (count == 3 || ! table_row.name) {
+                    //                 class_columns[item] = 'one-columns';
+                    //             } else if (count == 2) {
+                    //                 class_columns[item] = 'two-one-columns';
+                    //             } else if (count == 1) {
+                    //                 class_columns[item] = 'tree-columns';
+                    //             }
+                    //             count = 1;
+                    //
+                    //         } else {
+                    //             count++;
+                    //         }
+                    //     });
+                    
                     self._elements.table.html(
                         (self._templates.build || '')
                             .replacePHs('url', this._url.serialize())
 
-                            .replacePHs('prop_name', (table_row.properties || ''))
-                            .replacePHs('build_name', (table_row.build_name || ''))
-                            .replacePHs('build_date', ((table_row.build_date) ? ('Start date: ' + table_row.build_date) : ''))
+                            .replacePHs('prop_name', (table_row.prop || ''))
+                            .replacePHs('build_name', (table_row.name || ''))
+                            .replacePHs('build_date', ((table_row.date) ? ('Start date: ' + table_row.date) : ''))
 
                             .replacePHs('class_build', ((class_columns.name) ? class_columns.name : 'template-build-td'))
                             .replacePHs('class_date', ((class_columns.date) ? class_columns.date : 'template-build-td'))
@@ -356,7 +380,7 @@ var Project = {
             // cis.job.error.doesnt_exist
             } else if (message.event == this._events.response.cis.job_doesnt_exist) {
 
-                changeEnvironment();
+                changeEnvironment(buttons.build);
                 this._toastOpen('warning', 'job not found');
 
             // cis.job.error.invalid_params
@@ -387,13 +411,13 @@ var Project = {
             // cis.build.error.doesnt_exist
             } else if (message.event == this._events.response.cis.build_doesnt_exist) {
 
-                changeEnvironment();
+                changeEnvironment(buttons.entry);
                 this._toastOpen('warning', 'build not found');
 
             // cis.entry.error.doesnt_exist
             } else if (message.event == this._events.response.cis.entry_doesnt_exist) {
 
-                changeEnvironment();
+                changeEnvironment(buttons.entry);
                 this._toastOpen('warning', 'entry not found');
 
             // cis.property.info.success
@@ -413,19 +437,18 @@ var Project = {
             // fs.entry.new_dir.success
             } else if (message.event == this._events.response.fs.new_dir) {
 
-                this._toastOpen('info', 'create success');
                 Hash.set(this._url);
                 this.sendDataServer();
                 this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
+                this._toastOpen('info', 'create success');
 
             // fs.entry.remove.success
             } else if (message.event == this._events.response.fs.remove) {
 
-                this._toastOpen('info', 'remove success');
                 delete this._url[Object.keys(this._url).pop()];
                 Hash.set(this._url);
-                this.sendDataServer();
                 this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
+                this._toastOpen('info', 'remove success');
 
             // fs.entry.refresh.success
             } else if (message.event == this._events.response.fs.entry_refresh) {
@@ -450,12 +473,14 @@ var Project = {
      * @param params          - (Optional) Parameter for actions
      *     Variant
      *         action = 'init' (Initialization of values)
-     *         @param {array} params - Default values for request 'run job'
+     *         @param {array} params  - Default values for request 'run job'
      *             @param {object}       - Pair 'key-value'
      *                 @param {string} name  - (Optional) Name of param
      *                 @param {string} value - (Optional) Default value received from server
      *
      *         action = 'start' (Run job)
+     *         action = 'changeName
+     *         @param {string} params - Old name
      */
 
     , actionsJob: function(action, params) {
@@ -466,10 +491,10 @@ var Project = {
 
         } else if (action == 'start') {
 
-            var fields_form = this.formInputData('get') || [];
+            var fields_form = this.formInputData('get', {is_encode: true}) || [];
             var fields_default = JSON.parse(decodeURIComponent(Cookie.get('param_start_job') || '%5B%5D'));
 
-            if (( ! fields_default.length) || fields_form.length) {
+            if ( ! fields_default.length || fields_form.length) {
 
                 this._sendRequest(this._events.request.cis.job_run,{
                     project: this._url.project,
@@ -493,9 +518,10 @@ var Project = {
                         }
                     });
             }
+
         } else if (action == 'changeName') {
 
-            var new_name = ((this.formInputData('get') || [])[0] || {}).value || '';
+            var new_name = ((this.formInputData('get', {is_required: true}) || [])[0] || {}).value || '';
 
             if (new_name) {
 
@@ -508,7 +534,7 @@ var Project = {
                 this.formInputData('init',
                     {
                         title_name: 'Change name'
-                        ,input: {
+                        , input: {
                             fields: [{
                                 name: 'new name:'
                                 , value: params
@@ -520,7 +546,72 @@ var Project = {
                         }
                     });
             }
+        }
+    }
 
+//Build
+    , actionsBuild: function(action, params) {
+
+        if (action == 'addBuild') {
+            // params
+            //    name
+            //    accept
+
+            var new_files = this.formInputData('get', {is_required: true}) || [];
+
+            if ( ! new_files.length) {
+
+                params.name = params.name || '';
+                params.accept = params.accept || '';
+
+                this.formInputData('init', {
+                    title_name: 'Add ' + params.name
+                    , input: {
+                        is_input: true
+                        , type: "file"
+                        , file: {
+                            accept: params.accept
+                            , multiple: (params.name == 'file') ? true : false
+                            , webkitdirectory: (params.name == 'file') ? true : false
+                        }
+                        , fields: [{name: 'change ' + (params.accept || 'folder with') + ' file'}]
+                    }
+                    , button: {
+                        value: "Add (Don\'t work)"
+                        , onclick: "Project.actionsBuild('addBuild', {name: '" + params.name + "', accept: '" + params.accept +  "'})"
+                    }
+                });
+
+            } else {
+
+                var filename = {
+                    name: 'new_files'
+                    , files: {
+                        uploadfile: new_files
+                    }
+                };
+
+                var a = {
+                    url: '/upload/' + this._url.serialize()
+                    , method: 'POST'
+                    , data: filename
+                    , events: {
+                        wait: function() {
+                            console.log('wait');
+                        }
+                        , success: function(data) {
+                            console.log(data);
+                        }
+                        , error: function(text, xhr) {}
+                        , progress: function() {}
+                    }
+                };
+
+                console.log('Look param for AJAX:');
+                console.log(a);
+                AJAX(a);
+                this.formInputData('visible');
+            }
         }
     }
 
@@ -547,20 +638,12 @@ var Project = {
             } else {
                 return;
             }
-            var name_folder = (this.formInputData('get')[0] || {}).value;
+            var name_folder =((this.formInputData('get', {is_required: true}) || [])[0] || {}).value || '';
 
-            if (name_folder == '') {
-                this._toastOpen('warning', 'Please, enter a ' + title_form + ' name');
+            if (name_folder) {
 
-            } else if (name_folder) {
-
-                if (name_folder != name_folder.encode()) {
-                    this._toastOpen('warning', 'Please, enter ' + title_form + ' name without \' \" & < >');
-
-                } else {
-                    this._sendRequest(this._events.request.fs.new_dir, {path: this._serialize() + '/' + name_folder});
-                    this.formInputData('visible');
-                }
+                this._sendRequest(this._events.request.fs.new_dir, {path: this._serialize() + '/' + name_folder});
+                this.formInputData('visible');
 
             } else {
                 this.formInputData('init',
@@ -601,8 +684,29 @@ var Project = {
                     });
                 this.formInputData('visible', {is_visible: true});
             }
+        } else if (action == 'download') {
+
+            // var url = this._serialize(Hash.get());
+            //
+            // var a = {
+            //     url: this._serialize(Hash.get())
+            //     , method: 'GET'
+            //     , events: {
+            //         wait: function() {
+            //             console.log('wait');
+            //         }
+            //         , success: function(data) {
+            //             console.log(data);
+            //         }
+            //         , error: function(text, xhr) {}
+            //         , progress: function() {}
+            //     }
+            // };
+            // console.log(a);
+
         }
-    }
+
+}
 
     /**
      * Form
@@ -624,11 +728,13 @@ var Project = {
      *                 @param {string} onclick  - (Optional) Click action
      *
      *         action = 'get' (Get params from form)
-     *         @returns {array} - Array of objects with input param
-     *             {
-     *                 @param {string} name  - Name of value
-     *                 @param {string} value - Input value
-     *             }
+     *             @param {obj} params
+     *                 @param {bool} is_required - (Optional) Is param required
+     *                 @param {bool} is_encode   - (Optional) Is special characters allowed
+     *             @returns {array} - Array of objects with input param
+     *                 @param {obj}
+     *                     @param {string} name  - Name of value
+     *                     @param {string} value - Input value
      *
      *         action = 'visible' (close form)
      */
@@ -647,13 +753,17 @@ var Project = {
         for (var key in _elements) {
             _elements[key] = Selector.id('project-form' + ((key == 'form') ?  '' : ('-' + key)));
         }
-
         if (action == 'init') {
             // params:
             //   title_name
             //   input
             //       is_input
             //       fields
+            //       type
+            //       file
+            //           multiple
+            //           accept
+            //           webkitdirectory
             //   button
             //       onclick
             //       value
@@ -662,14 +772,30 @@ var Project = {
             _elements.params.innerHTML = '';
             _elements.name.innerHTML = params.title_name || '';
 
+console.log('Look params.input:');
+console.log(params.input);
+            var other_attributes = '';
+            if ((params.input || {}).file) {
 
-            ((params.input || {}).fields || [])
+                if (params.input.file.accept) {
+                    other_attributes += ' accept="' + params.input.file.accept + '"'
+                }
+                if (params.input.file.multiple) {
+                    other_attributes += ' multiple=true';
+                }
+                if (params.input.file.webkitdirectory) {
+                    other_attributes += ' webkitdirectory=true';
+                }
+            }
+            ((params.input || {}).fields || [{}])
                 .forEach(function(item) {
                     _elements.params.html(
                         (self._templates.form_params || '')
                             .replacePHs('param_name', (item.name || ''), true)
                             .replacePHs('param_value', (item.value || ''), true)
-                            .replacePHs('class_input', ((params.input.is_input || item.value) ? '' : 'form-project-list')))
+                            .replacePHs('type_input', (params.input.type || 'text'))
+                            .replacePHs('class_input', ((params.input.is_input || item.value) ? '' : 'form-project-list'))
+                            .replacePHs('other_attributes', other_attributes))
                 });
 
             _elements.button.html(
@@ -682,17 +808,50 @@ var Project = {
             is_visible = true;
 
         } else if (action == 'get') {
+            // params:
+            //     is_required
+            //     is_encode
 
             var values = Selector.queryAll('#project-form-params > div > input');
+            var is_correct = true;
 
-            return Selector.queryAll('#project-form-params > div > span')
-                .map(function (item, index) {
-                    return {
-                        name: item.innerHTML
-                        , value: values[index].value.trim()
-                    }
-                });
+            if ((params || {}).is_required) {
+
+                values
+                    .forEach(function(item) {
+
+                        if (item.value.trim() == '') {
+                            self._toastOpen('warning', 'Please enter a value');
+                            is_correct = false;
+                        }
+                    })
+            }
+            if ( ! (params || {}).is_encode) {
+                values
+                    .forEach(function (item) {
+
+                        if (item.value != item.value.encode()) {
+                            is_correct = false;
+                            self._toastOpen('warning', 'Please, enter value without \' \" & < >');
+                        }
+                    })
+            }
+            if ((values[0] || {}).type == 'file') {
+                return (values[0] || {}).files;
+            }
+
+            if (is_correct) {
+
+                return Selector.queryAll('#project-form-params > div > span')
+                    .map(function (item, index) {
+                        return {
+                            name: item.innerHTML
+                            , value: values[index].value.trim()
+                        }
+                    });
+            }
         }
+
         if (action == 'visible') {
 
             if (is_visible) {
@@ -746,3 +905,9 @@ var Project = {
             }).join('/');
     }
 };
+
+addEventListener("popstate",function(e) {
+    // if (window.location.href.indexOf('download') == -1) {
+        Project.sendDataServer();
+    // }
+});

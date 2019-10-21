@@ -34,7 +34,7 @@
 
 <!--template for path-->
 <script type="text/html" id="template-project-path">
-    <a onclick=Project.sendDataServer('%%url%%'); href="#%%url%%">%%part%%</a>
+    <a href="#%%url%%">%%part%%</a>
 </script>
 
 <!--template main info-->
@@ -45,7 +45,7 @@
 <!--template table-->
 <script type="text/html" id="template-project-list">
     <div class="%%class%%">
-        <div onclick="Project.sendDataServer('%%url%%&project=%%item_name%%');">
+        <div>
             <a href="#project=%%item_name%%">%%item_name%%</a>
         </div>
     </div>
@@ -53,7 +53,7 @@
 
 <script type="text/html" id="template-project-job">
     <div class="%%class%%">
-        <div onclick="Project.sendDataServer('%%url%%&job=%%item_name%%');">
+        <div>
             <a href="#%%url%%&job=%%item_name%%">%%item_name%%</a>
         </div>
         <div onclick="Project.actionsJob('changeName', '%%item_name%%')"><span>Change name</span></div>
@@ -62,13 +62,13 @@
 
 <script type="text/html" id="template-project-build">
     <div>
-        <div class="%%class_build%%" onclick="Project.sendDataServer('%%url%%&build=%%build_name%%');">
+        <div class="%%class_build%%">
             <a href="#%%url%%&build=%%build_name%%">%%build_name%%</a>
         </div>
-        <div class="%%class_date%%" onclick="Project.sendDataServer('%%url%%&build=%%build_name%%');">
+        <div class="%%class_date%%">
             <a href="#%%url%%&build=%%build_name%%">%%build_date%%</a>
         </div>
-        <div class="%%class_prop%%" onclick="Project.sendDataServer('%%url%%&name=%%prop_name%%');">
+        <div class="%%class_prop%%">
             <a href="#%%url%%&name=%%prop_name%%">%%prop_name%%</a>
         </div>
     </div>
@@ -80,7 +80,7 @@
             <a>%%item_name%%</a>
         </div>
         <div>
-            <a href="%%path_download%%" download="">download</a>
+            <a href="%%path_download%%">download</a>
         </div>
     </div>
 </script>
@@ -89,6 +89,6 @@
 <script type="text/html" id="template-project-form-params">
     <div>
         <span>%%param_name%%</span>
-        <input class="custom-input %%class_input%%" type="text" value="%%param_value%%">
+        <input class="custom-input %%class_input%%" type="%%type_input%%" value="%%param_value%%" %%other_attributes%%>
     </div>
 </script>

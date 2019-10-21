@@ -61,12 +61,29 @@ var Socket = {
                     }
                 });
             } else {
+                console.log(message);
+                // var event = message.event.split('.')[0];
+                //
+                // if (event == 'auth') {
+                //     Auth.onmessage(message);
+                //
+                // } else if (event == 'cis' ||
+                //            event == 'fs') {
+                //     Project.onmessage(message);
+                // }
 
-                if (message.event.indexOf('auth') === 0) {
-                    Auth.onmessage(message);
-                } else {
-                    Project.onmessage(message);
-                }
+                //or
+                var modules = {
+                    auth: Auth || {}
+                    , cis: Project || {}
+                    , fs: Project || {}
+                };
+
+                modules[
+                    message.event.split('.')[0]
+                ].onmessage(message);
+
+
             }
             Spiner.remove();
         };

@@ -172,7 +172,6 @@
     height: 100%;
     width: 100%;
     top: 0;
-    left: 0;
     padding-top: 100px;
     background: rgba(255, 255, 255, .5);
 }
@@ -180,7 +179,7 @@
     display: block;
 }
 #project-form > div {
-    min-width: 400px;
+    min-width: 350px;
     max-width: 450px;
     top: 100px;
     margin-left: auto;
@@ -233,6 +232,9 @@
 }
 input.form-project-list {
     display: none;
+}
+#project-form-params > div > input[type="file"] {
+    display: inline-block;
 }
 #project-form-button > .project-button {
     width: 100%;
