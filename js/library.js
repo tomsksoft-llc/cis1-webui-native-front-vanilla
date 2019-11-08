@@ -78,9 +78,15 @@ function addEvent(element, name, handler) {
         }
 
         if (element.addEventListener) {
+            if ( ! name.indexOf('on')) {
+                name = name.replace('on', '');
+            }
             element.addEventListener(name, handler, false);
         } else if (element.attachEvent) {
-            element.attachEvent('on' + name, handler);
+            if (name.indexOf('on')) {
+                name = 'on' + name;
+            }
+            element.attachEvent(name, handler);
         }
     }
 }
@@ -119,9 +125,15 @@ function removeEvent(element, name, handler) {
     }
 
     if (element.addEventListener) {
-        element.removeEventListener(name, handler, false);
+        if ( ! name.indexOf('on')) {
+            name = name.replace('on', '');
+        }
+        element.addEventListener(name, handler, false);
     } else if (element.attachEvent) {
-        element.detachEvent('on' + name, handler);
+        if (name.indexOf('on')) {
+            name = 'on' + name;
+        }
+        element.attachEvent(name, handler);
     }
 }
 

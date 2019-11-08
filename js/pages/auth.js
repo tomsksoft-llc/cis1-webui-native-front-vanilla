@@ -30,18 +30,22 @@ var Auth = {
     }
     , _events: {
         request: {
-            sign_in_token: 'auth.token'
-            , sign_in_log: 'auth.login_pass'
-            , sign_out: 'auth.logout'
+            sign_in_token:  'auth.token'
+            , sign_in_log:  'auth.login_pass'
+            , sign_out:     'auth.logout'
         }
         , response: {
-            sign_in: 'auth.login_pass.success'
-            , error: 'auth.error.wrong_credentials'
+            sign_in:    'auth.login_pass.success'
+            , error:    'auth.error.wrong_credentials'
             , sign_out: 'auth.logout.success'
         }
     }
 
-    , init: function () {
+    , _messages: [
+        'auth'
+    ]
+
+    , init: function() {
 
         for (var key in this._elements) {
             this._elements[key] = Selector.id(((key == 'auth') ? '' : 'auth-') + key);
@@ -50,19 +54,19 @@ var Auth = {
             this._cookie[key] = decodeURIComponent(Cookie.get(key));
         }
 
-        this._sendRequest(this._events.request.sign_in_token, {token: this._cookie.auth_token});
+        this._sendRequest(this._events.request.sign_in_token, { token: this._cookie.auth_token });
     }
 
     , signInByLogPass: function() {
 
         if ( ! this._elements.username.value) {
 
-            this._toastOpen('warning', 'Please enter your login');
+            Toast.message('warning', 'Please enter your login');
             return;
         }
         if ( ! this._elements.pass.value) {
 
-            this._toastOpen('warning', 'Please enter your password');
+            Toast.message('warning', 'Please enter your password');
             return;
         }
 
@@ -74,7 +78,7 @@ var Auth = {
 
     , signOut: function() {
 
-        this._sendRequest(this._events.request.sign_out, {token: this._cookie.auth_token});
+        this._sendRequest(this._events.request.sign_out, { token: this._cookie.auth_token });
     }
 
     , onmessage: function(message) {
@@ -96,13 +100,13 @@ var Auth = {
             }
 
             Selector.query('#auth-sign-out > span').innerHTML = 'Logged in as ' + this._cookie.username;
-            this._toastOpen('success', 'authentication was successful');
+            Toast.message('success', 'authentication was successful');
             this._elements.auth.className = 'sign-out';
 
         } else if (message.event == this._events.response.error) {
 
             if (this._elements.username.value) {
-                this._toastOpen('error', 'wrong login or password');
+                Toast.message('error', 'wrong login or password');
             }
 
             this._elements.auth.className = 'sign-in';
@@ -120,6 +124,7 @@ var Auth = {
             console.warn('not processed message');
         }
     }
+
     , _sendRequest: function(event, data) {
 
         if ( ! event) {
@@ -127,29 +132,9 @@ var Auth = {
         }
 
         Socket.send({
-            event: event,
-            transactionId: (new Date()).getTime(),
-            data: data || {}
-        });
-    }
-    , _toastOpen: function(type, message) {
-
-        var delay;
-        var is_close = false;
-
-        if (type == 'error' ||
-            type == 'warning') {
-            is_close = true;
-
-        } else {
-            delay = 2
-        }
-
-        Toast.open({
-            type: type
-            , text: message
-            , delay: delay
-            , button_close: is_close
+            event: event
+            , transactionId: (new Date()).getTime()
+            , data: data || {}
         });
     }
 };

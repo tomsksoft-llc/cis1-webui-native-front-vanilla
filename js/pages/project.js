@@ -39,7 +39,7 @@
  *                 @param {string} link    - (Optional) URL to download
  *                 @param {bool} directory - (Optional) Is this property or build
  *                 @param {obj} metainfo   - (Optional) Record metadata
- *                     @param {string}date     - (Optional) Start date
+ *                     @param {string} date - (Optional) Start date
  */
 
 var Project = {
@@ -57,44 +57,61 @@ var Project = {
     , _events: {
         response: {
             cis: {
-                project_list:           'cis.project_list.get.success'
-                , job_list:             'cis.project.info.success'
-                , project_doesnt_exist: 'cis.project.error.doesnt_exist'
-                , build_list:           'cis.job.info.success'
-                , job_run:              'cis.job.run.success'
-                , job_doesnt_exist:     'cis.job.error.doesnt_exist'
+                // errors
+                project_doesnt_exist:   'cis.project.error.doesnt_exist'
                 , job_invalid_params:   'cis.job.error.invalid_params'
-                , entry_list:           'cis.build.info.success'
+                , job_doesnt_exist:     'cis.job.error.doesnt_exist'
                 , build_doesnt_exist:   'cis.build.error.doesnt_exist'
-                , property:             'cis.property.info.success'
-                , entry_doesnt_exist:   'cis.entry.error.doesnt_exist'
+
+                // success
+                , project_list: 'cis.project_list.get.success'
+                , job_list:     'cis.project.info.success'
+                , build_list:   'cis.job.info.success'
+                , job_run:      'cis.job.run.success'
+                , entry_list:   'cis.build.info.success'
+                , property:     'cis.property.info.success'
             }
             , fs: {
-                any_entries_list: 'fs.entry.list.success'
-                , entry_refresh:  'fs.entry.refresh.success'
-                , new_dir :       'fs.entry.new_dir.success'
-                , remove:         'fs.entry.remove.success'
-                , error_dir:      'fs.entry.error.cant_create_dir'
+                // errors
+                invalid_path:   'fs.entry.error.invalid_path'
+                , doesnt_exist: 'fs.entry.error.doesnt_exist'
+                , error_dir:    'fs.entry.error.cant_create_dir'
+                , move_cant:    'fs.entry.error.cant_move'
+
+                // successes
+                , list:     'fs.entry.list.success'
+                , refresh:  'fs.entry.refresh.success'
+                , new_dir:  'fs.entry.new_dir.success'
+                , remove:   'fs.entry.remove.success'
+                , move:     'fs.entry.move.success'
+
             }
         }
         , request: {
             cis: {
-                project_list: 'cis.project_list.get'
-                , job_list:   'cis.project.info'
-                , build_list: 'cis.job.info'
-                , job_run:    'cis.job.run'
-                , entry_list: 'cis.build.info'
+                project_list:   'cis.project_list.get'
+                , job_list:     'cis.project.info'
+                , build_list:   'cis.job.info'
+                , job_run:      'cis.job.run'
+                , entry_list:   'cis.build.info'
             }
             , fs: {
-                any_entries_list: 'fs.entry.list'
-                , entry_refresh:  'fs.entry.refresh'
-                , new_dir :       'fs.entry.new_dir'
-                , remove:         'fs.entry.remove'
-                , move:           'fs.entry.move'
+                list:       'fs.entry.list'
+                , refresh:  'fs.entry.refresh'
+                , new_dir:  'fs.entry.new_dir'
+                , remove:   'fs.entry.remove'
+                , move:     'fs.entry.move'
             }
         }
     }
     , _templates: {}
+
+    , _messages: [
+        'cis'
+        , 'fs'
+    ]
+
+    , _last_file_content: ''
 
     , init: function() {
 
@@ -108,10 +125,10 @@ var Project = {
         var selector_name = 'template-project-';
         Selector.queryAll('script[id^="' + selector_name + '"]')
             .forEach(function(item) {
-                self._templates[item.id
-                    .replaceAll(selector_name,'')
-                    .replaceAll('-','_')
-                ] = item.innerHTML.trim();
+                self._templates[(item.id
+                        .replaceAll(selector_name,'')
+                        .replaceAll('-','_')
+                    )] = item.innerHTML.trim();
             });
 
         this.sendDataServer();
@@ -119,23 +136,22 @@ var Project = {
 
     , sendDataServer: function() {
 
-        var self = this;
         this._url = Hash.get();
 
         if (this._url.project &&
-            this._url.job &&
-            this._url.build) {
+                this._url.job &&
+                this._url.build) {
 
             this._sendRequest(this._events.request.cis.entry_list, this._url);
 
         } else if (this._url.project &&
-                   this._url.job &&
-                   this._url.name) {
+                this._url.job &&
+                this._url.name) {
 
-            this.onmessage({event: 'cis.property.info.success'});
+            this.onmessage({event: this._events.response.cis.property});
 
         } else if (this._url.project &&
-                   this._url.job) {
+                this._url.job) {
 
             this._sendRequest(this._events.request.cis.build_list, this._url);
 
@@ -151,6 +167,8 @@ var Project = {
 
     , onmessage: function(message) {
 
+        var self = this;
+
         function changeEnvironment(buttons) {
             //change button, path, info
 
@@ -159,7 +177,7 @@ var Project = {
             self._elements.path.html(
                 (self._templates.path || '')
                     .replacePHs('url', '')
-                    .replacePHs('part', 'job'), true) ;
+                    .replacePHs('part', 'job'), true);
 
             (buttons || [])
                 .forEach(function(item) {
@@ -191,70 +209,73 @@ var Project = {
             self._elements.table.innerHTML = '';
         }
 
-        function createTable(template, message, class_columns) {
+        function createTable(template, message) {
 
             (message.data || {}).fs_entries
                 .forEach(function(item) {
-
                     self._elements.table.html(
                         (template || '')
                             .replacePHs('url', self._url.serialize(), true)
-                            .replacePHs('class', (class_columns || ''))
                             .replacePHs('item_name', (item.name || ''), true)
                             .replacePHs('path_download', (item.link || ''), true));
                 });
         }
 
-        var self = this;
         var buttons = {
             project: [
                 {
                     name: 'New project'
-                    , onclick: "Project.actionsEntry('createNewFolder','project')"
+                    , onclick: "Project.actionsEntry('createNewFolder', 'project');"
                 }
             ]
             , job: [
                 {
                     name: 'New dir'
-                    , onclick: "Project.actionsEntry('createNewFolder','job')"
+                    , onclick: "Project.actionsEntry('createNewFolder', 'job');"
                 }
                 , {
                     name: 'Remove project'
-                    , onclick: "Project.actionsEntry('remove')"
+                    , onclick: "Project.actionsEntry('remove');"
                 }
                 , {
                     name: 'New job'
-                    , onclick: ""
+                    , onclick: ''
                 }
             ]
             , build: [
                 {
                     name: 'Start'
-                    , onclick: "Project.actionsJob('start')"
+                    , onclick: "Project.actionsJob('start');"
                 }
                 , {
                     name: 'Add file'
-                    , onclick: "Project.actionsBuild('addBuild', {name: 'file'})"
+                    , onclick: "Project.actionsBuild('addBuild', {name: 'file'});"
                 }
                 , {
                     name: 'Add params'
-                    , onclick: "Project.actionsBuild('addBuild', {name: 'params', accept: '.params'})"
+                    , onclick: "Project.actionsBuild('addBuild', {name: 'params', accept: '.params'});"
                 }
                 , {
                     name: 'Add readme'
-                    , onclick: "Project.actionsBuild('addBuild', {name: 'readme', accept: '.md, .txt'})"
+                    , onclick: "Project.actionsBuild('addBuild', {name: 'readme', accept: '.md, .txt'});"
                 }
             ]
             , entry: [
                 {
-                    name: 'Add test'
-                    , onclick: "Project.actionsBuild('addBuild', {name: 'test', accept: '.md, .txt'})"
+                    name: 'Add file(-s)'
+                    , onclick: "Project.actionsBuild('addFile');"
+                }
+            ]
+            , file: [
+                {
+                    name: 'Replace content to...'
+                    , onclick: ''
                 }
             ]
             , property: [
                 {
                     name: 'Save'
-                    , onclick: ""
+                    , onclick: ''
                 }
             ]
         };
@@ -262,24 +283,47 @@ var Project = {
         // cis. ...
         if ( ! message.event.indexOf('cis.')) {
 
+            // cis.project.error.doesnt_exist
+            // cis.job.error.doesnt_exist
+            // cis.job.error.invalid_params
+            // cis.build.error.doesnt_exist
+            if ([
+                    this._events.response.cis.project_doesnt_exist
+                    , this._events.response.cis.job_doesnt_exist
+                    , this._events.response.cis.job_invalid_params
+                    , this._events.response.cis.build_doesnt_exist
+                ].inArray(message.event)) {
+
+                // cis.project.error.doesnt_exist
+                if (message.event == this._events.response.cis.project_doesnt_exist) {
+
+                    changeEnvironment(buttons.project);
+
+                // cis.job.error.doesnt_exist
+                } else if (message.event == this._events.response.cis.job_doesnt_exist) {
+
+                    changeEnvironment(buttons.build);
+
+                // cis.build.error.doesnt_exist
+                } else if (message.event == this._events.response.cis.build_doesnt_exist) {
+
+                    changeEnvironment(buttons.entry);
+                }
+
+                Toast.message('error', message.errorMessage);
+
             // cis.project_list.get.success
-            if (message.event == this._events.response.cis.project_list) {
+            } else if (message.event == this._events.response.cis.project_list) {
 
                 changeEnvironment(buttons.project);
-                createTable((this._templates.list || ''), message, 'one-columns');
+                createTable((this._templates.list || ''), message);
                 this._elements.title.className = 'project-list';
 
             // cis.project.info.success
             } else if (message.event == this._events.response.cis.job_list) {
 
                 changeEnvironment(buttons.job);
-                createTable((this._templates.job || ''), message, 'two-columns');
-
-            // cis.project.error.doesnt_exist
-            } else if (message.event == this._events.response.cis.project_doesnt_exist) {
-
-                changeEnvironment(buttons.project);
-                this._toastOpen('warning', 'project not found');
+                createTable((this._templates.job || ''), message);
 
             // cis.job.info.success
             } else if (message.event == this._events.response.cis.build_list) {
@@ -307,65 +351,17 @@ var Project = {
                         , date: ((builds[i] || {}).metainfo || {}).date
                         , prop: (properties[i] || {}).name
                     };
-                    var class_columns = {
-                        name: ''
-                        , date: ''
-                        , prop: ''
-                    };
 
-                    Object.keys(table_row)
-                        .reduceRight(function (count, item) {
-
-                            if (table_row[item]) {
-
-                                if (count == 3 || ! table_row.name) {
-                                    class_columns[item] = 'one-columns';
-                                } else if (count == 2) {
-                                    class_columns[item] = 'two-one-columns';
-                                } else if (count == 1) {
-                                    class_columns[item] = 'tree-columns';
-                                }
-                                return 1;
-
-                            } else {
-                                return ++count;
-                            }
-
-                        }, 1);
-
-                    // or
-                    // var count = 1;
-                    // Object.keys(table_row)
-                    //     .reverse()
-                    //     .forEach(function (item) {
-                    //
-                    //         if (table_row[item]) {
-                    //
-                    //             if (count == 3 || ! table_row.name) {
-                    //                 class_columns[item] = 'one-columns';
-                    //             } else if (count == 2) {
-                    //                 class_columns[item] = 'two-one-columns';
-                    //             } else if (count == 1) {
-                    //                 class_columns[item] = 'tree-columns';
-                    //             }
-                    //             count = 1;
-                    //
-                    //         } else {
-                    //             count++;
-                    //         }
-                    //     });
-                    
-                    self._elements.table.html(
-                        (self._templates.build || '')
+                    this._elements.table.html(
+                        (this._templates.build || '')
                             .replacePHs('url', this._url.serialize())
 
                             .replacePHs('prop_name', (table_row.prop || ''))
                             .replacePHs('build_name', (table_row.name || ''))
                             .replacePHs('build_date', ((table_row.date) ? ('Start date: ' + table_row.date) : ''))
 
-                            .replacePHs('class_build', ((class_columns.name) ? class_columns.name : 'template-build-td'))
-                            .replacePHs('class_date', ((class_columns.date) ? class_columns.date : 'template-build-td'))
-                            .replacePHs('class_prop', ((class_columns.prop) ? class_columns.prop : 'template-build-td ')))
+                            .replacePHs('class', (table_row.prop ? '' : 'hidden'))
+                    );
                 }
 
                 this._elements.header.className = 'project-list';
@@ -374,51 +370,179 @@ var Project = {
             // cis.job.run.success
             } else if (message.event == this._events.response.cis.job_run) {
 
-                this._toastOpen('info', 'job run success');
-                this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
-
-            // cis.job.error.doesnt_exist
-            } else if (message.event == this._events.response.cis.job_doesnt_exist) {
-
-                changeEnvironment(buttons.build);
-                this._toastOpen('warning', 'job not found');
-
-            // cis.job.error.invalid_params
-            } else if (message.event == this._events.response.cis.job_invalid_params) {
-
-                this._toastOpen('error', 'error in params');
+                this._sendRequest(this._events.request.fs.refresh, { path: this._serialize() });
+                Toast.message('info', 'job run success');
 
             // cis.build.info.success
             } else if (message.event == this._events.response.cis.entry_list) {
 
-                changeEnvironment(buttons.entry);
-                if ((message.data || {}).date) {
-                    this._elements.info.html(
-                        (self._templates.info || '')
-                            .replacePHs('key', 'Start date')
-                            .replacePHs('value', message.data.date));
+                if ('file' in Project._url) {
+
+                    changeEnvironment(buttons.file);
+
+                    var item_file = ((message.data || {}).fs_entries || [])
+                        .filter(function(item) {
+                            return self._url.file == item.name;
+                        })[0];
+
+                    if ( ! item_file) {
+                        Toast.message('error', 'Server error. Try again later.');
+                        return;
+                    }
+
+                    self._elements.table.html(
+                        (this._templates.file || '')
+                            .replacePHs('link', item_file.link)
+                    );
+
+                    setTimeout(function() {
+                        self._last_file_content = '';
+
+                        var textarea = Selector.id('file-content');
+                        var file_save = Selector.query('#project-table > div.file-row > div.file-cell > .custom-button');
+
+                        addEvent(Selector.query('#project-buttons > div'), 'click', function() {
+                            var temp_input = document.createElement('input');
+
+                            temp_input.type = 'file';
+                            temp_input.click();
+
+                            temp_input.onchange = function() {
+                                var reader = new FileReader();
+                                reader.onload = function() {
+                                    textarea.value = this.result;
+                                    file_save.setAttribute('data-disabled', '');
+                                };
+                                reader.readAsText(this.files[0]);
+                            };
+                        });
+
+                        var url = item_file.link;
+                        var params = {};
+
+                        AJAX({
+                            url: item_file.link
+                            , method: 'GET'
+                            , data: {}
+                            , events: {
+                                wait: function() {
+                                    html.addClass('wait');
+                                }
+                                , success: function(data) {
+                                    textarea.innerHTML = data;
+                                    self._last_file_content = textarea.value;
+                                    html.removeClass('wait');
+                                }
+                                , error: function(text, xhr) {
+
+                                    html.removeClass('wait');
+                                }
+                            }
+                        });
+
+                        addEvent(textarea, ['keyup', 'focus', 'blur'], function() {
+                            if (this.value == self._last_file_content) {
+                                file_save.setAttribute('data-disabled', 'disabled');
+                            } else {
+                                file_save.setAttribute('data-disabled', '');
+                            }
+                        });
+
+                        addEvent(file_save, 'click', function() {
+                            if (file_save.getAttribute('data-disabled') == 'disabled') {
+                                return;
+                            }
+
+                            var link = self._url;
+                            delete link.file;
+
+                            AJAX({
+                                url: '/replace' + self._serialize(link)
+                                , method: 'POST'
+                                , data: {
+                                    files: {
+                                        file: new File([new Blob([textarea.value])], self._url.file)
+                                    }
+                                }
+                                , events: {
+                                    wait: function() {
+                                        html.addClass('wait');
+                                    }
+                                    , success: function() {
+                                        file_save.setAttribute('data-disabled', 'disabled');
+                                        Toast.message('success', 'File saved');
+                                    }
+                                    , error: function(text, xhr) {
+                                        switch(xhr.status * 1) {
+                                            case 404:
+                                                Toast.message('error', 'File deleted');
+                                                break;
+                                            default:
+                                                Toast.message('error', 'File save error');
+                                        }
+                                        html.removeClass('wait');
+                                    }
+                                }
+                            });
+                        });
+                    }, 0);
+
+                } else {
+
+                    changeEnvironment(buttons.entry);
+
+                    addEvent(Selector.query('#project-buttons > div'), 'click', function() {
+                        var temp_input = document.createElement('input');
+
+                        temp_input.type = 'file';
+                        temp_input.multiple = 'multiple';
+                        temp_input.click();
+
+                        temp_input.onchange = function() {
+
+                            AJAX({
+                                url: '/upload' + self._serialize()
+                                , method: 'POST'
+                                , data: {
+                                    files: this.files
+                                }
+                                , events: {
+                                    wait: function() {
+                                        html.addClass('wait');
+                                    }
+                                    , success: function() {
+                                        Toast.message('success', 'File(-s) added');
+                                        setTimeout(function() {
+                                            location.reload();
+                                        }, 2 * 1000);
+                                    }
+                                    , error: function(text, xhr) {
+                                        Toast.message('error', 'File added error');
+                                        html.removeClass('wait');
+                                    }
+                                }
+                            });
+                        };
+                    });
+
+                    if ((message.data || {}).date) {
+                        this._elements.info.html(
+                            (this._templates.info || '')
+                                .replacePHs('key', 'Start date')
+                                .replacePHs('value', message.data.date)
+                        );
+                    }
+                    if (typeof ((message.data || {}).status) == "number") {
+                        this._elements.info.html(
+                            (this._templates.info || '')
+                                .replacePHs('key', 'exitcode')
+                                .replacePHs('value', message.data.status)
+                        );
+                    }
+
+                    createTable((this._templates.entry || ''), message);
+
                 }
-                if (typeof ((message.data || {}).status) == "number") {
-                    this._elements.table.html(
-                        (this._templates.entry || '')
-                            .replacePHs('class', 'two-columns exitcode')
-                            .replacePHs('item_name', 'exitcode: ' + message.data.status)
-                            .replacePHs('path_download', '', true));
-                }
-
-                createTable((this._templates.entry || ''), message, 'two-columns');
-
-            // cis.build.error.doesnt_exist
-            } else if (message.event == this._events.response.cis.build_doesnt_exist) {
-
-                changeEnvironment(buttons.entry);
-                this._toastOpen('warning', 'build not found');
-
-            // cis.entry.error.doesnt_exist
-            } else if (message.event == this._events.response.cis.entry_doesnt_exist) {
-
-                changeEnvironment(buttons.entry);
-                this._toastOpen('warning', 'entry not found');
 
             // cis.property.info.success
             } else if (message.event == this._events.response.cis.property) {
@@ -430,34 +554,51 @@ var Project = {
         // fs
         } else if ( ! message.event.indexOf('fs.')) {
 
+            // fs.entry.error.invalid_path
+            // fs.entry.error.doesnt_exist
+            // fs.entry.error.cant_create_dir
+            // fs.entry.error.cant_move
+            if ([
+                    this._events.response.fs.invalid_path
+                    , this._events.response.fs.doesnt_exist
+                    , this._events.response.fs.error_dir
+                    , this._events.response.fs.move_cant
+                ].inArray(message.event)) {
+
+                Toast.message('error', message.errorMessage);
+
             // fs.entry.list.success
-            if (message.event == this._events.response.fs.any_entries_list) {
-                //list_entries
+            } else if (message.event == this._events.response.fs.list) {
+
+                this._sendRequest(this._events.request.fs.refresh, { path: this._serialize() });
+
+            // fs.entry.refresh.success
+            } else if (message.event == this._events.response.fs.refresh) {
+
+                location.reload();
 
             // fs.entry.new_dir.success
             } else if (message.event == this._events.response.fs.new_dir) {
 
                 Hash.set(this._url);
                 this.sendDataServer();
-                this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
-                this._toastOpen('info', 'create success');
+                this._sendRequest(this._events.request.fs.refresh, { path: this._serialize() });
+                Toast.message('info', 'create success');
 
             // fs.entry.remove.success
             } else if (message.event == this._events.response.fs.remove) {
 
                 delete this._url[Object.keys(this._url).pop()];
                 Hash.set(this._url);
-                this._sendRequest(this._events.request.fs.entry_refresh, {path: this._serialize()});
-                this._toastOpen('info', 'remove success');
+                this._sendRequest(this._events.request.fs.refresh, { path: this._serialize() });
+                Toast.message('info', 'remove success');
 
-            // fs.entry.refresh.success
-            } else if (message.event == this._events.response.fs.entry_refresh) {
-                //refresh
+            // fs.entry.move.success
+            } else if (message.event == this._events.response.fs.move) {
 
-            // fs.entry.error.cant_create_dir
-            } else if (message.event == this._events.response.fs.error_dir) {
+                Hash.set(this._url);
+                this._sendRequest(this._events.request.fs.refresh, { path: this._serialize() });
 
-                this._toastOpen('error', 'Please enter a different name');
             }
 
         //unidentified message
@@ -479,11 +620,12 @@ var Project = {
      *                 @param {string} value - (Optional) Default value received from server
      *
      *         action = 'start' (Run job)
-     *         action = 'changeName
+     *         action = 'changeName'
      *         @param {string} params - Old name
      */
-
     , actionsJob: function(action, params) {
+
+        var self = this;
 
         if (action == 'init') {
 
@@ -513,7 +655,7 @@ var Project = {
                             , fields: fields_default
                         }
                         , button: {
-                            onclick: "Project.actionsJob('start')"
+                            onclick: "Project.actionsJob('start');"
                             , value: 'Start'
                         }
                     });
@@ -525,7 +667,30 @@ var Project = {
 
             if (new_name) {
 
-                //change_name
+                var obj = {
+                    oldPath: [
+                        ''
+                        , params
+                    ]
+                    , newPath: [
+                        ''
+                        , new_name
+                    ]
+                };
+
+                if ('project' in this._url) {
+                    Object.keys(obj)
+                        .forEach(function(key) {
+                            obj[key].splice(1, 0, self._url['project']);
+                        });
+                }
+
+                Object.keys(obj)
+                    .forEach(function(key) {
+                        obj[key] = obj[key].join('/');
+                    });
+
+                this._sendRequest(this._events.request.fs.move, obj);
 
                 this.formInputData('visible');
 
@@ -541,15 +706,15 @@ var Project = {
                             }]
                         }
                         , button: {
-                            onclick: "Project.actionsJob('changeName','" + params + "')"
-                            , value: 'Change (Don\'t work)'
+                            onclick: "Project.actionsJob('changeName', '" + params + "');"
+                            , value: 'Change'
                         }
                     });
             }
         }
     }
 
-//Build
+    //Build
     , actionsBuild: function(action, params) {
 
         if (action == 'addBuild') {
@@ -571,14 +736,14 @@ var Project = {
                         , type: "file"
                         , file: {
                             accept: params.accept
-                            , multiple: (params.name == 'file') ? true : false
-                            , webkitdirectory: (params.name == 'file') ? true : false
+                            , multiple: (params.name == 'file')
+                            , webkitdirectory: (params.name == 'file')
                         }
                         , fields: [{name: 'change ' + (params.accept || 'folder with') + ' file'}]
                     }
                     , button: {
-                        value: "Add (Don\'t work)"
-                        , onclick: "Project.actionsBuild('addBuild', {name: '" + params.name + "', accept: '" + params.accept +  "'})"
+                        value: "Add (Don't work)"
+                        , onclick: "Project.actionsBuild('addBuild', {name: '" + params.name + "', accept: '" + params.accept +  "'});"
                     }
                 });
 
@@ -591,7 +756,7 @@ var Project = {
                     }
                 };
 
-                var a = {
+                AJAX({
                     url: '/upload/' + this._url.serialize()
                     , method: 'POST'
                     , data: filename
@@ -605,11 +770,8 @@ var Project = {
                         , error: function(text, xhr) {}
                         , progress: function() {}
                     }
-                };
+                });
 
-                console.log('Look param for AJAX:');
-                console.log(a);
-                AJAX(a);
                 this.formInputData('visible');
             }
         }
@@ -627,7 +789,6 @@ var Project = {
      *         action = 'remove' (Remove folder)
      *         {bool} params   - Deletion confirmed
      */
-
     , actionsEntry: function(action, params) {
 
         if (action == 'createNewFolder') {
@@ -654,7 +815,7 @@ var Project = {
                             , fields: [{name: 'name of New ' + title_form}]
                         }
                         , button: {
-                            onclick: "Project.actionsEntry('createNewFolder', '" + title_form + "')"
+                            onclick: "Project.actionsEntry('createNewFolder', '" + title_form + "');"
                             , value: 'Add'
                         }
                     });
@@ -678,12 +839,13 @@ var Project = {
                             fields: [{name: 'Are you sure, that you want to delete file ' + this._serialize()}]
                         }
                         , button: {
-                            onclick: "Project.actionsEntry('remove', true)"
+                            onclick: "Project.actionsEntry('remove', true);"
                             , value: 'Remove'
                         }
                     });
                 this.formInputData('visible', {is_visible: true});
             }
+
         } else if (action == 'download') {
 
             // var url = this._serialize(Hash.get());
@@ -705,8 +867,7 @@ var Project = {
             // console.log(a);
 
         }
-
-}
+    }
 
     /**
      * Form
@@ -738,7 +899,6 @@ var Project = {
      *
      *         action = 'visible' (close form)
      */
-
     , formInputData: function(action, params) {
 
         var self = this;
@@ -772,8 +932,6 @@ var Project = {
             _elements.params.innerHTML = '';
             _elements.name.innerHTML = params.title_name || '';
 
-console.log('Look params.input:');
-console.log(params.input);
             var other_attributes = '';
             if ((params.input || {}).file) {
 
@@ -787,6 +945,7 @@ console.log(params.input);
                     other_attributes += ' webkitdirectory=true';
                 }
             }
+
             ((params.input || {}).fields || [{}])
                 .forEach(function(item) {
                     _elements.params.html(
@@ -820,22 +979,25 @@ console.log(params.input);
                 values
                     .forEach(function(item) {
 
-                        if (item.value.trim() == '') {
-                            self._toastOpen('warning', 'Please enter a value');
+                        if ( ! item.value.trim()) {
                             is_correct = false;
+                            Toast.message('warning', 'Please enter a value');
                         }
-                    })
+                    });
             }
+
             if ( ! (params || {}).is_encode) {
+
                 values
-                    .forEach(function (item) {
+                    .forEach(function(item) {
 
                         if (item.value != item.value.encode()) {
                             is_correct = false;
-                            self._toastOpen('warning', 'Please, enter value without \' \" & < >');
+                            Toast.message('warning', 'Please, enter value without \' \" & < >');
                         }
-                    })
+                    });
             }
+
             if ((values[0] || {}).type == 'file') {
                 return (values[0] || {}).files;
             }
@@ -876,30 +1038,12 @@ console.log(params.input);
             data: data || {}
         });
     }
-    , _toastOpen: function(type, message) {
 
-        var delay;
-        var is_close = false;
-
-        if (type == 'error' ||
-            type == 'warning') {
-            is_close = true;
-
-        } else {
-            delay = 2
-        }
-
-        Toast.open({
-            type: type
-            , text: message
-            , delay: delay
-            , button_close: is_close
-        });
-    }
-    , _serialize: function() {
+    , _serialize: function(params) {
         var self = this;
+
         // get the path of the form '/<project.name>/<job.name>/..'
-        return '/' + Object.keys(this._url)
+        return '/' + Object.keys(params || this._url)
             .map(function(item) {
                 return self._url[item];
             }).join('/');
