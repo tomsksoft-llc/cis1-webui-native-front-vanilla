@@ -1,12 +1,15 @@
 #auth {
-    width: 340px;
+    /*width: 340px;*/
+    width: 250px;
     border: 1px solid #a9a9a9;
-    line-height: 30px;
+    line-height: 20px;
+    /*line-height: 30px;*/
+    color: #7b7b7b;
     text-align: left;
     cursor: default;
 }
 #auth > h2 {
-    padding: 5px 20px;
+    padding: 10px 20px;
     border-bottom: 1px solid #a9a9a9;
     text-align: left;
 }
@@ -22,6 +25,9 @@
     margin: auto;
     padding: 20px;
 }
+#auth-form > div > span {
+    font-weight: 600;
+}
 #auth-sign-in > #auth-form > div > input {
     width: 100%;
     margin-bottom: 5px;
@@ -29,6 +35,7 @@
 #auth-sign-in > .custom-button,
 #auth-sign-out > .custom-button {
     width: 100%;
+    min-width: 210px;
     margin: 5px 0;
 }
 #auth-sign-out {
@@ -38,4 +45,11 @@
 #auth-checkbox > label,
 #auth-remember {
     cursor: pointer;
+}
+#auth-checkbox > label:hover,
+#auth-sign-in > a:hover {
+    color: #41b7ef;
+}
+#auth-sign-in > a {
+    color: #7b7b7b;
 }

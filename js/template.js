@@ -34,8 +34,7 @@ addEvent(document, 'ready', function() {
 
     // JS
     [
-        '/js/config.js'
-        , '/js/socket.js'
+
     ].addToHead('js');
 
     [].slice.call(document.scripts)
@@ -67,11 +66,11 @@ addEvent(document, 'ready', function() {
                     , success: function(data) {
                         html.removeClass('wait');
 
-                        item.html(data);
+                        item.innerHTML = data;
 
                         ([
                             '/js/pages/' + attr + '.js'
-                        ]).addToHead('js', (attr.capitalize() + '.init();'));
+                        ]).addToHead('js', (attr.capitalize() + '.init(); Socket.addTypes(' + attr.capitalize() + ', ' + attr.capitalize() + '._messages);'));
                     }
                     , error: function() {
                         html.removeClass('wait');
@@ -84,10 +83,13 @@ addEvent(document, 'ready', function() {
 addEvent(window, 'load', function() {
 
     Socket.init({
-        host: config.webSockHost
+        host: Config.socket.host
         , token: 1
         , debug: 0
     });
+
+    User.init();
+    Socket.addTypes(User, User._messages);
 
     Socket.open(function() { body.removeClass('spinner'); });
 
@@ -113,12 +115,200 @@ var Page = {
 };
 
 var Spiner = {
+
     add: function () {
         body.addClass('spinner');
     }
 
     , remove: function () {
         body.removeClass('spinner');
+    }
+};
+
+var User = {
+
+    _events: {
+        permissions: {
+            error_denied: 'user.permissions.error.access_denied'
+            , error_invalid: 'user.permissions.error.invalid_permissions'
+        }
+    }
+
+    , _messages: [
+        'user'
+    ]
+
+    , init: function() {
+
+        // not required
+
+    }
+
+    , onmessage: function(message) {
+
+        if ([
+                this._events.permissions.error_denied
+                , this._events.permissions.error_invalid
+            ].inArray(message.event)) {
+
+            Toast.message('warning', message.errorMessage);
+        }
+    }
+};
+
+var Config = {
+    // webSockHost: 'ws://10.0.150.236:8080/ws'
+    socket: {
+        host: 'ws://cis.tomsksoft:8080/ws'
+    }
+    , modules: {
+        // Each module add our message types
+    }
+};
+
+var Socket = {
+
+    data: {}
+    , ws: null
+    , opened: false
+    , _events: []
+    , _messages: {}
+
+    , init: function(data) {
+        this.data = data || {};
+    }
+
+    , open: function(callback) {
+
+        var self = this;
+
+        if (this.ws) {
+            console.info('Error: WebSoket has already opened');
+            return;
+        }
+
+        if ( ! this.data.host) {
+            console.warn('Error: Host URL is undefined');
+            return;
+        }
+
+        this.ws = (typeof MozWebSocket == 'function' ? new MozWebSocket(this.data.host) : new WebSocket(this.data.host));
+
+        this.ws.onopen = function() {
+
+            console.info([
+                'WS opened, params:'
+                , 'url: ' + self.data.host
+                , 'token: ' + self.data.token
+                , 'debug: ' + self.data.debug
+            ].join('\n    '));
+
+            self.opened = true;
+
+            while(self._events.length) {
+                self.send(self._events.shift());
+            }
+
+            if (typeof callback == 'function') {
+                callback();
+            }
+        };
+
+        this.ws.onmessage = function(message) {
+
+            try {
+                message = JSON.parse(message.data);
+            } catch(e) {
+                return;
+            }
+
+            if (message.type === 100) {
+
+                self.send({
+                    type: 101
+                    , data: {
+                        connectionCookie:  message.data.connectionCookie
+                        , session: self.data.session
+                        , joinCookie: self.data.cookie
+                        , protocolVersion: self.data.version
+                    }
+                });
+
+            } else {
+
+                // console.log(message);
+
+                var type = message.event.split('.')[0];
+
+                if (Config.modules[type]) {
+                    Config.modules[type].onmessage(message);
+                } else {
+                    if ( ! self._messages[type]) {
+                        self._messages[type] = [];
+                    }
+                    self._messages[type].push(message);
+                }
+            }
+
+            Spiner.remove();
+        };
+
+        this.ws.onerror = function(error) {
+            console.warn('WebSocket Client Error: ' + error.message);
+        };
+
+        this.ws.onclose = function(event) {
+            if (event.wasClean) {
+                console.log('Connection for Client was closed cleanly');
+            } else {
+                // Modal.open({ type: 'reconnect' });
+                console.log('Unexpected disconnect for client');
+            }
+            console.log('Code: ' + event.code + ' reason: ' + event.reason);
+
+            self.ws = null;
+        };
+    }
+
+    , addTypes: function(value, types) {
+
+        var self = this;
+
+        types
+            .forEach(function(type) {
+                Config.modules[type] = value;
+
+                while((self._messages[type] || []).length) {
+                    Config.modules[type].onmessage(self._messages[type].shift());
+                }
+            });
+    }
+
+    , send: function(obj) {
+        Spiner.add();
+
+        // console.log(obj);
+
+        if ( ! this.ws ||
+            ! this.opened ||
+            this.ws.readyState == this.ws.CLOSED ||
+            this.ws.readyState == this.ws.CLOSING) {
+
+            this._events.push(obj);
+            return false;
+        }
+        this.ws.send(JSON.stringify(obj));
+
+        return true;
+    }
+
+    , reconnect: function() {
+
+    }
+
+    , close: function() {
+        this.ws.close();
+        this.opened = false;
     }
 };
 
@@ -248,6 +438,28 @@ var Toast = {
             self._element.wrapper.addClass('show');
 
         }, delay * 1000);
+    }
+
+    , message: function(type, message) {
+
+        var delay = 0;
+        var is_close = false;
+
+        if (type == 'error' ||
+                type == 'warning') {
+
+            is_close = true;
+
+        } else {
+            delay = 2;
+        }
+
+        this.open({
+            type: type
+            , text: message.encode()
+            , delay: delay
+            , button_close: is_close
+        });
     }
 
     , close: function(delay) {

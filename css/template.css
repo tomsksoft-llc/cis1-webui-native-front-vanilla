@@ -7,7 +7,8 @@ body {
     margin: 0;
     padding: 0;
 }
-html.wait {
+html.wait,
+html.wait * {
     cursor: wait !important;
 }
 body {

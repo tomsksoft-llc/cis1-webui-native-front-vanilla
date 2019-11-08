@@ -1,8 +1,6 @@
 /**
  * Authenticate
  *
- * @param {boolean} logged - user logged in
- *
  * Methods:
  *  init            - Variable initialization
  *  signInByLogPass - Sign in by login and password
@@ -20,8 +18,7 @@
 
 var Auth = {
 
-    logged: false
-    , _elements: {
+    _elements: {
         auth: null
         , username: null
         , pass: null
@@ -31,76 +28,69 @@ var Auth = {
         auth_token: null
         , username: null
     }
+    , _events: {
+        request: {
+            sign_in_token:  'auth.token'
+            , sign_in_log:  'auth.login_pass'
+            , sign_out:     'auth.logout'
+        }
+        , response: {
+            sign_in:    'auth.login_pass.success'
+            , error:    'auth.error.wrong_credentials'
+            , sign_out: 'auth.logout.success'
+        }
+    }
 
-    , init: function () {
+    , _messages: [
+        'auth'
+    ]
+
+    , init: function() {
 
         for (var key in this._elements) {
-            this._elements[key] = (key == 'auth' ? Selector.id(key) : Selector.id('auth-' + key));
+            this._elements[key] = Selector.id(((key == 'auth') ? '' : 'auth-') + key);
         }
-        for (var key in this._cookie){
+        for (var key in this._cookie) {
             this._cookie[key] = decodeURIComponent(Cookie.get(key));
         }
 
-        Socket.send({
-            event: 'auth.token'
-            , transactionId: (new Date()).getTime()
-            , data: {
-                token: this._cookie.auth_token
-            }
-        });
+        this._sendRequest(this._events.request.sign_in_token, { token: this._cookie.auth_token });
     }
 
     , signInByLogPass: function() {
 
         if ( ! this._elements.username.value) {
-            Toast.open({
-                type: 'info'
-                , text: 'Please enter your login'
-                , button_close: true
-            });
+
+            Toast.message('warning', 'Please enter your login');
             return;
         }
         if ( ! this._elements.pass.value) {
-            Toast.open({
-                type: 'info'
-                , text: 'Please enter your password'
-                , button_close: true
-            });
+
+            Toast.message('warning', 'Please enter your password');
             return;
         }
 
-        Socket.send({
-            event: 'auth.login_pass'
-            , transactionId: (new Date()).getTime()
-            , data: {
-                username: this._elements.username.value
-                , pass: this._elements.pass.value
-            }
+        this._sendRequest(this._events.request.sign_in_log, {
+            username: this._elements.username.value
+            , pass: this._elements.pass.value
         });
     }
 
     , signOut: function() {
 
-        Socket.send({
-            event: 'auth.logout'
-            , transactionId: (new Date()).getTime()
-            , data: {
-                token: this._cookie.auth_token
-            }
-        });
+        this._sendRequest(this._events.request.sign_out, { token: this._cookie.auth_token });
     }
 
     , onmessage: function(message) {
 
         message = message || {event: ''};
 
-        if (message.event == 'auth.success') {
+        if (message.event == this._events.response.sign_in) {
 
             this._cookie.auth_token = (message.data || {}).token || '';
-            this.logged = true;
 
-            // to log/pass
             if (this._elements.username.value) {
+
                 this._cookie.username = this._elements.username.value;
                 if (this._elements.remember.checked) {
                     for (var key in this._cookie) {
@@ -110,29 +100,19 @@ var Auth = {
             }
 
             Selector.query('#auth-sign-out > span').innerHTML = 'Logged in as ' + this._cookie.username;
-            Toast.open({
-                type: 'success'
-                , text: 'authentication was successful'
-                , delay: 2
-            });
-
+            Toast.message('success', 'authentication was successful');
             this._elements.auth.className = 'sign-out';
 
-        } else if (message.event == 'auth.error.wrong_credentials') {
+        } else if (message.event == this._events.response.error) {
 
             if (this._elements.username.value) {
-                Toast.open({
-                    type: 'error'
-                    , text: 'wrong login or password'
-                    , button_close: true
-                });
+                Toast.message('error', 'wrong login or password');
             }
 
             this._elements.auth.className = 'sign-in';
 
-        } else if (message.event == 'auth.logout_success') {
+        } else if (message.event == this._events.response.sign_out) {
 
-            this.logged = false;
             for (var key in this._cookie) {
                 Cookie.delete(key);
             }
@@ -141,11 +121,20 @@ var Auth = {
 
         } else {
 
-            Toast.open({
-                type: 'error'
-                , text: 'Unexpected message was found'
-                , button_close: true
-            });
+            console.warn('not processed message');
         }
+    }
+
+    , _sendRequest: function(event, data) {
+
+        if ( ! event) {
+            return;
+        }
+
+        Socket.send({
+            event: event
+            , transactionId: (new Date()).getTime()
+            , data: data || {}
+        });
     }
 };

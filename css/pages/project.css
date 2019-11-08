@@ -119,31 +119,48 @@
     font-size: 0;
     text-align: center;
 }
+#project-table > div {
+    position: relative;
+    height: 60px;
+}
+#project-table > div.file-row {
+    height: auto;
+}
 #project-table > div > div {
+    position: absolute;
     display: inline-block;
+    width: 100%;
+    top: 0;
+    left: 0;
     padding: 0;
     font-size: 14px;
 }
-#project-table > div.one-columns > div,
-#project-table > div > div.one-columns {
-    width: 100%;
+#project-table > div.file-row > div.file-cell {
+    position: static;
+    background-color: #fff;
+    cursor: default;
 }
-#project-table > div.two-columns > div,
-#project-table > div > div.two-columns {
+#project-table > div > div:nth-child(1):nth-last-child(2),
+#project-table > div > div:nth-child(2):nth-last-child(1) {
     width: 50%;
 }
-#project-table > div.tree-columns > div,
-#project-table > div > div.tree-columns {
-    width: 33.3%;
-}
-#project-table > div > div.two-one-columns {
-    width: 66.6%;
-}
-#project-table > div > div:last-child {
+#project-table > div > div:nth-child(2):nth-last-child(1) {
+    left: 50%;
     text-align: right;
 }
-#project-table > div > div:first-child {
-    text-align: left;
+#project-table > div > div:nth-child(1):nth-last-child(3),
+#project-table > div > div:nth-child(2):nth-last-child(2),
+#project-table > div > div:nth-child(3):nth-last-child(1) {
+    width: 33.33%;
+}
+#project-table > div > div:nth-child(2):nth-last-child(2) {
+    width: 66.66%;
+    left: 33.33%;
+}
+#project-table > div > div:nth-child(3):nth-last-child(1) {
+    width: 33.33%;
+    left: 66.66%;
+    text-align: right;
 }
 #project-table > div > div > a,
 #project-table > div > div > span {
@@ -152,16 +169,48 @@
     padding: 15px;
     color: #54ccf3;
 }
-#project-table > div.exitcode > div:first-child > a {
-    color: #7b7b7b;
-}
 #project-table > div:hover > div > span,
-#project-table > div:hover > div > a,
-#project-table > div.exitcode:hover > div > a {
+#project-table > div:hover > div > a {
     color: #ffffff;
 }
-#project-table > div > div.template-build-td {
+#project-table > div > div:hover > span,
+#project-table > div > div:hover > a {
+    text-decoration: underline;
+}
+#project-table > div > div.hidden {
     display: none;
+}
+#project-table > div.file-row > div.file-cell {
+    padding: 15px;
+    box-sizing: border-box;
+}
+#project-table > div.file-row > div.file-cell > textarea {
+    min-height: 260px;
+    width: 100%;
+    padding: 6px 12px;
+    border: 1px solid #ccd0d2;
+    box-sizing: border-box;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #555;
+    line-height: 22px;
+    resize: vertical;
+    background-color: #eee;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+}
+#project-table > div.file-row > div.file-cell > .custom-button {
+    width: 100%;
+    padding-top: 0;
+    padding-bottom: 0;
+    color: #fff;
+    text-decoration: none;
+}
+#project-table > div.file-row > div.file-cell > [data-disabled="disabled"].custom-button {
+    background-color: #eee;
+    cursor: not-allowed;
+}
+#project-table > div.file-row > div.file-cell > .custom-button + .custom-button {
+    margin-top: 6px;
 }
 /* End table*/
 
@@ -172,7 +221,6 @@
     height: 100%;
     width: 100%;
     top: 0;
-    left: 0;
     padding-top: 100px;
     background: rgba(255, 255, 255, .5);
 }
@@ -180,7 +228,7 @@
     display: block;
 }
 #project-form > div {
-    min-width: 400px;
+    min-width: 350px;
     max-width: 450px;
     top: 100px;
     margin-left: auto;
@@ -222,17 +270,21 @@
     padding: 20px;
 }
 #project-form-params > div {
-    text-align: right;
+    text-align: left;
 }
 #project-form-params > div > span {
+    display: block;
     font-weight: 900;
 }
 #project-form-params > div > input {
-    width: 230px;
+    width: 100%;
     margin: 0 0 5px 5px;
 }
 input.form-project-list {
     display: none;
+}
+#project-form-params > div > input[type="file"] {
+    display: inline-block;
 }
 #project-form-button > .project-button {
     width: 100%;
