@@ -2,16 +2,14 @@
  * Project, job, file-system
  *
  * Methods:
- * actionsJob     - Methods that are used when clicking buttons of job
- * actionsEntry   - Methods that are used when clicking buttons of entry
- * formInputData  - Methods that are used to work with the data filling form
- * sendDataServer - Methods that are used to move from one table to another
+ * action   - Methods that are used when clicking buttons of entry
+ * send     - Methods that are used to move from one table to another
  *     @param {string} path - (Optional) Parameter containing url
  *                                   Line of the form 'project=[name project]&job=[name job]...'
  *
- * init           - Variable initialization
+ * init     - Variable initialization
  *
- * onmessage      - Behavior on response from server
+ * onmessage    - Behavior on response from server
  *     @param {object} message - Text of response text of response from server
  *         @param {string} event - Success of action
  *                          Variant 'cis.project_list.get.success' (success get projects list) ||
@@ -131,10 +129,10 @@ var Project = {
                     )] = item.innerHTML.trim();
             });
 
-        this.sendDataServer();
+        this.send();
     }
 
-    , sendDataServer: function() {
+    , send: function() {
 
         this._url = Hash.get();
 
@@ -215,6 +213,7 @@ var Project = {
                 .forEach(function(item) {
                     self._elements.table.html(
                         (template || '')
+                            .replacePHs('rename_event', ("Project.modal('rename', { value: '%%item_name%%' })"), true)
                             .replacePHs('url', self._url.serialize(), true)
                             .replacePHs('item_name', (item.name || ''), true)
                             .replacePHs('path_download', (item.link || ''), true));
@@ -225,45 +224,45 @@ var Project = {
             project: [
                 {
                     name: 'New project'
-                    , onclick: "Project.actionsEntry('createNewFolder', 'project');"
+                    , onclick: "Project.modal('addDir', {type: 'project'});"
                 }
             ]
             , job: [
                 {
                     name: 'New dir'
-                    , onclick: "Project.actionsEntry('createNewFolder', 'job');"
+                    , onclick: "Project.modal('addDir', {type: 'job'});"
                 }
                 , {
                     name: 'Remove project'
-                    , onclick: "Project.actionsEntry('remove');"
+                    , onclick: "Project.modal('remove');"
                 }
                 , {
                     name: 'New job'
-                    , onclick: ''
+                    , onclick: "Project.modal('addJob', {type: 'job'});"
                 }
             ]
             , build: [
                 {
                     name: 'Start'
-                    , onclick: "Project.actionsJob('start');"
+                    , onclick: "Project.modal('startJob');"
                 }
                 , {
-                    name: 'Add file'
-                    , onclick: "Project.actionsBuild('addBuild', {name: 'file'});"
+                    name: 'Add file(-s)'
+                    , onclick: "Project.modal('addFile', {name: 'file'});"
                 }
                 , {
                     name: 'Add params'
-                    , onclick: "Project.actionsBuild('addBuild', {name: 'params', accept: '.params'});"
+                    , onclick: "Project.modal('addFile', {name: 'params', accept: '.params'});"
                 }
                 , {
                     name: 'Add readme'
-                    , onclick: "Project.actionsBuild('addBuild', {name: 'readme', accept: '.md, .txt'});"
+                    , onclick: "Project.modal('addFile', {name: 'readme', accept: '.md, .txt'});"
                 }
             ]
             , entry: [
                 {
                     name: 'Add file(-s)'
-                    , onclick: "Project.actionsBuild('addFile');"
+                    , onclick: "Project.modal('addFile', {name: 'file'});"
                 }
             ]
             , file: [
@@ -365,7 +364,7 @@ var Project = {
                 }
 
                 this._elements.header.className = 'project-list';
-                this.actionsJob('init', (message.data || {}).params);
+                Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(((message.data || {}).params || []))));
 
             // cis.job.run.success
             } else if (message.event == this._events.response.cis.job_run) {
@@ -417,9 +416,6 @@ var Project = {
                             };
                         });
 
-                        var url = item_file.link;
-                        var params = {};
-
                         AJAX({
                             url: item_file.link
                             , method: 'GET'
@@ -453,7 +449,7 @@ var Project = {
                                 return;
                             }
 
-                            var link = self._url;
+                            var link = JSON.parse(JSON.stringify(self._url));
                             delete link.file;
 
                             AJAX({
@@ -490,40 +486,6 @@ var Project = {
                 } else {
 
                     changeEnvironment(buttons.entry);
-
-                    addEvent(Selector.query('#project-buttons > div'), 'click', function() {
-                        var temp_input = document.createElement('input');
-
-                        temp_input.type = 'file';
-                        temp_input.multiple = 'multiple';
-                        temp_input.click();
-
-                        temp_input.onchange = function() {
-
-                            AJAX({
-                                url: '/upload' + self._serialize()
-                                , method: 'POST'
-                                , data: {
-                                    files: this.files
-                                }
-                                , events: {
-                                    wait: function() {
-                                        html.addClass('wait');
-                                    }
-                                    , success: function() {
-                                        Toast.message('success', 'File(-s) added');
-                                        setTimeout(function() {
-                                            location.reload();
-                                        }, 2 * 1000);
-                                    }
-                                    , error: function(text, xhr) {
-                                        Toast.message('error', 'File added error');
-                                        html.removeClass('wait');
-                                    }
-                                }
-                            });
-                        };
-                    });
 
                     if ((message.data || {}).date) {
                         this._elements.info.html(
@@ -581,8 +543,8 @@ var Project = {
             } else if (message.event == this._events.response.fs.new_dir) {
 
                 Hash.set(this._url);
-                this.sendDataServer();
-                this._sendRequest(this._events.request.fs.refresh, { path: this._serialize() });
+                this.send();
+                // this._sendRequest(this._events.request.fs.refresh, { path: this._serialize() });
                 Toast.message('info', 'create success');
 
             // fs.entry.remove.success
@@ -778,7 +740,7 @@ var Project = {
     }
 
     /**
-     *  Entry
+     *  Modal
      *
      * @param {string} action - Key to action selection
      * @param params          - (Optional)Parameter for actions
@@ -789,64 +751,335 @@ var Project = {
      *         action = 'remove' (Remove folder)
      *         {bool} params   - Deletion confirmed
      */
-    , actionsEntry: function(action, params) {
+    , modal: function(action, params) {
 
-        if (action == 'createNewFolder') {
+        if ( ! this._modal) {
+            this._modal = {
+                params: null
+                , name: null
+                , form: null
+                , button: null
+            };
 
-            var title_form = '';
-            if (params) {
-                title_form = params;
-            } else {
-                return;
+            for (var key in this._modal) {
+                this._modal[key] = Selector.id('project-form' + ((key == 'form') ?  '' : ('-' + key)));
             }
-            var name_folder =((this.formInputData('get', {is_required: true}) || [])[0] || {}).value || '';
+        }
 
-            if (name_folder) {
+        if (action == 'close') {
+            this._modal.form.className = '';
+            this._modal.params.innerHTML = '';
+            return;
+        }
 
-                this._sendRequest(this._events.request.fs.new_dir, {path: this._serialize() + '/' + name_folder});
-                this.formInputData('visible');
+        var self = this;
 
-            } else {
-                this.formInputData('init',
+        /**
+         *  @param {string} title   - (Optional) Name of form
+         *  @param {array} fields   - (Optional) Array with obj param
+         *      @param {obj}
+         *          @param {string} type    - (Optional) Field type
+         *          @param {string} name    - (Optional) Field name
+         *          @param {string} value   - (Optional) Field value
+         *          @param {obj} file       - (Optional) Object with attributes
+         *              @param {string} accept  - (Optional) Attribute
+         *              @param {bool} multiple  - (Optional) Attribute
+         *  @param {string} button   - (Optional) Text on buttons
+         */
+        function createModal(params) {
+            params = params || {};
+            self._modal.params.innerHTML = '';
+            self._modal.name.innerHTML = params.title || '';
+
+            (params.fields || [{}])
+                .forEach(function(item) {
+
+                    if (item.type == 'file') {
+
+                        self._modal.params.html(
+                            (self._templates.form_upload || '')
+                                .replacePHs('name', (item.name || ''), true)
+                                .replacePHs('type', (item.type || 'text'))
+                                .replacePHs('attributes', (function() {
+                                    var attributes = [];
+
+                                    if (item.file) {
+                                        if ('accept' in item.file) {
+                                            attributes.push('accept="' + item.file.accept + '"');
+                                        }
+                                        if ('multiple' in item.file) {
+                                            attributes.push('multiple="' + (item.file.multiple).toString() + '"');
+                                        }
+                                    }
+
+                                    return attributes.join(' ');
+                                })())
+                        );
+
+                    } else {
+
+                        self._modal.params.html(
+                            (self._templates.form_field || '')
+                                .replacePHs('name', (item.name || ''), true)
+                                .replacePHs('class', (item.class || ''), true)
+                                .replacePHs('type', (item.type || 'text'))
+                                .replacePHs('value', (item.value || ''), true)
+                        );
+
+                    }
+                });
+
+            self._modal.button.html(
+                (self._templates.button || '')
+                    .replacePHs('name', (params.button || ''))
+                , true);
+
+            self._modal.form.className = 'show-modal';
+        }
+
+        if (action == 'addDir') {
+
+            createModal({
+                title: 'New ' + params.type
+                , fields: [
                     {
-                        title_name: 'New ' + title_form
-                        , input: {
-                            is_input: true
-                            , fields: [{name: 'name of New ' + title_form}]
-                        }
-                        , button: {
-                            onclick: "Project.actionsEntry('createNewFolder', '" + title_form + "');"
-                            , value: 'Add'
-                        }
+                        name: 'name of New ' + params.type
+                    }
+                ]
+                , button: 'Add'
+            });
+
+            addEvent(this._modal.button.querySelector('div'), 'click', function() {
+                var value = self._modal.params.querySelector('input').value;
+
+                if (value) {
+                    self._sendRequest(self._events.request.fs.new_dir, {
+                        path: self._serialize() + '/' + value
                     });
-            }
+                    self.modal('close');
+                } else {
+                    Toast.message('error', 'Name must be not empty');
+                }
+            });
 
         } else if (action == 'remove') {
 
-            var is_remove = params || false;
-
-            if (is_remove) {
-
-                this._sendRequest(this._events.request.fs.remove, {path: this._serialize()});
-                this.formInputData('visible');
-
-            } else {
-
-                this.formInputData('init',
+            createModal({
+                title: 'Remove'
+                , fields: [
                     {
-                        title_name: 'Remove'
-                        , input: {
-                            fields: [{name: 'Are you sure, that you want to delete file ' + this._serialize()}]
-                        }
-                        , button: {
-                            onclick: "Project.actionsEntry('remove', true);"
-                            , value: 'Remove'
-                        }
+                        name: 'Are you sure, that you want to delete path ' + self._serialize()
+                        , class: 'hidden'
+                    }
+                ]
+                , button: 'Remove'
+            });
+
+            addEvent(this._modal.button.querySelector('div'), 'click', function() {
+                self._sendRequest(self._events.request.fs.remove, {
+                    path: self._serialize()
+                });
+            });
+
+        } else if (action == 'rename') {
+
+            createModal({
+                title: 'Change name'
+                , fields: [
+                    {
+                        name: 'New name:'
+                        , value: params.value
+                    }
+                ]
+                , button: 'Change'
+            });
+
+            addEvent(this._modal.button.querySelector('div'), 'click', function() {
+                var value = self._modal.params.querySelector('input').value;
+
+                if (value) {
+                    var obj = {
+                        oldPath: [
+                            ''
+                            , params.value
+                        ]
+                        , newPath: [
+                            ''
+                            , value
+                        ]
+                    };
+
+                    if ('project' in self._url) {
+                        Object.keys(obj)
+                            .forEach(function(key) {
+                                obj[key].splice(1, 0, self._url['project']);
+                            });
+                    }
+
+                    Object.keys(obj)
+                        .forEach(function(key) {
+                            obj[key] = obj[key].join('/');
+                        });
+
+                    self._sendRequest(self._events.request.fs.move, obj);
+                    self.modal('close');
+                } else {
+                    Toast.message('error', 'Name must be not empty');
+                }
+            });
+
+        } else if (action == 'addJob') {
+
+            createModal({
+                title: 'New ' + params.type
+                , fields: [
+                    {
+                        name: 'name of New ' + params.type
+                    }
+                ]
+                , button: 'Add ' + params.type
+            });
+
+            addEvent(this._modal.button.querySelector('div'), 'click', function() {
+                var value = self._modal.params.querySelector('input').value;
+
+                if (value) {
+                    self._sendRequest(self._events.request.fs.new_dir, {
+                        path: self._serialize() + '/' + value
                     });
-                this.formInputData('visible', {is_visible: true});
+                    self.modal('close');
+                } else {
+                    Toast.message('error', 'Name must be not empty');
+                }
+            });
+
+        } else if (action == 'startJob') {
+
+            var fields = JSON.parse(decodeURIComponent(Cookie.get('param_start_job') || '%5B%5D'));
+
+            createModal({
+                title: 'Set params'
+                , fields: fields
+                , button: 'Start'
+            });
+
+            addEvent(this._modal.button.querySelector('div'), 'click', function() {
+                Selector.queryAll('#project-form-params input')
+                    .forEach(function(input, key) {
+                        fields[key].value = input.value.trim();
+                    });
+
+                // Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(fields || [])));
+
+                self._sendRequest(self._events.request.cis.job_run, {
+                    project: self._url.project,
+                    job: self._url.job,
+                    params: fields
+                });
+                self.modal('close');
+            });
+
+        } else if (action == 'addFile') {
+
+            createModal((function() {
+                var obj = {
+                    title: 'Upload ' + params.name + '(-s)'
+                    , fields: [
+                        {
+                            type: 'file'
+                            , file: {
+                                multiple: true
+                            }
+                            , name: 'Select ' + params.name + '(-s)'
+                        }
+                    ]
+                    , button: 'Upload'
+                };
+
+                if (params.accept) {
+                    obj.fields[0].file.accept = params.accept;
+                }
+
+                return obj;
+            })());
+
+            function disableButton(param) {
+                if (param) {
+                    self._modal.button.querySelector('div').setAttribute('data-disabled', 'disabled');
+                } else {
+                    self._modal.button.querySelector('div').setAttribute('data-disabled', '');
+                }
             }
 
-        } else if (action == 'download') {
+            addEvent(this._modal.params.querySelector('input[type="file"]'), 'change', function() {
+                if ( ! this.files.length) {
+                    disableButton(true);
+                    return;
+                }
+
+                Selector.id('project-form-upload').innerHTML = '';
+
+                [].slice.call(this.files)
+                    .forEach(function(file, key) {
+                        if ( ! key) {
+                            Selector.id('project-form-upload').html(
+                                (self._templates.form_upload_item || '')
+                                    .replacePHs('name', 'Name')
+                                    .replacePHs('type', 'Type')
+                                    .replacePHs('size', 'Size')
+                            );
+                        }
+                        Selector.id('project-form-upload').html(
+                            (self._templates.form_upload_item || '')
+                                .replacePHs('name', file.name)
+                                .replacePHs('type', (file.type || '-'))
+                                .replacePHs('size', fileSize(file.size))
+                        );
+                    });
+
+                disableButton(false);
+            });
+
+            disableButton(true);
+
+            addEvent(this._modal.button.querySelector('div'), 'click', function() {
+                if (this.getAttribute('data-disabled') == 'disabled') {
+                    Toast.message('warning', 'Select file(-s) first please');
+                    return;
+                }
+
+                AJAX({
+                    url: '/upload' + self._serialize()
+                    , method: 'POST'
+                    , data: {
+                        files: self._modal.params.querySelector('input[type="file"]').files
+                    }
+                    , events: {
+                        wait: function() {
+                            html.addClass('wait');
+                        }
+                        , success: function() {
+                            Toast.message('success', 'File(-s) added success');
+                            setTimeout(function() {
+                                location.reload();
+                            }, 2 * 1000);
+                        }
+                        , error: function(text, xhr) {
+                            Toast.message('error', 'File(-s) added error');
+                            html.removeClass('wait');
+                        }
+                    }
+                });
+
+                self.modal('close');
+            });
+
+        }
+
+
+
+
+        // } else if (action == 'download') {
 
             // var url = this._serialize(Hash.get());
             //
@@ -866,7 +1099,7 @@ var Project = {
             // };
             // console.log(a);
 
-        }
+        // }
     }
 
     /**
@@ -932,17 +1165,14 @@ var Project = {
             _elements.params.innerHTML = '';
             _elements.name.innerHTML = params.title_name || '';
 
-            var other_attributes = '';
+            var other_attributes = [];
             if ((params.input || {}).file) {
 
                 if (params.input.file.accept) {
-                    other_attributes += ' accept="' + params.input.file.accept + '"'
+                    other_attributes.push('accept="' + params.input.file.accept + '"');
                 }
                 if (params.input.file.multiple) {
-                    other_attributes += ' multiple=true';
-                }
-                if (params.input.file.webkitdirectory) {
-                    other_attributes += ' webkitdirectory=true';
+                    other_attributes.push('multiple=true');
                 }
             }
 
@@ -954,7 +1184,8 @@ var Project = {
                             .replacePHs('param_value', (item.value || ''), true)
                             .replacePHs('type_input', (params.input.type || 'text'))
                             .replacePHs('class_input', ((params.input.is_input || item.value) ? '' : 'form-project-list'))
-                            .replacePHs('other_attributes', other_attributes))
+                            .replacePHs('other_attributes', other_attributes.join(' '))
+                    );
                 });
 
             _elements.button.html(
@@ -1052,6 +1283,6 @@ var Project = {
 
 addEventListener("popstate",function(e) {
     // if (window.location.href.indexOf('download') == -1) {
-        Project.sendDataServer();
+        Project.send();
     // }
 });

@@ -236,7 +236,7 @@ var Socket = {
 
             } else {
 
-                // console.log(message);
+                console.log(message);
 
                 var type = message.event.split('.')[0];
 
@@ -278,7 +278,7 @@ var Socket = {
             .forEach(function(type) {
                 Config.modules[type] = value;
 
-                while((self._messages[type] || []).length) {
+                while ((self._messages[type] || []).length) {
                     Config.modules[type].onmessage(self._messages[type].shift());
                 }
             });
@@ -287,7 +287,7 @@ var Socket = {
     , send: function(obj) {
         Spiner.add();
 
-        // console.log(obj);
+        console.log(obj);
 
         if ( ! this.ws ||
             ! this.opened ||
@@ -542,3 +542,8 @@ var Modal = {
         html.removeClass('modal-show');
     }
 };
+
+function fileSize(size) {
+    var i = Math.floor(Math.log(size) / Math.log(1024));
+    return (size / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
+}

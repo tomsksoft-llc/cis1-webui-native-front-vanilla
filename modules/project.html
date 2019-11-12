@@ -18,7 +18,7 @@
     <div>
         <div id="project-form-header">
             <div id="project-form-name"></div>
-            <div id="project-form-close" onclick="Project.formInputData('visible');"></div>
+            <div id="project-form-close" onclick="Project.modal('close');"></div>
         </div>
         <div id="project-form-data">
             <div id="project-form-params"></div>
@@ -29,7 +29,7 @@
 
 <!--template for button-->
 <script type="text/html" id="template-project-button">
-    <div class="custom-button blue-button project-button" onclick="%%onclick%%">%%name%%</div>
+    <div class="custom-button blue-button" onclick="%%onclick%%">%%name%%</div>
 </script>
 
 <!--template main info-->
@@ -48,7 +48,7 @@
         <div>
             <a href="#project=%%item_name%%">%%item_name%%</a>
         </div>
-        <div onclick="Project.actionsJob('changeName', '%%item_name%%')"><span>Change name</span></div>
+        <div onclick="%%rename_event%%"><span>Change name</span></div>
     </div>
 </script>
 
@@ -57,7 +57,7 @@
         <div>
             <a href="#%%url%%&job=%%item_name%%">%%item_name%%</a>
         </div>
-        <div onclick="Project.actionsJob('changeName', '%%item_name%%')"><span>Change name</span></div>
+        <div onclick="%%rename_event%%"><span>Change name</span></div>
     </div>
 </script>
 
@@ -97,9 +97,27 @@
 </script>
 
 <!--template for param-->
-<script type="text/html" id="template-project-form-params">
+<script type="text/html" id="template-project-form-upload">
     <div>
-        <span>%%param_name%%</span>
-        <input class="custom-input %%class_input%%" type="%%type_input%%" value="%%param_value%%" %%other_attributes%%>
+        <label>
+            <span class="custom-button blue-button">%%name%%</span>
+            <input class="custom-input" type="%%type%%" %%attributes%%>
+        </label>
+    </div>
+    <div id="project-form-upload"></div>
+</script>
+
+<script type="text/html" id="template-project-form-upload-item">
+    <div>
+        <div>%%name%%</div>
+        <div>%%type%%</div>
+        <div>%%size%%</div>
+    </div>
+</script>
+
+<script type="text/html" id="template-project-form-field">
+    <div>
+        <span>%%name%%</span>
+        <input class="custom-input %%class%%" type="%%type%%" value="%%value%%">
     </div>
 </script>
