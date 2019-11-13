@@ -136,11 +136,15 @@ var Project = {
 
         this._url = Hash.get();
 
-        if (this._url.project &&
+        if (this._url.path) {
+
+            this._sendRequest(this._events.request.fs.list);
+
+        } else if (this._url.project &&
                 this._url.job &&
                 this._url.build) {
 
-            this._sendRequest(this._events.request.cis.entry_list, this._url);
+            this._sendRequest(this._events.request.cis.entry_list);
 
         } else if (this._url.project &&
                 this._url.job &&
@@ -151,11 +155,11 @@ var Project = {
         } else if (this._url.project &&
                 this._url.job) {
 
-            this._sendRequest(this._events.request.cis.build_list, this._url);
+            this._sendRequest(this._events.request.cis.build_list);
 
         } else if (this._url.project) {
 
-            this._sendRequest(this._events.request.cis.job_list, this._url);
+            this._sendRequest(this._events.request.cis.job_list);
 
         } else {
 
@@ -191,32 +195,92 @@ var Project = {
 
                 url[key] = self._url[key];
 
-                self._elements.path.html(
-                    (self._templates.path || '')
-                        .replacePHs('url', url.serialize())
-                        .replacePHs('part', url[key]));
+                if (self._url[key].indexOf('/') > -1) {
+
+                    var arr = [];
+
+                    self._url[key].split('/')
+                        .forEach(function(part) {
+                            arr.push(part);
+                            url[key] = arr.join('/');
+
+                            self._elements.path.html(
+                                (self._templates.path || '')
+                                    .replacePHs('url', url.serialize())
+                                    .replacePHs('part', part)
+                            );
+                        });
+
+                } else {
+
+                    self._elements.path.html(
+                        (self._templates.path || '')
+                            .replacePHs('url', url.serialize())
+                            .replacePHs('part', url[key])
+                    );
+                }
 
                 self._elements.info.html(
                     (self._templates.info || '')
                         .replacePHs('key', key.capitalize())
-                        .replacePHs('value', url[key]));
+                        .replacePHs('value', url[key])
+                );
             }
 
             self._elements.title.className = '';
-            self._elements.header.className = '';
             self._elements.table.innerHTML = '';
         }
 
-        function createTable(template, message) {
+        function createTable(message) {
 
-            (message.data || {}).fs_entries
+            var url = JSON.stringify(self._url);
+
+            ((message.data || {}).fs_entries || [])
                 .forEach(function(item) {
-                    self._elements.table.html(
-                        (template || '')
+                    self._elements.table.html((function() {
+
+                        var type = '';
+                        var template = self._templates.list || '';
+                        var obj = JSON.parse(url);
+
+                        if (item.metainfo) {
+
+                            type = item.metainfo_type;
+                            if (type == 'build') {
+                                template = self._templates.build || '';
+                            }
+                            obj[type] = '%%item_name%%';
+
+                        } else if (item.directory) {
+
+                            type = 'directory';
+                            if ( ! obj['path']) {
+                                obj['path'] = '';
+                            }
+                            obj['path'] = obj['path']
+                                .split('/')
+                                .filter(function(part) {
+                                    return part;
+                                });
+                            obj['path'].push('%%item_name%%');
+                            obj['path'] = obj['path'].join('/');
+
+                        } else {
+
+                            type = 'file';
+                            obj[type] = '%%item_name%%';
+
+                        }
+
+                        return template
+                            .replacePHs('title', type, true)
                             .replacePHs('rename_event', ("Project.modal('rename', { value: '%%item_name%%' })"), true)
-                            .replacePHs('url', self._url.serialize(), true)
+                            .replacePHs('url', ('#' + obj.serialize()
+                                .replaceAll('%25%25item_name%25%25', '%%item_name%%')))
                             .replacePHs('item_name', (item.name || ''), true)
-                            .replacePHs('path_download', (item.link || ''), true));
+                            .replacePHs('link', (item.link || ''), true)
+                            .replacePHs('date', ('Start date: ' + (item.metainfo || {}).date));
+                    })());
                 });
         }
 
@@ -315,61 +379,26 @@ var Project = {
             } else if (message.event == this._events.response.cis.project_list) {
 
                 changeEnvironment(buttons.project);
-                createTable((this._templates.list || ''), message);
-                this._elements.title.className = 'project-list';
+                createTable(message);
+                this._elements.title.className = 'show';
 
             // cis.project.info.success
             } else if (message.event == this._events.response.cis.job_list) {
 
                 changeEnvironment(buttons.job);
-                createTable((this._templates.job || ''), message);
+                createTable(message);
 
             // cis.job.info.success
             } else if (message.event == this._events.response.cis.build_list) {
 
                 changeEnvironment(buttons.build);
-                this._elements.table.innerHTML = '';
-
-                var properties = [];
-                var builds = [];
-
-                (message.data || {}).fs_entries
-                    .forEach(function(item) {
-
-                        if (item.directory) {
-                            builds.push(item)
-                        } else {
-                            properties.push(item);
-                        }
-                    });
-
-                for (var i = 0; i < [properties.length, builds.length].max(); i++) {
-
-                    var table_row = {
-                        name: (builds[i] || {}).name
-                        , date: ((builds[i] || {}).metainfo || {}).date
-                        , prop: (properties[i] || {}).name
-                    };
-
-                    this._elements.table.html(
-                        (this._templates.build || '')
-                            .replacePHs('url', this._url.serialize())
-
-                            .replacePHs('prop_name', (table_row.prop || ''))
-                            .replacePHs('build_name', (table_row.name || ''))
-                            .replacePHs('build_date', ((table_row.date) ? ('Start date: ' + table_row.date) : ''))
-
-                            .replacePHs('class', (table_row.prop ? '' : 'hidden'))
-                    );
-                }
-
-                this._elements.header.className = 'project-list';
+                createTable(message);
                 Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(((message.data || {}).params || []))));
 
             // cis.job.run.success
             } else if (message.event == this._events.response.cis.job_run) {
 
-                this._sendRequest(this._events.request.fs.refresh, { path: this._serialize() });
+                this._sendRequest(this._events.request.fs.refresh);
                 Toast.message('info', 'job run success');
 
             // cis.build.info.success
@@ -502,7 +531,7 @@ var Project = {
                         );
                     }
 
-                    createTable((this._templates.entry || ''), message);
+                    createTable(message);
 
                 }
 
@@ -532,7 +561,8 @@ var Project = {
             // fs.entry.list.success
             } else if (message.event == this._events.response.fs.list) {
 
-                this._sendRequest(this._events.request.fs.refresh, { path: this._serialize() });
+                changeEnvironment(buttons.entry);
+                createTable(message);
 
             // fs.entry.refresh.success
             } else if (message.event == this._events.response.fs.refresh) {
@@ -544,7 +574,7 @@ var Project = {
 
                 Hash.set(this._url);
                 this.send();
-                // this._sendRequest(this._events.request.fs.refresh, { path: this._serialize() });
+                // this._sendRequest(this._events.request.fs.refresh);
                 Toast.message('info', 'create success');
 
             // fs.entry.remove.success
@@ -552,14 +582,14 @@ var Project = {
 
                 delete this._url[Object.keys(this._url).pop()];
                 Hash.set(this._url);
-                this._sendRequest(this._events.request.fs.refresh, { path: this._serialize() });
+                this._sendRequest(this._events.request.fs.refresh);
                 Toast.message('info', 'remove success');
 
             // fs.entry.move.success
             } else if (message.event == this._events.response.fs.move) {
 
                 Hash.set(this._url);
-                this._sendRequest(this._events.request.fs.refresh, { path: this._serialize() });
+                this._sendRequest(this._events.request.fs.refresh);
 
             }
 
@@ -567,176 +597,13 @@ var Project = {
         } else {
             console.warn('not processed message');
         }
-    }
 
-    /**
-     * Job
-     *
-     * @param {string} action - Key to action selection
-     * @param params          - (Optional) Parameter for actions
-     *     Variant
-     *         action = 'init' (Initialization of values)
-     *         @param {array} params  - Default values for request 'run job'
-     *             @param {object}       - Pair 'key-value'
-     *                 @param {string} name  - (Optional) Name of param
-     *                 @param {string} value - (Optional) Default value received from server
-     *
-     *         action = 'start' (Run job)
-     *         action = 'changeName'
-     *         @param {string} params - Old name
-     */
-    , actionsJob: function(action, params) {
-
-        var self = this;
-
-        if (action == 'init') {
-
-            Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(params || [])));
-
-        } else if (action == 'start') {
-
-            var fields_form = this.formInputData('get', {is_encode: true}) || [];
-            var fields_default = JSON.parse(decodeURIComponent(Cookie.get('param_start_job') || '%5B%5D'));
-
-            if ( ! fields_default.length || fields_form.length) {
-
-                this._sendRequest(this._events.request.cis.job_run,{
-                    project: this._url.project,
-                    job: this._url.job,
-                    params: fields_form
-                });
-                this.formInputData('visible');
-
-            } else {
-
-                this.formInputData('init',
-                    {
-                        title_name: 'Set params'
-                        , input: {
-                            is_input: true
-                            , fields: fields_default
-                        }
-                        , button: {
-                            onclick: "Project.actionsJob('start');"
-                            , value: 'Start'
-                        }
-                    });
-            }
-
-        } else if (action == 'changeName') {
-
-            var new_name = ((this.formInputData('get', {is_required: true}) || [])[0] || {}).value || '';
-
-            if (new_name) {
-
-                var obj = {
-                    oldPath: [
-                        ''
-                        , params
-                    ]
-                    , newPath: [
-                        ''
-                        , new_name
-                    ]
-                };
-
-                if ('project' in this._url) {
-                    Object.keys(obj)
-                        .forEach(function(key) {
-                            obj[key].splice(1, 0, self._url['project']);
-                        });
-                }
-
-                Object.keys(obj)
-                    .forEach(function(key) {
-                        obj[key] = obj[key].join('/');
-                    });
-
-                this._sendRequest(this._events.request.fs.move, obj);
-
-                this.formInputData('visible');
-
-            } else {
-
-                this.formInputData('init',
-                    {
-                        title_name: 'Change name'
-                        , input: {
-                            fields: [{
-                                name: 'new name:'
-                                , value: params
-                            }]
-                        }
-                        , button: {
-                            onclick: "Project.actionsJob('changeName', '" + params + "');"
-                            , value: 'Change'
-                        }
-                    });
-            }
-        }
-    }
-
-    //Build
-    , actionsBuild: function(action, params) {
-
-        if (action == 'addBuild') {
-            // params
-            //    name
-            //    accept
-
-            var new_files = this.formInputData('get', {is_required: true}) || [];
-
-            if ( ! new_files.length) {
-
-                params.name = params.name || '';
-                params.accept = params.accept || '';
-
-                this.formInputData('init', {
-                    title_name: 'Add ' + params.name
-                    , input: {
-                        is_input: true
-                        , type: "file"
-                        , file: {
-                            accept: params.accept
-                            , multiple: (params.name == 'file')
-                            , webkitdirectory: (params.name == 'file')
-                        }
-                        , fields: [{name: 'change ' + (params.accept || 'folder with') + ' file'}]
-                    }
-                    , button: {
-                        value: "Add (Don't work)"
-                        , onclick: "Project.actionsBuild('addBuild', {name: '" + params.name + "', accept: '" + params.accept +  "'});"
-                    }
-                });
-
-            } else {
-
-                var filename = {
-                    name: 'new_files'
-                    , files: {
-                        uploadfile: new_files
-                    }
-                };
-
-                AJAX({
-                    url: '/upload/' + this._url.serialize()
-                    , method: 'POST'
-                    , data: filename
-                    , events: {
-                        wait: function() {
-                            console.log('wait');
-                        }
-                        , success: function(data) {
-                            console.log(data);
-                        }
-                        , error: function(text, xhr) {}
-                        , progress: function() {}
-                    }
-                });
-
-                this.formInputData('visible');
-            }
-        }
+        Selector.query('title').innerHTML = 'CIS: ' + this._url.serialize()
+            .split('&')
+            .map(function(item) {
+                return item.capitalize();
+            })
+            .join(' | ');
     }
 
     /**
@@ -876,9 +743,7 @@ var Project = {
             });
 
             addEvent(this._modal.button.querySelector('div'), 'click', function() {
-                self._sendRequest(self._events.request.fs.remove, {
-                    path: self._serialize()
-                });
+                self._sendRequest(self._events.request.fs.remove);
             });
 
         } else if (action == 'rename') {
@@ -1075,186 +940,6 @@ var Project = {
             });
 
         }
-
-
-
-
-        // } else if (action == 'download') {
-
-            // var url = this._serialize(Hash.get());
-            //
-            // var a = {
-            //     url: this._serialize(Hash.get())
-            //     , method: 'GET'
-            //     , events: {
-            //         wait: function() {
-            //             console.log('wait');
-            //         }
-            //         , success: function(data) {
-            //             console.log(data);
-            //         }
-            //         , error: function(text, xhr) {}
-            //         , progress: function() {}
-            //     }
-            // };
-            // console.log(a);
-
-        // }
-    }
-
-    /**
-     * Form
-     *
-     * @param {string} action - Key to action selection
-     * @param params          - Parameter for form actions
-     *     Variant
-     *         action = 'init' (Set the name of the form, button, onclick event, default param)
-     *         @param {obj} params
-     *             @param {string} title_name - (Optional) Name of form
-     *             @param {obj} input         - (Optional) Input options
-     *                 @param {bool} is_input   - (Optional) Is need input fields
-     *                 @param {array} fields    - (Optional) Array with obj param
-     *                     @param {obj}
-     *                         @param {string} name  - (Optional) Field name
-     *                         @param {string} value - (Optional) Field value
-     *             @param {obj} button        - (Optional) Button options
-     *                 @param {string} value    - (Optional) Text on buttons
-     *                 @param {string} onclick  - (Optional) Click action
-     *
-     *         action = 'get' (Get params from form)
-     *             @param {obj} params
-     *                 @param {bool} is_required - (Optional) Is param required
-     *                 @param {bool} is_encode   - (Optional) Is special characters allowed
-     *             @returns {array} - Array of objects with input param
-     *                 @param {obj}
-     *                     @param {string} name  - Name of value
-     *                     @param {string} value - Input value
-     *
-     *         action = 'visible' (close form)
-     */
-    , formInputData: function(action, params) {
-
-        var self = this;
-        var _elements = {
-            params: null
-            , form: null
-            , button: null
-            , name: null
-        };
-        var is_visible = (params || {}).is_visible || false;
-
-        for (var key in _elements) {
-            _elements[key] = Selector.id('project-form' + ((key == 'form') ?  '' : ('-' + key)));
-        }
-        if (action == 'init') {
-            // params:
-            //   title_name
-            //   input
-            //       is_input
-            //       fields
-            //       type
-            //       file
-            //           multiple
-            //           accept
-            //           webkitdirectory
-            //   button
-            //       onclick
-            //       value
-
-            params = params || {};
-            _elements.params.innerHTML = '';
-            _elements.name.innerHTML = params.title_name || '';
-
-            var other_attributes = [];
-            if ((params.input || {}).file) {
-
-                if (params.input.file.accept) {
-                    other_attributes.push('accept="' + params.input.file.accept + '"');
-                }
-                if (params.input.file.multiple) {
-                    other_attributes.push('multiple=true');
-                }
-            }
-
-            ((params.input || {}).fields || [{}])
-                .forEach(function(item) {
-                    _elements.params.html(
-                        (self._templates.form_params || '')
-                            .replacePHs('param_name', (item.name || ''), true)
-                            .replacePHs('param_value', (item.value || ''), true)
-                            .replacePHs('type_input', (params.input.type || 'text'))
-                            .replacePHs('class_input', ((params.input.is_input || item.value) ? '' : 'form-project-list'))
-                            .replacePHs('other_attributes', other_attributes.join(' '))
-                    );
-                });
-
-            _elements.button.html(
-                (this._templates.button || '')
-                    .replacePHs('onclick', ((params.button || {}).onclick || ''), true)
-                    .replacePHs('name', ((params.button || {}).value || ''))
-                , true);
-
-            action = 'visible';
-            is_visible = true;
-
-        } else if (action == 'get') {
-            // params:
-            //     is_required
-            //     is_encode
-
-            var values = Selector.queryAll('#project-form-params > div > input');
-            var is_correct = true;
-
-            if ((params || {}).is_required) {
-
-                values
-                    .forEach(function(item) {
-
-                        if ( ! item.value.trim()) {
-                            is_correct = false;
-                            Toast.message('warning', 'Please enter a value');
-                        }
-                    });
-            }
-
-            if ( ! (params || {}).is_encode) {
-
-                values
-                    .forEach(function(item) {
-
-                        if (item.value != item.value.encode()) {
-                            is_correct = false;
-                            Toast.message('warning', 'Please, enter value without \' \" & < >');
-                        }
-                    });
-            }
-
-            if ((values[0] || {}).type == 'file') {
-                return (values[0] || {}).files;
-            }
-
-            if (is_correct) {
-
-                return Selector.queryAll('#project-form-params > div > span')
-                    .map(function (item, index) {
-                        return {
-                            name: item.innerHTML
-                            , value: values[index].value.trim()
-                        }
-                    });
-            }
-        }
-
-        if (action == 'visible') {
-
-            if (is_visible) {
-                _elements.form.className = 'project-param';
-
-            } else {
-                _elements.form.className = '';
-                _elements.params.innerHTML = '';
-            }
-        }
     }
 
     , _sendRequest: function(event, data) {
@@ -1263,10 +948,16 @@ var Project = {
             return;
         }
 
+        if ( ! event.indexOf('fs.entry')) {
+            data = { path: this._serialize() };
+        } else {
+            data = data || this._url || {};
+        }
+
         Socket.send({
             event: event,
             transactionId: (new Date()).getTime(),
-            data: data || {}
+            data: data
         });
     }
 
@@ -1282,7 +973,5 @@ var Project = {
 };
 
 addEventListener("popstate",function(e) {
-    // if (window.location.href.indexOf('download') == -1) {
-        Project.send();
-    // }
+    Project.send();
 });

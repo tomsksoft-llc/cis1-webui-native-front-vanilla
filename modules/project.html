@@ -6,10 +6,6 @@
     </div>
     <div id="project-list" class="">
         <h2 id="project-title">Project list:</h2>
-        <div id="project-header">
-            <div>Builds:</div>
-            <div>Properties:</div>
-        </div>
         <div class="custom-table" id="project-table"></div>
     </div>
 </div>
@@ -44,45 +40,20 @@
 
 <!--template table-->
 <script type="text/html" id="template-project-list">
-    <div>
+    <div data-type="%%title%%" title="%%title%%">
         <div>
-            <a href="#project=%%item_name%%">%%item_name%%</a>
-        </div>
-        <div onclick="%%rename_event%%"><span>Change name</span></div>
-    </div>
-</script>
-
-<script type="text/html" id="template-project-job">
-    <div>
-        <div>
-            <a href="#%%url%%&job=%%item_name%%">%%item_name%%</a>
+            <a href="%%url%%">%%item_name%%</a>
         </div>
         <div onclick="%%rename_event%%"><span>Change name</span></div>
     </div>
 </script>
 
 <script type="text/html" id="template-project-build">
-    <div>
+    <div data-type="%%title%%" title="%%title%%">
         <div>
-            <a href="#%%url%%&build=%%build_name%%">%%build_name%%</a>
+            <a href="%%url%%">%%item_name%%</a>
         </div>
-        <div>
-            <a href="#%%url%%&build=%%build_name%%">%%build_date%%</a>
-        </div>
-        <div class="%%class%%">
-            <a href="#%%url%%&name=%%prop_name%%">%%prop_name%%</a>
-        </div>
-    </div>
-</script>
-
-<script type="text/html" id="template-project-entry">
-    <div>
-        <div>
-            <a href="#%%url%%&file=%%item_name%%">%%item_name%%</a>
-        </div>
-        <div>
-            <a href="%%path_download%%">download</a>
-        </div>
+        <div><span>%%date%%</span></div>
     </div>
 </script>
 

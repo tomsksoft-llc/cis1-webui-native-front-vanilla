@@ -53,6 +53,8 @@
 }
 #project-path > a:last-child {
     color: #a9a9a9;
+    cursor: default;
+    pointer-events: none;
 }
 #project-path > a:hover {
     color: #54ccf3;
@@ -80,8 +82,8 @@
 #project-header {
     display: none;
 }
-#project-title.project-list,
-#project-header.project-list {
+#project-title.show,
+#project-header.show {
     display: block;
 }
 #project-title {
@@ -129,6 +131,7 @@
 #project-table > div > div {
     position: absolute;
     display: inline-block;
+    height: 100%;
     width: 100%;
     top: 0;
     left: 0;
@@ -162,11 +165,15 @@
     left: 66.66%;
     text-align: right;
 }
+#project-table > div[data-type="build"] > div:nth-child(2) {
+    pointer-events: none;
+}
 #project-table > div > div > a,
 #project-table > div > div > span {
     display: block;
     height: 100%;
     padding: 15px;
+    box-sizing: border-box;
     color: #54ccf3;
 }
 #project-table > div:hover > div > span,

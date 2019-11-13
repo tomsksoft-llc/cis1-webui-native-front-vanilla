@@ -95,8 +95,8 @@ addEvent(window, 'load', function() {
 
     // as example
     Page.init({
-        header: 'header'
-        , footer: 'footer'
+        header: ''
+        , footer: ''
     });
 });
 
