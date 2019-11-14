@@ -178,15 +178,16 @@ var Project = {
 
         var self = this;
 
-        function changeEnvironment(buttons) {
+        function showButtons(buttons) {
             //change button, path, info
 
             self._elements.buttons.innerHTML = '';
             self._elements.info.innerHTML = '';
             self._elements.path.html(
                 (self._templates.path || '')
+                    .replacePHs('title', 'root')
                     .replacePHs('url', '')
-                    .replacePHs('part', 'job'), true);
+                    .replacePHs('part', 'root'), true);
 
             (buttons || [])
                 .forEach(function(item) {
@@ -213,6 +214,7 @@ var Project = {
 
                             self._elements.path.html(
                                 (self._templates.path || '')
+                                    .replacePHs('title', key)
                                     .replacePHs('url', url.serialize())
                                     .replacePHs('part', part)
                             );
@@ -222,6 +224,7 @@ var Project = {
 
                     self._elements.path.html(
                         (self._templates.path || '')
+                            .replacePHs('title', key)
                             .replacePHs('url', url.serialize())
                             .replacePHs('part', url[key])
                     );
@@ -240,9 +243,122 @@ var Project = {
 
         function createTable(message) {
 
+            message = (message.data || {}).fs_entries || [];
+
+            if (self._url.file) {
+
+                showButtons(buttons.file);
+
+                var item_file = message
+                    .filter(function(item) {
+                        return self._url.file == item.name;
+                    })[0];
+
+                if ( ! item_file) {
+                    Toast.message('error', 'Server error. Try again later.');
+                    return;
+                }
+
+                self._elements.table.html(
+                    (self._templates.file || '')
+                        .replacePHs('link', item_file.link)
+                );
+
+                setTimeout(function() {
+                    self._last_file_content = '';
+
+                    var textarea = Selector.id('file-content');
+                    var file_save = Selector.query('#project-table > div.file-row > div.file-cell > .custom-button');
+
+                    addEvent(Selector.query('#project-buttons > div'), 'click', function() {
+                        var temp_input = document.createElement('input');
+
+                        temp_input.type = 'file';
+                        temp_input.click();
+
+                        temp_input.onchange = function() {
+                            var reader = new FileReader();
+                            reader.onload = function() {
+                                textarea.value = this.result;
+                                file_save.setAttribute('data-disabled', '');
+                            };
+                            reader.readAsText(this.files[0]);
+                        };
+                    });
+
+                    AJAX({
+                        url: item_file.link
+                        , method: 'GET'
+                        , data: {}
+                        , events: {
+                            wait: function() {
+                                html.addClass('wait');
+                            }
+                            , success: function(data) {
+                                textarea.innerHTML = data;
+                                self._last_file_content = textarea.value;
+                                html.removeClass('wait');
+                            }
+                            , error: function(text, xhr) {
+
+                                html.removeClass('wait');
+                            }
+                        }
+                    });
+
+                    addEvent(textarea, ['keyup', 'focus', 'blur'], function() {
+                        if (this.value == self._last_file_content) {
+                            file_save.setAttribute('data-disabled', 'disabled');
+                        } else {
+                            file_save.setAttribute('data-disabled', '');
+                        }
+                    });
+
+                    addEvent(file_save, 'click', function() {
+                        if (file_save.getAttribute('data-disabled') == 'disabled') {
+                            return;
+                        }
+
+                        var link = JSON.parse(JSON.stringify(self._url));
+                        delete link.file;
+
+                        AJAX({
+                            url: '/replace' + self._serialize(link)
+                            , method: 'POST'
+                            , data: {
+                                files: {
+                                    file: new File([new Blob([textarea.value])], self._url.file)
+                                }
+                            }
+                            , events: {
+                                wait: function() {
+                                    html.addClass('wait');
+                                }
+                                , success: function() {
+                                    file_save.setAttribute('data-disabled', 'disabled');
+                                    Toast.message('success', 'File saved');
+                                }
+                                , error: function(text, xhr) {
+                                    switch(xhr.status * 1) {
+                                        case 404:
+                                            Toast.message('error', 'File deleted');
+                                            break;
+                                        default:
+                                            Toast.message('error', 'File save error');
+                                    }
+                                    html.removeClass('wait');
+                                }
+                            }
+                        });
+                    });
+                }, 0);
+
+                return false;
+            }
+
             var url = JSON.stringify(self._url);
 
-            ((message.data || {}).fs_entries || [])
+            message
                 .forEach(function(item) {
                     self._elements.table.html((function() {
 
@@ -289,6 +405,8 @@ var Project = {
                             .replacePHs('date', ('Start date: ' + (item.metainfo || {}).date));
                     })());
                 });
+
+            return true;
         }
 
         var buttons = {
@@ -375,17 +493,17 @@ var Project = {
                 // cis.project.error.doesnt_exist
                 if (message.event == this._events.response.cis.project_doesnt_exist) {
 
-                    changeEnvironment(buttons.project);
+                    showButtons(buttons.project);
 
                 // cis.job.error.doesnt_exist
                 } else if (message.event == this._events.response.cis.job_doesnt_exist) {
 
-                    changeEnvironment(buttons.build);
+                    showButtons(buttons.build);
 
                 // cis.build.error.doesnt_exist
                 } else if (message.event == this._events.response.cis.build_doesnt_exist) {
 
-                    changeEnvironment(buttons.entry);
+                    showButtons(buttons.entry);
                 }
 
                 Toast.message('error', message.errorMessage);
@@ -393,22 +511,24 @@ var Project = {
             // cis.project_list.get.success
             } else if (message.event == this._events.response.cis.project_list) {
 
-                changeEnvironment(buttons.project);
-                createTable(message);
-                this._elements.title.className = 'show';
+                showButtons(buttons.project);
+                if (createTable(message)) {
+                    this._elements.title.className = 'show';
+                }
 
             // cis.project.info.success
             } else if (message.event == this._events.response.cis.job_list) {
 
-                changeEnvironment(buttons.job);
+                showButtons(buttons.job);
                 createTable(message);
 
             // cis.job.info.success
             } else if (message.event == this._events.response.cis.build_list) {
 
-                changeEnvironment(buttons.build);
-                createTable(message);
-                Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(((message.data || {}).params || []))));
+                showButtons(buttons.build);
+                if (createTable(message)) {
+                    Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(((message.data || {}).params || []))));
+                }
 
             // cis.job.run.success
             } else if (message.event == this._events.response.cis.job_run) {
@@ -419,117 +539,9 @@ var Project = {
             // cis.build.info.success
             } else if (message.event == this._events.response.cis.entry_list) {
 
-                if ('file' in Project._url) {
+                if (createTable(message)) {
 
-                    changeEnvironment(buttons.file);
-
-                    var item_file = ((message.data || {}).fs_entries || [])
-                        .filter(function(item) {
-                            return self._url.file == item.name;
-                        })[0];
-
-                    if ( ! item_file) {
-                        Toast.message('error', 'Server error. Try again later.');
-                        return;
-                    }
-
-                    self._elements.table.html(
-                        (this._templates.file || '')
-                            .replacePHs('link', item_file.link)
-                    );
-
-                    setTimeout(function() {
-                        self._last_file_content = '';
-
-                        var textarea = Selector.id('file-content');
-                        var file_save = Selector.query('#project-table > div.file-row > div.file-cell > .custom-button');
-
-                        addEvent(Selector.query('#project-buttons > div'), 'click', function() {
-                            var temp_input = document.createElement('input');
-
-                            temp_input.type = 'file';
-                            temp_input.click();
-
-                            temp_input.onchange = function() {
-                                var reader = new FileReader();
-                                reader.onload = function() {
-                                    textarea.value = this.result;
-                                    file_save.setAttribute('data-disabled', '');
-                                };
-                                reader.readAsText(this.files[0]);
-                            };
-                        });
-
-                        AJAX({
-                            url: item_file.link
-                            , method: 'GET'
-                            , data: {}
-                            , events: {
-                                wait: function() {
-                                    html.addClass('wait');
-                                }
-                                , success: function(data) {
-                                    textarea.innerHTML = data;
-                                    self._last_file_content = textarea.value;
-                                    html.removeClass('wait');
-                                }
-                                , error: function(text, xhr) {
-
-                                    html.removeClass('wait');
-                                }
-                            }
-                        });
-
-                        addEvent(textarea, ['keyup', 'focus', 'blur'], function() {
-                            if (this.value == self._last_file_content) {
-                                file_save.setAttribute('data-disabled', 'disabled');
-                            } else {
-                                file_save.setAttribute('data-disabled', '');
-                            }
-                        });
-
-                        addEvent(file_save, 'click', function() {
-                            if (file_save.getAttribute('data-disabled') == 'disabled') {
-                                return;
-                            }
-
-                            var link = JSON.parse(JSON.stringify(self._url));
-                            delete link.file;
-
-                            AJAX({
-                                url: '/replace' + self._serialize(link)
-                                , method: 'POST'
-                                , data: {
-                                    files: {
-                                        file: new File([new Blob([textarea.value])], self._url.file)
-                                    }
-                                }
-                                , events: {
-                                    wait: function() {
-                                        html.addClass('wait');
-                                    }
-                                    , success: function() {
-                                        file_save.setAttribute('data-disabled', 'disabled');
-                                        Toast.message('success', 'File saved');
-                                    }
-                                    , error: function(text, xhr) {
-                                        switch(xhr.status * 1) {
-                                            case 404:
-                                                Toast.message('error', 'File deleted');
-                                                break;
-                                            default:
-                                                Toast.message('error', 'File save error');
-                                        }
-                                        html.removeClass('wait');
-                                    }
-                                }
-                            });
-                        });
-                    }, 0);
-
-                } else {
-
-                    changeEnvironment(buttons.entry);
+                    showButtons(buttons.entry);
 
                     if ((message.data || {}).date) {
                         this._elements.info.html(
@@ -545,15 +557,12 @@ var Project = {
                                 .replacePHs('value', message.data.status)
                         );
                     }
-
-                    createTable(message);
-
                 }
 
             // cis.property.info.success
             } else if (message.event == this._events.response.cis.property) {
 
-                changeEnvironment(buttons.property);
+                showButtons(buttons.property);
                 this._elements.table.innerHTML = '';
             }
 
@@ -576,7 +585,7 @@ var Project = {
             // fs.entry.list.success
             } else if (message.event == this._events.response.fs.list) {
 
-                changeEnvironment(buttons.entry);
+                showButtons(buttons.entry);
                 createTable(message);
 
             // fs.entry.refresh.success
