@@ -721,6 +721,7 @@ var Project = {
             self._modal.button.html(
                 (self._templates.button || '')
                     .replacePHs('name', (params.button || ''))
+                    .replacePHs('onclick', '')
                 , true);
 
             self._modal.form.className = 'show-modal';
@@ -740,7 +741,7 @@ var Project = {
 
             addEvent(this._modal.button.querySelector('div'), 'click', function() {
                 var value = self._modal.params.querySelector('input').value;
-console.info(value);
+
                 if (value) {
                     self._sendRequest(self._events.request.fs.new_dir, {
                         path: self._serialize() + '/' + value
@@ -785,30 +786,10 @@ console.info(value);
                 var value = self._modal.params.querySelector('input').value;
 
                 if (value) {
-                    var obj = {
-                        oldPath: [
-                            ''
-                            , params.value
-                        ]
-                        , newPath: [
-                            ''
-                            , value
-                        ]
-                    };
-
-                    if ('project' in self._url) {
-                        Object.keys(obj)
-                            .forEach(function(key) {
-                                obj[key].splice(1, 0, self._url['project']);
-                            });
-                    }
-
-                    Object.keys(obj)
-                        .forEach(function(key) {
-                            obj[key] = obj[key].join('/');
-                        });
-
-                    self._sendRequest(self._events.request.fs.move, obj);
+                    self._sendRequest(self._events.request.fs.move, {
+                        oldPath: self._serialize() + '/' + params.value
+                        , newPath: self._serialize() + '/' + value
+                    });
                     self.modal('close');
                 } else {
                     Toast.message('error', 'Name must be not empty');
