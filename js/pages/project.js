@@ -78,6 +78,7 @@ var Project = {
 
                 // successes
                 , list:     'fs.entry.list.success'
+                , info:     'fs.entry.info.success'
                 , refresh:  'fs.entry.refresh.success'
                 , new_dir:  'fs.entry.new_dir.success'
                 , remove:   'fs.entry.remove.success'
@@ -95,6 +96,7 @@ var Project = {
             }
             , fs: {
                 list:       'fs.entry.list'
+                , info:     'fs.entry.info'
                 , refresh:  'fs.entry.refresh'
                 , new_dir:  'fs.entry.new_dir'
                 , remove:   'fs.entry.remove'
@@ -136,7 +138,11 @@ var Project = {
 
         this._url = Hash.get();
 
-        if (this._url.path) {
+        if (this._url.file) {
+
+            this._sendRequest(this._events.request.fs.info);
+
+        } else if (this._url.path) {
 
             this._sendRequest(this._events.request.fs.list);
 
@@ -236,32 +242,25 @@ var Project = {
                         .replacePHs('value', url[key])
                 );
             }
-
-            self._elements.title.className = '';
-            self._elements.table.innerHTML = '';
         }
 
         function createTable(message) {
 
-            message = (message.data || {}).fs_entries || [];
+            self._elements.title.className = '';
+            self._elements.table.innerHTML = '';
 
             if (self._url.file) {
 
                 showButtons(buttons.file);
 
-                var item_file = message
-                    .filter(function(item) {
-                        return self._url.file == item.name;
-                    })[0];
-
-                if ( ! item_file) {
+                if ( ! message.data) {
                     Toast.message('error', 'Server error. Try again later.');
                     return;
                 }
 
                 self._elements.table.html(
                     (self._templates.file || '')
-                        .replacePHs('link', item_file.link)
+                        .replacePHs('link', message.data.link)
                 );
 
                 setTimeout(function() {
@@ -287,7 +286,7 @@ var Project = {
                     });
 
                     AJAX({
-                        url: item_file.link
+                        url: message.data.link
                         , method: 'GET'
                         , data: {}
                         , events: {
@@ -358,7 +357,7 @@ var Project = {
 
             var url = JSON.stringify(self._url);
 
-            message
+            ((message.data || {}).fs_entries || [])
                 .forEach(function(item) {
                     self._elements.table.html((function() {
 
@@ -584,6 +583,12 @@ var Project = {
 
             // fs.entry.list.success
             } else if (message.event == this._events.response.fs.list) {
+
+                showButtons(buttons.entry);
+                createTable(message);
+
+            // fs.entry.info.success
+            } else if (message.event == this._events.response.fs.info) {
 
                 showButtons(buttons.entry);
                 createTable(message);
