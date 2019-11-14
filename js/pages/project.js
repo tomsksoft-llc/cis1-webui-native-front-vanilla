@@ -165,6 +165,13 @@ var Project = {
 
             this._sendRequest(this._events.request.cis.project_list);
         }
+
+        Selector.query('title').innerHTML = 'CIS: ' + this._url.serialize()
+            .split('&')
+            .map(function(item) {
+                return item.capitalize();
+            })
+            .join(' > ');
     }
 
     , onmessage: function(message) {
@@ -325,8 +332,16 @@ var Project = {
             ]
             , entry: [
                 {
+                    name: 'New dir'
+                    , onclick: "Project.modal('addDir', {type: 'job'});"
+                }
+                , {
                     name: 'Add file(-s)'
                     , onclick: "Project.modal('addFile', {name: 'file'});"
+                }
+                , {
+                    name: 'Remove directory'
+                    , onclick: "Project.modal('remove');"
                 }
             ]
             , file: [
@@ -597,13 +612,6 @@ var Project = {
         } else {
             console.warn('not processed message');
         }
-
-        Selector.query('title').innerHTML = 'CIS: ' + this._url.serialize()
-            .split('&')
-            .map(function(item) {
-                return item.capitalize();
-            })
-            .join(' | ');
     }
 
     /**
@@ -713,12 +721,12 @@ var Project = {
                         name: 'name of New ' + params.type
                     }
                 ]
-                , button: 'Add'
+                , button: 'Add directory'
             });
 
             addEvent(this._modal.button.querySelector('div'), 'click', function() {
                 var value = self._modal.params.querySelector('input').value;
-
+console.info(value);
                 if (value) {
                     self._sendRequest(self._events.request.fs.new_dir, {
                         path: self._serialize() + '/' + value
@@ -948,7 +956,8 @@ var Project = {
             return;
         }
 
-        if ( ! event.indexOf('fs.entry')) {
+        if ( ! event.indexOf('fs.entry') &&
+             ! data) {
             data = { path: this._serialize() };
         } else {
             data = data || this._url || {};
