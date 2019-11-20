@@ -511,6 +511,10 @@ var Project = {
                     name: 'Download'
                     , onclick: "Project.actionButton('file', 'download');"
                 }
+                , {
+                    name: 'Remove'
+                    , onclick: "Project.modal('removeDir', {type: 'file'});"
+                }
             ]
         };
 
@@ -742,7 +746,7 @@ var Project = {
 
                         self._modal.params.html(
                             (self._templates.form_upload || '')
-                                .replacePHs('name', (item.name || ''), true)
+                                .replacePHs('name', (item.name || ''))
                                 .replacePHs('type', (item.type || 'text'))
                                 .replacePHs('attributes', (function() {
                                     var attributes = [];
@@ -764,7 +768,7 @@ var Project = {
 
                         self._modal.params.html(
                             (self._templates.form_field || '')
-                                .replacePHs('name', (item.name || ''), true)
+                                .replacePHs('name', (item.name || ''))
                                 .replacePHs('class', (item.class || ''), true)
                                 .replacePHs('type', (item.type || 'text'))
                                 .replacePHs('value', (item.value || ''), true)
@@ -833,7 +837,7 @@ var Project = {
                 title: 'Remove ' + params.type
                 , fields: [
                     {
-                        name: 'Are you sure, that you want to delete ' + params.type.capitalize() + ' ' + self._serialize()
+                        name: 'Are you sure, that you want to delete ' + params.type.capitalize() + ':<br>' + self._serialize()
                         , class: 'hidden'
                     }
                 ]
@@ -847,6 +851,7 @@ var Project = {
                     , project: self._events.request.cis.project_remove
                     , job: self._events.request.cis.job_remove
                     , build: self._events.request.cis.build_remove
+                    , file: self._events.request.fs.remove
                 };
 
                 self._sendRequest(events[params.type]);
