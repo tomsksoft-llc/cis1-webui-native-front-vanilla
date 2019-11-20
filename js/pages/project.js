@@ -12,22 +12,6 @@
  * onmessage    - Behavior on response from server
  *     @param {object} message - Text of response text of response from server
  *         @param {string} event - Success of action
- *                          Variant 'cis.project_list.get.success' (success get projects list) ||
- *                                  'cis.project.info.success' (success get jobs list) ||
- *                                  'cis.project.error.doesnt_exist' (project not found) ||
- *                                  'cis.job.info.success' (success get builds list) ||
- *                                  'cis.job.run.success' (success job run) ||
- *                                  'cis.job.error.invalid_params' (invalid parameters specified at startup of job) ||
- *                                  'cis.job.error.doesnt_exist' (job not found) ||
- *                                  'cis.build.info.success' (success get entry list) ||
- *                                  'cis.build.error.doesnt_exist' (build not found) ||
- *                                  'cis.property.info.success' (go to properties section) ||
- *                                  'cis.entry.error.doesnt_exist' (entry not found) ||
- *                                  'fs.entry.list.success' (get any fs_list) ||
- *                                  'fs.entry.refresh.success' (refresh success) ||
- *                                  'fs.entry.new_dir.success' (create new dir success) ||
- *                                  'fs.entry.remove.success' (remove folder success) ||
- *                                  'fs.entry.error.cant_create_dir' (can't create dir)
  *
  *         @param {obj} data     - (Optional) Message data
  *             @param {status} number    - (Optional) Exit code
@@ -62,12 +46,16 @@ var Project = {
                 , build_doesnt_exist:   'cis.build.error.doesnt_exist'
 
                 // success
-                , project_list: 'cis.project_list.get.success'
-                , job_list:     'cis.project.info.success'
-                , build_list:   'cis.job.info.success'
-                , job_run:      'cis.job.run.success'
-                , entry_list:   'cis.build.info.success'
-                , property:     'cis.property.info.success'
+                , project_list:     'cis.project_list.get.success'
+                , project_add:      'cis.project.add.success'
+                , project_remove:   'cis.project.remove.success'
+                , job_list:         'cis.project.info.success'
+                , job_add:          'cis.job.add.success'
+                , job_remove:       'cis.job.remove.success'
+                , build_list:       'cis.job.info.success'
+                , build_run:        'cis.job.run.success'
+                , build_remove:     'cis.build.remove.success'
+                , entry_list:       'cis.build.info.success'
             }
             , fs: {
                 // errors
@@ -88,11 +76,16 @@ var Project = {
         }
         , request: {
             cis: {
-                project_list:   'cis.project_list.get'
-                , job_list:     'cis.project.info'
-                , build_list:   'cis.job.info'
-                , job_run:      'cis.job.run'
-                , entry_list:   'cis.build.info'
+                project_list:       'cis.project_list.get'
+                , project_add:      'cis.project.add'
+                , project_remove:   'cis.project.remove'
+                , job_list:         'cis.project.info'
+                , job_add:          'cis.job.add'
+                , job_remove:       'cis.job.remove'
+                , build_list:       'cis.job.info'
+                , build_run:        'cis.job.run'
+                , build_remove:     'cis.build.remove'
+                , entry_list:       'cis.build.info'
             }
             , fs: {
                 list:       'fs.entry.list'
@@ -104,6 +97,7 @@ var Project = {
             }
         }
     }
+    , _data: {}
     , _templates: {}
 
     , _messages: [
@@ -135,6 +129,8 @@ var Project = {
     }
 
     , send: function() {
+
+        var self = this;
 
         this._url = Hash.get();
 
@@ -172,35 +168,60 @@ var Project = {
             this._sendRequest(this._events.request.cis.project_list);
         }
 
-        Selector.query('title').innerHTML = 'CIS: ' + this._url.serialize()
-            .split('&')
-            .map(function(item) {
-                return item.capitalize();
-            })
-            .join(' > ');
+        Selector.query('title').innerHTML = 'CIS: ' + (self._url.serialize()
+                    .split('&')
+                    .map(function(item) {
+                        return item.capitalize();
+                    })
+                    .join(' > ') || 'root');
     }
 
     , onmessage: function(message) {
 
         var self = this;
 
-        function showButtons(buttons) {
-            //change button, path, info
+        this._data = message.data || {};
+
+        function showButtons(buttons, properties) {
+
+            buttons = buttons || [];
+            properties = properties || [];
 
             self._elements.buttons.innerHTML = '';
             self._elements.info.innerHTML = '';
+
             self._elements.path.html(
                 (self._templates.path || '')
                     .replacePHs('title', 'root')
                     .replacePHs('url', '')
                     .replacePHs('part', 'root'), true);
 
-            (buttons || [])
+            buttons
                 .forEach(function(item) {
 
                     self._elements.buttons.html(
                         (self._templates.button || '')
                             .replacePHs('onclick', item.onclick, true)
+                            .replacePHs('name', item.name));
+                });
+
+            properties
+                .forEach(function(item) {
+
+                    self._elements.buttons.html(
+                        (self._templates.property || '')
+                            .replacePHs('onclick', (function() {
+
+                                var type = (item.metainfo || {}).type;
+                                var obj = JSON.parse(JSON.stringify(self._url));
+
+                                if (type == 'file') {
+                                    obj[type] = item.name;
+                                    return 'window.location.hash = \'#' + obj.serialize() + '\';';
+                                }
+
+                                return '';
+                            })(), true)
                             .replacePHs('name', item.name));
                 });
 
@@ -260,7 +281,6 @@ var Project = {
 
                 self._elements.table.html(
                     (self._templates.file || '')
-                        .replacePHs('link', message.data.link)
                 );
 
                 setTimeout(function() {
@@ -268,22 +288,6 @@ var Project = {
 
                     var textarea = Selector.id('file-content');
                     var file_save = Selector.query('#project-table > div.file-row > div.file-cell > .custom-button');
-
-                    addEvent(Selector.query('#project-buttons > div'), 'click', function() {
-                        var temp_input = document.createElement('input');
-
-                        temp_input.type = 'file';
-                        temp_input.click();
-
-                        temp_input.onchange = function() {
-                            var reader = new FileReader();
-                            reader.onload = function() {
-                                textarea.value = this.result;
-                                file_save.setAttribute('data-disabled', '');
-                            };
-                            reader.readAsText(this.files[0]);
-                        };
-                    });
 
                     AJAX({
                         url: message.data.link
@@ -361,21 +365,22 @@ var Project = {
                 .forEach(function(item) {
                     self._elements.table.html((function() {
 
-                        var type = '';
+                        var type = (item.metainfo || {}).type || '';
                         var template = self._templates.list || '';
                         var obj = JSON.parse(url);
 
-                        if (item.metainfo) {
+                        if ( ! [
+                                'project'
+                                , 'job'
+                                , 'build'
+                                , 'directory'
+                                , 'file'
+                            ].inArray(type)) {
+                            return '';
+                        }
 
-                            type = item.metainfo_type;
-                            if (type == 'build') {
-                                template = self._templates.build || '';
-                            }
-                            obj[type] = '%%item_name%%';
+                        if (type == 'directory') {
 
-                        } else if (item.directory) {
-
-                            type = 'directory';
                             if ( ! obj['path']) {
                                 obj['path'] = '';
                             }
@@ -389,7 +394,9 @@ var Project = {
 
                         } else {
 
-                            type = 'file';
+                            if (type == 'build') {
+                                template = self._templates.build || '';
+                            }
                             obj[type] = '%%item_name%%';
 
                         }
@@ -398,7 +405,7 @@ var Project = {
                             .replacePHs('title', type, true)
                             .replacePHs('rename_event', ("Project.modal('rename', { value: '%%item_name%%' })"), true)
                             .replacePHs('url', ('#' + obj.serialize()
-                                .replaceAll('%25%25item_name%25%25', '%%item_name%%')))
+                                .replaceAll(encodeURIComponent('%%item_name%%'), '%%item_name%%')))
                             .replacePHs('item_name', (item.name || ''), true)
                             .replacePHs('link', (item.link || ''), true)
                             .replacePHs('date', ('Start date: ' + (item.metainfo || {}).date));
@@ -409,68 +416,100 @@ var Project = {
         }
 
         var buttons = {
-            project: [
+            root: [
                 {
                     name: 'New project'
                     , onclick: "Project.modal('addDir', {type: 'project'});"
                 }
-            ]
-            , job: [
-                {
+                , {
                     name: 'New dir'
+                    , onclick: "Project.modal('addDir', {type: 'directory'});"
+                }
+                , {
+                    name: 'Add file(-s)'
+                    , onclick: "Project.modal('addFile', {name: 'file'});"
+                }
+            ]
+            , project: [
+                {
+                    name: 'New job'
                     , onclick: "Project.modal('addDir', {type: 'job'});"
                 }
                 , {
                     name: 'Remove project'
-                    , onclick: "Project.modal('remove');"
+                    , onclick: "Project.modal('removeDir', {type: 'project'});"
                 }
                 , {
-                    name: 'New job'
-                    , onclick: "Project.modal('addJob', {type: 'job'});"
+                    name: 'New dir'
+                    , onclick: "Project.modal('addDir', {type: 'directory'});"
+                }
+                , {
+                    name: 'Add file(-s)'
+                    , onclick: "Project.modal('addFile', {name: 'file'});"
+                }
+            ]
+            , job: [
+                {
+                    name: 'Start job'
+                    , onclick: "Project.modal('startJob');"
+                }
+                , {
+                    name: 'Remove job'
+                    , onclick: "Project.modal('removeDir', {type: 'job'});"
+                }
+                , {
+                    name: 'New dir'
+                    , onclick: "Project.modal('addDir', {type: 'directory'});"
+                }
+                , {
+                    name: 'Add file(-s)'
+                    , onclick: "Project.modal('addFile', {name: 'file'});"
                 }
             ]
             , build: [
                 {
-                    name: 'Start'
-                    , onclick: "Project.modal('startJob');"
+                    name: 'Remove build'
+                    , onclick: "Project.modal('removeDir', {type: 'build'});"
                 }
                 , {
-                    name: 'Add file(-s)'
-                    , onclick: "Project.modal('addFile', {name: 'file'});"
-                }
-                , {
-                    name: 'Add params'
-                    , onclick: "Project.modal('addFile', {name: 'params', accept: '.params'});"
-                }
-                , {
-                    name: 'Add readme'
-                    , onclick: "Project.modal('addFile', {name: 'readme', accept: '.md, .txt'});"
-                }
-            ]
-            , entry: [
-                {
                     name: 'New dir'
-                    , onclick: "Project.modal('addDir', {type: 'job'});"
+                    , onclick: "Project.modal('addDir', {type: 'directory'});"
                 }
                 , {
                     name: 'Add file(-s)'
                     , onclick: "Project.modal('addFile', {name: 'file'});"
                 }
-                , {
+                // , {
+                //     name: 'Add params'
+                //     , onclick: "Project.modal('addFile', {name: 'params', accept: '.params'});"
+                // }
+                // , {
+                //     name: 'Add readme'
+                //     , onclick: "Project.modal('addFile', {name: 'readme', accept: '.md, .txt'});"
+                // }
+            ]
+            , directory: [
+                {
                     name: 'Remove directory'
-                    , onclick: "Project.modal('remove');"
+                    , onclick: "Project.modal('removeDir', {type: 'directory'});"
+                }
+                , {
+                    name: 'New dir'
+                    , onclick: "Project.modal('addDir', {type: 'directory'});"
+                }
+                , {
+                    name: 'Add file(-s)'
+                    , onclick: "Project.modal('addFile', {name: 'file'});"
                 }
             ]
             , file: [
                 {
-                    name: 'Replace content to...'
-                    , onclick: ''
+                    name: 'Replace content'
+                    , onclick: "Project.actionButton('file', 'replace');"
                 }
-            ]
-            , property: [
-                {
-                    name: 'Save'
-                    , onclick: ''
+                , {
+                    name: 'Download'
+                    , onclick: "Project.actionButton('file', 'download');"
                 }
             ]
         };
@@ -502,7 +541,8 @@ var Project = {
                 // cis.build.error.doesnt_exist
                 } else if (message.event == this._events.response.cis.build_doesnt_exist) {
 
-                    showButtons(buttons.entry);
+                    showButtons(buttons.job);
+
                 }
 
                 Toast.message('error', message.errorMessage);
@@ -510,37 +550,68 @@ var Project = {
             // cis.project_list.get.success
             } else if (message.event == this._events.response.cis.project_list) {
 
-                showButtons(buttons.project);
+                showButtons(buttons.root);
                 if (createTable(message)) {
                     this._elements.title.className = 'show';
                 }
 
+            // cis.project.add.success
+            } else if (message.event == this._events.response.cis.project_add) {
+
+                location.reload();
+
+            // cis.project.remove.success
+            } else if (message.event == this._events.response.cis.project_remove) {
+
+                delete this._url.project;
+                Hash.set(this._url);
+                location.reload();
+
             // cis.project.info.success
             } else if (message.event == this._events.response.cis.job_list) {
 
-                showButtons(buttons.job);
+                showButtons(buttons.project);
                 createTable(message);
+
+            // cis.job.add.success
+            } else if (message.event == this._events.response.cis.job_add) {
+
+                location.reload();
+
+            // cis.job.remove.success
+            } else if (message.event == this._events.response.cis.job_remove) {
+
+                delete this._url.job;
+                Hash.set(this._url);
+                location.reload();
 
             // cis.job.info.success
             } else if (message.event == this._events.response.cis.build_list) {
 
-                showButtons(buttons.build);
+                showButtons(buttons.job, (message.data || {}).properties);
                 if (createTable(message)) {
                     Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(((message.data || {}).params || []))));
                 }
 
             // cis.job.run.success
-            } else if (message.event == this._events.response.cis.job_run) {
+            } else if (message.event == this._events.response.cis.build_run) {
 
                 this._sendRequest(this._events.request.fs.refresh);
                 Toast.message('info', 'job run success');
+
+            // cis.build.remove.success
+            } else if (message.event == this._events.response.cis.build_remove) {
+
+                delete this._url.build;
+                Hash.set(this._url);
+                location.reload();
 
             // cis.build.info.success
             } else if (message.event == this._events.response.cis.entry_list) {
 
                 if (createTable(message)) {
 
-                    showButtons(buttons.entry);
+                    showButtons(buttons.build);
 
                     if ((message.data || {}).date) {
                         this._elements.info.html(
@@ -557,12 +628,6 @@ var Project = {
                         );
                     }
                 }
-
-            // cis.property.info.success
-            } else if (message.event == this._events.response.cis.property) {
-
-                showButtons(buttons.property);
-                this._elements.table.innerHTML = '';
             }
 
         // fs
@@ -584,13 +649,13 @@ var Project = {
             // fs.entry.list.success
             } else if (message.event == this._events.response.fs.list) {
 
-                showButtons(buttons.entry);
+                showButtons(buttons.directory);
                 createTable(message);
 
             // fs.entry.info.success
             } else if (message.event == this._events.response.fs.info) {
 
-                showButtons(buttons.entry);
+                showButtons(buttons.directory);
                 createTable(message);
 
             // fs.entry.refresh.success
@@ -601,8 +666,7 @@ var Project = {
             // fs.entry.new_dir.success
             } else if (message.event == this._events.response.fs.new_dir) {
 
-                Hash.set(this._url);
-                this.send();
+                location.reload();
                 // this._sendRequest(this._events.request.fs.refresh);
                 Toast.message('info', 'create success');
 
@@ -733,40 +797,68 @@ var Project = {
                 title: 'New ' + params.type
                 , fields: [
                     {
-                        name: 'name of New ' + params.type
+                        name: 'name of New ' + params.type.capitalize()
                     }
                 ]
-                , button: 'Add directory'
+                , button: 'Add ' + params.type
             });
 
             addEvent(this._modal.button.querySelector('div'), 'click', function() {
                 var value = self._modal.params.querySelector('input').value;
 
+                var events = {
+                    directory: {
+                        event: self._events.request.fs.new_dir
+                        , value: {
+                            path: self._serialize() + '/' + value
+                        }
+                    }
+                    , project: {
+                        event: self._events.request.cis.project_add
+                        , value: {
+                            project: value
+                        }
+                    }
+                    , job: {
+                        event: self._events.request.cis.job_add
+                        , value: {
+                            project: self._url.project
+                            , job: value
+                        }
+                    }
+                };
+
                 if (value) {
-                    self._sendRequest(self._events.request.fs.new_dir, {
-                        path: self._serialize() + '/' + value
-                    });
+                    self._sendRequest(events[params.type].event, events[params.type].value);
                     self.modal('close');
                 } else {
                     Toast.message('error', 'Name must be not empty');
                 }
             });
 
-        } else if (action == 'remove') {
+        } else if (action == 'removeDir') {
 
             createModal({
-                title: 'Remove'
+                title: 'Remove ' + params.type
                 , fields: [
                     {
-                        name: 'Are you sure, that you want to delete path ' + self._serialize()
+                        name: 'Are you sure, that you want to delete ' + params.type.capitalize() + ' ' + self._serialize()
                         , class: 'hidden'
                     }
                 ]
-                , button: 'Remove'
+                , button: 'Remove ' + params.type
             });
 
             addEvent(this._modal.button.querySelector('div'), 'click', function() {
-                self._sendRequest(self._events.request.fs.remove);
+
+                var events = {
+                    directory: self._events.request.fs.remove
+                    , project: self._events.request.cis.project_remove
+                    , job: self._events.request.cis.job_remove
+                    , build: self._events.request.cis.build_remove
+                };
+
+                self._sendRequest(events[params.type]);
             });
 
         } else if (action == 'rename') {
@@ -796,31 +888,6 @@ var Project = {
                 }
             });
 
-        } else if (action == 'addJob') {
-
-            createModal({
-                title: 'New ' + params.type
-                , fields: [
-                    {
-                        name: 'name of New ' + params.type
-                    }
-                ]
-                , button: 'Add ' + params.type
-            });
-
-            addEvent(this._modal.button.querySelector('div'), 'click', function() {
-                var value = self._modal.params.querySelector('input').value;
-
-                if (value) {
-                    self._sendRequest(self._events.request.fs.new_dir, {
-                        path: self._serialize() + '/' + value
-                    });
-                    self.modal('close');
-                } else {
-                    Toast.message('error', 'Name must be not empty');
-                }
-            });
-
         } else if (action == 'startJob') {
 
             var fields = JSON.parse(decodeURIComponent(Cookie.get('param_start_job') || '%5B%5D'));
@@ -839,7 +906,7 @@ var Project = {
 
                 // Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(fields || [])));
 
-                self._sendRequest(self._events.request.cis.job_run, {
+                self._sendRequest(self._events.request.cis.build_run, {
                     project: self._url.project,
                     job: self._url.job,
                     params: fields
@@ -941,6 +1008,42 @@ var Project = {
 
                 self.modal('close');
             });
+
+        }
+    }
+
+    , actionButton: function(type, action) {
+
+        if (type == 'file') {
+
+            if (action == 'replace') {
+
+                var textarea = Selector.id('file-content');
+                var file_save = Selector.query('#project-table > div.file-row > div.file-cell > .custom-button');
+                var temp_input = document.createElement('input');
+
+                temp_input.type = 'file';
+                temp_input.click();
+
+                temp_input.onchange = function() {
+                    var reader = new FileReader();
+                    reader.onload = function() {
+                        textarea.value = this.result;
+                        file_save.setAttribute('data-disabled', '');
+                    };
+                    reader.readAsText(this.files[0]);
+                };
+
+            } else if (action == 'download') {
+
+                if (this._data.link) {
+                    var link = document.createElement('a');
+                    link.href = this._data.link;
+                    link.target = '_blank';
+                    link.click();
+                }
+
+            }
 
         }
     }

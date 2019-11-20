@@ -1,4 +1,4 @@
-<div id="project-buttons" class=""></div>
+<div id="project-buttons"></div>
 <div id="project-menu">
     <div id="project-path"></div>
     <div id="project-info-parent">
@@ -26,6 +26,11 @@
 <!--template for button-->
 <script type="text/html" id="template-project-button">
     <div class="custom-button blue-button" onclick="%%onclick%%">%%name%%</div>
+</script>
+
+<!--template for button-->
+<script type="text/html" id="template-project-property">
+    <div class="custom-button white-button" onclick="%%onclick%%">%%name%%</div>
 </script>
 
 <!--template main info-->
@@ -62,7 +67,6 @@
         <div class="file-cell">
             <textarea id="file-content"></textarea>
             <div class="custom-button blue-button" data-disabled="disabled">Save</div>
-            <a class="custom-button blue-button" href="%%link%%">Download</a>
         </div>
     </div>
 </script>
