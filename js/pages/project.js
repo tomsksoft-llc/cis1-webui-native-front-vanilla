@@ -563,9 +563,7 @@ var Project = {
             // cis.project.remove.success
             } else if (message.event == this._events.response.cis.project_remove) {
 
-                delete this._url.project;
-                Hash.set(this._url);
-                location.reload();
+                this._backToPath();
 
             // cis.project.info.success
             } else if (message.event == this._events.response.cis.job_list) {
@@ -581,9 +579,7 @@ var Project = {
             // cis.job.remove.success
             } else if (message.event == this._events.response.cis.job_remove) {
 
-                delete this._url.job;
-                Hash.set(this._url);
-                location.reload();
+                this._backToPath();
 
             // cis.job.info.success
             } else if (message.event == this._events.response.cis.build_list) {
@@ -602,9 +598,7 @@ var Project = {
             // cis.build.remove.success
             } else if (message.event == this._events.response.cis.build_remove) {
 
-                delete this._url.build;
-                Hash.set(this._url);
-                location.reload();
+                this._backToPath();
 
             // cis.build.info.success
             } else if (message.event == this._events.response.cis.entry_list) {
@@ -673,10 +667,7 @@ var Project = {
             // fs.entry.remove.success
             } else if (message.event == this._events.response.fs.remove) {
 
-                delete this._url[Object.keys(this._url).pop()];
-                Hash.set(this._url);
-                this._sendRequest(this._events.request.fs.refresh);
-                Toast.message('info', 'remove success');
+                this._backToPath();
 
             // fs.entry.move.success
             } else if (message.event == this._events.response.fs.move) {
@@ -1046,6 +1037,20 @@ var Project = {
             }
 
         }
+    }
+
+    , _backToPath: function() {
+
+        var new_href = (this._elements.path.querySelector('a:nth-last-child(2)') ||
+            this._elements.path.querySelector('a')).href;
+
+        if (new_href == window.location) {
+            window.location.reload();
+        } else {
+            window.location = new_href;
+        }
+
+        Toast.message('info', 'remove success');
     }
 
     , _sendRequest: function(event, data) {
