@@ -382,6 +382,7 @@ var Toast = {
                     }, 0);
                 }
                 , error: function() {
+                    console.error('Error "Toast" module load');
                     html.removeClass('wait');
                 }
             }
