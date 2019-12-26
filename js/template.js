@@ -258,6 +258,14 @@ var Socket = {
         };
 
         this.ws.onerror = function(error) {
+            Toast.open({
+                type: 'error'
+                , text: 'WebSocket error connection'
+                , button_custom: {
+                    text: 'reconnect'
+                    , action: self.reconnect
+                }
+            });
             console.warn(error);
             console.error('WebSocket Client Error: ' + error.message);
         };
@@ -270,6 +278,15 @@ var Socket = {
                 console.log('Unexpected disconnect for client');
             }
             console.log('Code: ' + event.code + ' reason: ' + event.reason);
+
+            Toast.open({
+                type: 'error'
+                , text: 'WebSocket close connection'
+                , button_custom: {
+                    text: 'reconnect'
+                    , action: self.reconnect
+                }
+            });
 
             self.ws = null;
         };
@@ -290,8 +307,6 @@ var Socket = {
     }
 
     , send: function(obj) {
-        var self = this;
-
         Spiner.add();
 
         console.log(obj);
@@ -300,19 +315,6 @@ var Socket = {
                 ! this.opened ||
                 this.ws.readyState == this.ws.CLOSED ||
                 this.ws.readyState == this.ws.CLOSING) {
-
-            if ( ! this.ws &&
-                    this.opened) {
-
-                Toast.open({
-                    type: 'error'
-                    , text: 'WebSocket lost connection'
-                    , button_custom: {
-                        text: 'reconnect'
-                        , action: self.reconnect
-                    }
-                });
-            }
 
             this._events.push(obj);
             return false;

@@ -362,6 +362,7 @@ var Project = {
                                     self._last_file_content = textarea.value;
                                     file_save.setAttribute('data-disabled', 'disabled');
                                     Toast.message('success', 'File saved');
+                                    html.removeClass('wait');
                                 }
                                 , error: function(text, xhr) {
                                     switch(xhr.status * 1) {
