@@ -1,4 +1,4 @@
-var config_socket = 'ws://cis.tomsksoft:8080/ws';
+var config_socket = ''; // ws://cis.tomsksoft:8080/ws
 
 var templates = {};
 
@@ -301,8 +301,8 @@ var Socket = {
                 this.ws.readyState == this.ws.CLOSED ||
                 this.ws.readyState == this.ws.CLOSING) {
 
-            if (this.ws.readyState == this.ws.CLOSED ||
-                this.ws.readyState == this.ws.CLOSING) {
+            if ( ! this.ws &&
+                    this.opened) {
 
                 Toast.open({
                     type: 'error'

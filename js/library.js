@@ -372,7 +372,7 @@ var Cookie = {
 
 /**
  * Redirect to action with obj_data
- * 
+ *
  * @param {object} params:
  * 		{string} action		- Action for form
  * 		{string} method		- (optional) Send method ('post'(by default)/'get')
@@ -383,7 +383,7 @@ function redirectWithForm(params) {
 	if ( ! params.action) {
 		return;
 	}
-	
+
     var empty_form = document.createElement('form');
     var empty_input = document.createElement('input');
 
@@ -922,12 +922,12 @@ var Script = {
         }
 
         var empty_script = document.createElement('script');
-		
+
         Object.keys(params)
 			.forEach(function(key) {
 				empty_script[key] = params[key];
 			});
-		
+
         body.appendChild(empty_script);
         return empty_script;
     }
@@ -941,7 +941,7 @@ var Script = {
 
 /**
  * AJAX function
- * 
+ *
  * @param {object} params:
  * 		{string} url    - Request URL
  * 		{string} method	- (optional) ('POST' by default) Request type ('post'/'get')
@@ -961,13 +961,14 @@ var Script = {
  *          }
  */
 function AJAX(params) {
-	
+
 	if ( ! params.url) {
 		return;
 	}
-	
+
 	params.method = params.method || 'POST';
-	
+    params.events = params.events || {};
+
     var xhr = null;
 
     try { // For: chrome, firefox, safari, opera, yandex, ...
@@ -1001,17 +1002,17 @@ function AJAX(params) {
             } catch (e) { }
 
             if (xhr.status === 200) { // on success
-                if (isFunction((params.events || {}).success)) {
+                if (isFunction(params.events.success)) {
                     params.events.success(response_text);
                 }
             } else { // on error
-                if (isFunction((params.events || {}).error)) {
+                if (isFunction(params.events.error)) {
                     console.log(xhr.status + ': ' + xhr.statusText);
                     params.events.error(response_text, xhr);
                 }
             }
         } else { // waiting for result
-            if (isFunction((params.events || {}).wait)) {
+            if (isFunction(params.events.wait)) {
                 params.events.wait();
             }
         }
@@ -1027,14 +1028,13 @@ function AJAX(params) {
         for (var index_param in params.data) {
             if (typeof params.data[index_param] == 'object') {
                 for (var index_file in params.data[index_param]) {
-                    data.append(index_file, params.data[index_param][index_file]);
+                    data.append(index_file, params.data[index_param][index_file], params.data[index_param][index_file].name);
                 }
             } else {
                 data.append(index_param, params.data[index_param]);
             }
         }
-
-        if (isFunction((params.events || {}).progress)) {
+        if (isFunction(params.events.progress)) {
             xhr.upload.onprogress = function(event) {
                 // 'progress: ' + event.loaded + ' / ' + event.total;
                 params.events.progress(event);

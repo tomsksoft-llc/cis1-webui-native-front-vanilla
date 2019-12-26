@@ -346,8 +346,8 @@ var Project = {
                                         try {
                                             file = new File([new Blob([textarea.value])], self._url.file);
                                         } catch(e) {
-                                            file = new Blob([textarea.value], { type: 'text/plain' });
-                                            file.lastModifiedDate = new Date();
+                                            file = new Blob([textarea.value], { type: '' });
+                                            file.lastModifiedDate = (new Date()).getTime();
                                             file.name = self._url.file;
                                         }
                                         return file;
