@@ -226,32 +226,17 @@ var Socket = {
                 return;
             }
 
-            if (message.type === 100) {
+            console.log(message);
 
-                self.send({
-                    type: 101
-                    , data: {
-                        connectionCookie:  message.data.connectionCookie
-                        , session: self.data.session
-                        , joinCookie: self.data.cookie
-                        , protocolVersion: self.data.version
-                    }
-                });
+            var type = message.event.split('.')[0];
 
+            if (Config.modules[type]) {
+                Config.modules[type].onmessage(message);
             } else {
-
-                console.log(message);
-
-                var type = message.event.split('.')[0];
-
-                if (Config.modules[type]) {
-                    Config.modules[type].onmessage(message);
-                } else {
-                    if ( ! self._messages[type]) {
-                        self._messages[type] = [];
-                    }
-                    self._messages[type].push(message);
+                if ( ! self._messages[type]) {
+                    self._messages[type] = [];
                 }
+                self._messages[type].push(message);
             }
 
             Spiner.remove();
@@ -325,7 +310,7 @@ var Socket = {
     }
 
     , reconnect: function() {
-        this.open(this._callback);
+        Socket.open(Socket._callback);
     }
 
     , close: function() {
