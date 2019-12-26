@@ -466,7 +466,7 @@ html.modal-show > body > #modal-wrapper {
 input,
 textarea,
 select {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Roboto', sans-serif;
     outline: none;
 }
 input[type="file"],
@@ -474,7 +474,7 @@ input[type="radio"] {
     display: none;
 }
 .custom-input {
-    font-family: 'Open Sans', sans-serif;
+    font-family: 'Roboto', sans-serif;
 }
 .custom-input[type="text"],
 .custom-input[type="password"],

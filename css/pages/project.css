@@ -1,3 +1,13 @@
+div[data-type="checkbox"] > label,
+div.file-cell > label {
+    user-select: none;
+    -webkit-user-select: none;
+     -khtml-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+         -o-user-select: none;
+}
+
 /* Begin base project style */
 #project {
     position: relative;
@@ -141,6 +151,17 @@
     position: relative;
     height: 60px;
 }
+#project-table > div[data-type="file"][data-executable="true"] > div > a:after {
+    content: '';
+    display: inline-block;
+    height: 30px;
+    width: 30px;
+    margin-left: 10px;
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAMAAAAM7l6QAAAAqFBMVEVCQj4AAABCQj00NDMzMzIyMjI2NjU7Ozc0NDM2NjU+PjkxMTEyMjItLS41NTQzMzM/PzwvLzA5OTYyMjEzMzM3NzU8PDk+PjpAQDwvLy8uLi4xMTA0NDM1NTQ5OTY+Pjk+Pjk/PzstLS0xMTE3NzU4ODU5OTY6OjY9PTlAQDwsLCwuLi42NjU3NzU7Ozc3NzU8PDg8PDg0NDIyMi8tLS4sLC0wMDApKSq5gHkLAAAANHRSTlMDAAWivbCDUqyUL8qm/aauEPpkt5qBNCsO59zUqY1nJyAa9rORbUpAEwvwznpwX1s/O8N2j/AKFAAAAVRJREFUKM9904mOgjAUhWEOII4CKgKKCwLu+zJzW97/zeY2ogg684e0Tb6koWmqqbANHKfDOTzxYKTQHuk6dgdz2Spb+vMhdJViDe0xKkWUt6FxBdsRtDI0jSMNwPTgXoXPJk6C/Q++zhPEoo0qlx6Pbcfl//vIOpC2h5HdhcbVmYPKmL5zGb6Mx+ajCNVeGMAAb92Zw88iMGsFPRSMde4SCSFIqEl9RHnw5BVJKV1PjjxXujx4npRkPrlPkjqZvvE1m3bBIdNTT1L3lYUFa0HJ9gq3A6vr1phaGJ6IgO+cVzOq8xKhLyaAwRz6dRYhZsYYmyMmU8xi+cpqL7OZXJzNntbxpJncmBvlwYSU6rSSpOSRV5WDpXtBzByJe0T5pWD2bH1r1hrgeSU6sEI9TS8vdDDa/nvfdvSBp8wc8xgfmi5QPKKJH1q1QkucmVXInMZ7fdZfOIQtMqvddFYAAAAASUVORK5CYII);
+    background-repeat: no-repeat;
+    background-size: cover;
+    vertical-align: middle;
+}
 #project-table > div.file-row {
     height: auto;
 }
@@ -214,12 +235,25 @@
     border: 1px solid #ccd0d2;
     box-sizing: border-box;
     border-radius: 4px;
+    font-family: 'Roboto Mono';
+    font-weight: 400;
     font-size: 14px;
     color: #555;
     line-height: 22px;
     resize: vertical;
     background-color: #eee;
     box-shadow: inset 0 1px 1px #ececec;
+}
+#project-table > div.file-row > div.file-cell > label {
+    position: relative;
+    display: inline-block;
+    height: 24px;
+    top: -3px;
+    line-height: 24px;
+}
+#project-table > div.file-row > div.file-cell > label > * {
+    display: inline-block;
+    vertical-align: middle;
 }
 #project-table > div.file-row > div.file-cell > .custom-button {
     width: 100%;
@@ -303,6 +337,19 @@
 #project-form-params > div > label > span {
     width: 100%;
 }
+#project-form-params > div[data-type="checkbox"] {
+    margin-top: 10px;
+}
+#project-form-params > div[data-type="checkbox"] > label > span {
+    color: #414141;
+}
+#project-form-params > div[data-type="checkbox"] > label > * {
+    vertical-align: middle;
+    cursor: pointer;
+}
+#project-form-params > div[data-type="checkbox"] > label > input {
+    margin: 0;
+}
 #project-form-button > .custom-button[data-disabled="disabled"] {
     background-color: #eee;
     cursor: not-allowed;
@@ -318,10 +365,10 @@ input.hidden {
 }
 #project-form-button > .custom-button {
     width: 100%;
-    margin-top: 10px;
+    margin-top: 20px;
 }
 #project-form-upload {
-    margin-top: 10px;
+    margin-top: 20px;
 }
 #project-form-upload > div {
     display: block;

@@ -45,7 +45,7 @@
 
 <!--template table-->
 <script type="text/html" id="template-project-list">
-    <div data-type="%%title%%" title="%%title%%">
+    <div data-type="%%title%%" title="%%title%%" data-executable="%%executable%%">
         <div>
             <a href="%%url%%">%%item_name%%</a>
         </div>
@@ -66,6 +66,10 @@
     <div class="file-row">
         <div class="file-cell">
             <textarea id="file-content"></textarea>
+            <label>
+                <input id="file-executable" type="checkbox" name="executable" %%executable%%>
+                <span>File is executable</span>
+            </label>
             <div class="custom-button blue-button" data-disabled="disabled">Save</div>
         </div>
     </div>
@@ -73,7 +77,7 @@
 
 <!--template for param-->
 <script type="text/html" id="template-project-form-upload">
-    <div>
+    <div data-type="upload">
         <label>
             <span class="custom-button blue-button">%%name%%</span>
             <input class="custom-input" type="%%type%%" %%attributes%%>
@@ -90,9 +94,18 @@
     </div>
 </script>
 
-<script type="text/html" id="template-project-form-field">
+<script type="text/html" id="template-project-form-text">
     <div>
         <span>%%name%%</span>
         <input class="custom-input %%class%%" type="%%type%%" value="%%value%%">
+    </div>
+</script>
+
+<script type="text/html" id="template-project-form-checkbox">
+    <div data-type="checkbox">
+        <label>
+            <input id="%%class%%" type="checkbox" name="%%name%%" %%value%%>
+            <span>%%text%%</span>
+        </label>
     </div>
 </script>

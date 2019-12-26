@@ -1,3 +1,5 @@
+var config_socket = 'ws://cis.tomsksoft:8080/ws';
+
 var templates = {};
 
 Object.defineProperty(Array.prototype, 'addToHead', {
@@ -159,7 +161,7 @@ var User = {
 var Config = {
     // webSockHost: 'ws://10.0.150.236:8080/ws'
     socket: {
-        host: 'ws://cis.tomsksoft:8080/ws'
+        host: (config_socket || ('ws://' + window.location.host + '/ws'))
     }
     , modules: {
         // Each module add our message types
@@ -173,6 +175,7 @@ var Socket = {
     , opened: false
     , _events: []
     , _messages: {}
+    , _callback: null
 
     , init: function(data) {
         this.data = data || {};
@@ -210,7 +213,8 @@ var Socket = {
             }
 
             if (typeof callback == 'function') {
-                callback();
+                this._callback = callback;
+                this._callback();
             }
         };
 
@@ -254,7 +258,8 @@ var Socket = {
         };
 
         this.ws.onerror = function(error) {
-            console.warn('WebSocket Client Error: ' + error.message);
+            console.warn(error);
+            console.error('WebSocket Client Error: ' + error.message);
         };
 
         this.ws.onclose = function(event) {
@@ -285,14 +290,29 @@ var Socket = {
     }
 
     , send: function(obj) {
+        var self = this;
+
         Spiner.add();
 
         console.log(obj);
 
         if ( ! this.ws ||
-            ! this.opened ||
-            this.ws.readyState == this.ws.CLOSED ||
-            this.ws.readyState == this.ws.CLOSING) {
+                ! this.opened ||
+                this.ws.readyState == this.ws.CLOSED ||
+                this.ws.readyState == this.ws.CLOSING) {
+
+            if (this.ws.readyState == this.ws.CLOSED ||
+                this.ws.readyState == this.ws.CLOSING) {
+
+                Toast.open({
+                    type: 'error'
+                    , text: 'WebSocket lost connection'
+                    , button_custom: {
+                        text: 'reconnect'
+                        , action: self.reconnect
+                    }
+                });
+            }
 
             this._events.push(obj);
             return false;
@@ -303,7 +323,7 @@ var Socket = {
     }
 
     , reconnect: function() {
-
+        this.open(this._callback);
     }
 
     , close: function() {
@@ -457,8 +477,8 @@ var Toast = {
         this.open({
             type: type
             , text: message.encode()
-            , delay: delay
             , button_close: is_close
+            , delay: delay
         });
     }
 

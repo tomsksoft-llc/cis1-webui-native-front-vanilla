@@ -71,7 +71,7 @@ var Project = {
                 , new_dir:  'fs.entry.new_dir.success'
                 , remove:   'fs.entry.remove.success'
                 , move:     'fs.entry.move.success'
-
+                , executable: 'fs.entry.set_executable_flag.success'
             }
         }
         , request: {
@@ -94,6 +94,7 @@ var Project = {
                 , new_dir:  'fs.entry.new_dir'
                 , remove:   'fs.entry.remove'
                 , move:     'fs.entry.move'
+                , executable: 'fs.entry.set_executable_flag'
             }
         }
     }
@@ -117,6 +118,7 @@ var Project = {
         }
 
         var selector_name = 'template-project-';
+
         Selector.queryAll('script[id^="' + selector_name + '"]')
             .forEach(function(item) {
                 self._templates[(item.id
@@ -281,12 +283,14 @@ var Project = {
 
                 self._elements.table.html(
                     (self._templates.file || '')
+                        .replacePHs('executable', (((message.data || {}).metainfo || {}).executable ? 'checked' : ''))
                 );
 
                 setTimeout(function() {
                     self._last_file_content = '';
 
                     var textarea = Selector.id('file-content');
+                    var executable_checkbox = Selector.id('file-executable');
                     var file_save = Selector.query('#project-table > div.file-row > div.file-cell > .custom-button');
 
                     AJAX({
@@ -317,6 +321,13 @@ var Project = {
                         }
                     });
 
+                    addEvent(executable_checkbox, 'change', function() {
+                        self._sendRequest(self._events.request.fs.executable, {
+                            path: message.data.path
+                            , executable: !!this.checked
+                        });
+                    });
+
                     addEvent(file_save, 'click', function() {
                         if (file_save.getAttribute('data-disabled') == 'disabled') {
                             return;
@@ -330,7 +341,17 @@ var Project = {
                             , method: 'POST'
                             , data: {
                                 files: {
-                                    file: new File([new Blob([textarea.value])], self._url.file)
+                                    file: (function() {
+                                        var file = null;
+                                        try {
+                                            file = new File([new Blob([textarea.value])], self._url.file);
+                                        } catch(e) {
+                                            file = new Blob([textarea.value], { type: 'text/plain' });
+                                            file.lastModifiedDate = new Date();
+                                            file.name = self._url.file;
+                                        }
+                                        return file;
+                                    })()
                                 }
                             }
                             , events: {
@@ -338,6 +359,7 @@ var Project = {
                                     html.addClass('wait');
                                 }
                                 , success: function() {
+                                    self._last_file_content = textarea.value;
                                     file_save.setAttribute('data-disabled', 'disabled');
                                     Toast.message('success', 'File saved');
                                 }
@@ -403,6 +425,7 @@ var Project = {
 
                         return template
                             .replacePHs('title', type, true)
+                            .replacePHs('executable', ((item.metainfo || {}).executable || 'false'))
                             .replacePHs('rename_event', ("Project.modal('rename', { value: '%%item_name%%' })"), true)
                             .replacePHs('url', ('#' + obj.serialize()
                                 .replaceAll(encodeURIComponent('%%item_name%%'), '%%item_name%%')))
@@ -597,7 +620,7 @@ var Project = {
             } else if (message.event == this._events.response.cis.build_run) {
 
                 this._sendRequest(this._events.request.fs.refresh);
-                Toast.message('info', 'job run success');
+                Toast.message('info', 'Job run success');
 
             // cis.build.remove.success
             } else if (message.event == this._events.response.cis.build_remove) {
@@ -666,7 +689,7 @@ var Project = {
 
                 location.reload();
                 // this._sendRequest(this._events.request.fs.refresh);
-                Toast.message('info', 'create success');
+                Toast.message('info', 'Create success');
 
             // fs.entry.remove.success
             } else if (message.event == this._events.response.fs.remove) {
@@ -678,6 +701,11 @@ var Project = {
 
                 Hash.set(this._url);
                 this._sendRequest(this._events.request.fs.refresh);
+
+            // fs.entry.executable.success
+            } else if (message.event == this._events.response.fs.executable) {
+
+                Toast.message('info', 'File executable changed success');
 
             }
 
@@ -732,7 +760,10 @@ var Project = {
          *          @param {obj} file       - (Optional) Object with attributes
          *              @param {string} accept  - (Optional) Attribute
          *              @param {bool} multiple  - (Optional) Attribute
-         *  @param {string} button   - (Optional) Text on buttons
+         *  @param {array} custom   - (Optional) Array with obj param
+         *      @param {obj}
+         *          @
+         *  @param {string} button  - (Optional) Text on buttons
          */
         function createModal(params) {
             params = params || {};
@@ -767,11 +798,12 @@ var Project = {
                     } else {
 
                         self._modal.params.html(
-                            (self._templates.form_field || '')
+                            ((item.type == 'checkbox' ? self._templates.form_checkbox : self._templates.form_text) || '')
                                 .replacePHs('name', (item.name || ''))
                                 .replacePHs('class', (item.class || ''), true)
                                 .replacePHs('type', (item.type || 'text'))
                                 .replacePHs('value', (item.value || ''), true)
+                                .replacePHs('text', (item.text || ''), true)
                         );
 
                     }
@@ -888,9 +920,22 @@ var Project = {
 
             var fields = JSON.parse(decodeURIComponent(Cookie.get('param_start_job') || '%5B%5D'));
 
+            // <input id="%%class%%" type="checkbox" name="%%name%%" checked="%%value%%">
+            // <span>%%text%%</span>
+
             createModal({
                 title: 'Set params'
-                , fields: fields
+                , fields: (function() {
+                    var params = fields;
+                    params.push({
+                        type: 'checkbox'
+                        , class: 'start-job-force'
+                        , name: 'force'
+                        , text: 'force'
+                        , value: 'checked'
+                    });
+                    return params;
+                })()
                 , button: 'Start'
             });
 
@@ -903,9 +948,10 @@ var Project = {
                 // Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(fields || [])));
 
                 self._sendRequest(self._events.request.cis.build_run, {
-                    project: self._url.project,
-                    job: self._url.job,
-                    params: fields
+                    project: self._url.project
+                    , job: self._url.job
+                    , params: fields
+                    , force: !!document.getElementById('start-job-force').checked
                 });
                 self.modal('close');
             });
@@ -1076,6 +1122,8 @@ var Project = {
             transactionId: (new Date()).getTime(),
             data: data
         });
+
+        this.modal('close');
     }
 
     , _serialize: function(params) {

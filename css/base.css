@@ -1,130 +1,210 @@
 /* Begin Fonts Settings */
-/* Open Sans */
+/* Roboto */
 /* normal */
 @font-face {
-    font-family: 'Open Sans';
+    font-family: 'Roboto';
+    font-style: normal;
+    font-weight: 100;
+    src: local('Roboto Thin'),
+        local('Roboto-Thin'),
+        url(/css/fonts/Roboto-Thin.woff2) format('woff2'),
+        url(/css/fonts/Roboto-Thin.woff) format('woff');
+}
+@font-face {
+    font-family: 'Roboto';
     font-style: normal;
     font-weight: 300;
-    src: local('Open Sans Light'),
-        local('OpenSans-Light'),
-        url(/css/fonts/OpenSans-Light.woff2) format('woff2'),
-        url(/css/fonts/OpenSans-Light.woff) format('woff');
+    src: local('Roboto Light'),
+        local('Roboto-Light'),
+        url(/css/fonts/Roboto-Light.woff2) format('woff2'),
+        url(/css/fonts/Roboto-Light.woff) format('woff');
 }
 @font-face {
-    font-family: 'Open Sans';
+    font-family: 'Roboto';
     font-style: normal;
     font-weight: 400;
-    src: local('Open Sans'),
-        local('OpenSans'),
-        url(/css/fonts/OpenSans-Regular.woff2) format('woff2'),
-        url(/css/fonts/OpenSans-Regular.woff) format('woff');
+    src: local('Roboto'),
+        local('Roboto-Regular'),
+        url(/css/fonts/Roboto-Regular.woff2) format('woff2'),
+        url(/css/fonts/Roboto-Regular.woff) format('woff');
 }
 @font-face {
-    font-family: 'Open Sans';
+    font-family: 'Roboto';
     font-style: normal;
-    font-weight: 600;
-    src: local('Open Sans Semibold'),
-        local('OpenSans-Semibold'),
-        url(/css/fonts/OpenSans-Semibold.woff2) format('woff2'),
-        url(/css/fonts/OpenSans-Semibold.woff) format('woff');
+    font-weight: 500;
+    src: local('Roboto Medium'),
+        local('Roboto-Medium'),
+        url(/css/fonts/Roboto-Medium.woff2) format('woff2'),
+        url(/css/fonts/Roboto-Medium.woff) format('woff');
 }
 @font-face {
-    font-family: 'Open Sans';
+    font-family: 'Roboto';
     font-style: normal;
     font-weight: 700;
-    src: local('Open Sans Bold'),
-        local('OpenSans-Bold'),
-        url(/css/fonts/OpenSans-Bold.woff2) format('woff2'),
-        url(/css/fonts/OpenSans-Bold.woff) format('woff');
+    src: local('Roboto Bold'),
+        local('Roboto-Bold'),
+        url(/css/fonts/Roboto-Bold.woff2) format('woff2'),
+        url(/css/fonts/Roboto-Bold.woff) format('woff');
 }
 @font-face {
-    font-family: 'Open Sans';
+    font-family: 'Roboto';
     font-style: normal;
-    font-weight: 800;
-    src: local('Open Sans Extrabold'),
-        local('OpenSans-Extrabold'),
-        url(/css/fonts/OpenSans-ExtraBold.woff2) format('woff2'),
-        url(/css/fonts/OpenSans-ExtraBold.woff) format('woff');
+    font-weight: 900;
+    src: local('Roboto Black'),
+        local('Roboto-Black'),
+        url(/css/fonts/Roboto-UltraBold.woff2) format('woff2'),
+        url(/css/fonts/Roboto-UltraBold.woff) format('woff');
 }
 
 /* italic */
 @font-face {
-    font-family: 'Open Sans';
+    font-family: 'Roboto';
     font-style: italic;
-    font-weight: 300;
-    src: local('Open Sans Light Italic'),
-        local('OpenSansLight-Italic'),
-        url(/css/fonts/OpenSans_Italic-Light.woff2) format('woff2'),
-        url(/css/fonts/OpenSans_Italic-Light.woff) format('woff');
+    font-weight: 100;
+    src: local('Roboto Thin Italic'),
+        local('Roboto-ThinItalic'),
+        url(/css/fonts/Roboto_Italic-Thin.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Italic-Thin.woff) format('woff');
 }
 @font-face {
-    font-family: 'Open Sans';
+    font-family: 'Roboto';
+    font-style: italic;
+    font-weight: 300;
+    src: local('Roboto Light Italic'),
+        local('Roboto-LightItalic'),
+        url(/css/fonts/Roboto_Italic-Light.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Italic-Light.woff) format('woff');
+}
+@font-face {
+    font-family: 'Roboto';
     font-style: italic;
     font-weight: 400;
-    src: local('Open Sans Italic'),
-        local('OpenSans-Italic'),
-        url(/css/fonts/OpenSans_Italic-Regular.woff2) format('woff2'),
-        url(/css/fonts/OpenSans_Italic-Regular.woff) format('woff');
+    src: local('Roboto Italic'),
+        local('Roboto-Italic'),
+        url(/css/fonts/Roboto_Italic-Regular.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Italic-Regular.woff) format('woff');
 }
 @font-face {
-    font-family: 'Open Sans';
+    font-family: 'Roboto';
     font-style: italic;
-    font-weight: 600;
-    src: local('Open Sans Semibold Italic'),
-        local('OpenSans-SemiboldItalic'),
-        url(/css/fonts/OpenSans_Italic-Semibold.woff2) format('woff2'),
-        url(/css/fonts/OpenSans_Italic-Semibold.woff) format('woff');
+    font-weight: 500;
+    src: local('Roboto Medium Italic'),
+        local('Roboto-MediumItalic'),
+        url(/css/fonts/Roboto_Italic-Medium.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Italic-Medium.woff) format('woff');
 }
 @font-face {
-    font-family: 'Open Sans';
+    font-family: 'Roboto';
     font-style: italic;
     font-weight: 700;
-    src: local('Open Sans Bold Italic'),
-        local('OpenSans-BoldItalic'),
-        url(/css/fonts/OpenSans_Italic-Bold.woff2) format('woff2'),
-        url(/css/fonts/OpenSans_Italic-Bold.woff) format('woff');
+    src: local('Roboto Bold Italic'),
+        local('Roboto-BoldItalic'),
+        url(/css/fonts/Roboto_Italic-Bold.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Italic-Bold.woff) format('woff');
 }
 @font-face {
-    font-family: 'Open Sans';
+    font-family: 'Roboto';
     font-style: italic;
-    font-weight: 800;
-    src: local('Open Sans Extrabold Italic'),
-        local('OpenSans-ExtraboldItalic'),
-        url(/css/fonts/OpenSans_Italic-ExtraBold.woff2) format('woff2'),
-        url(/css/fonts/OpenSans_Italic-ExtraBold.woff) format('woff');
+    font-weight: 900;
+    src: local('Roboto Black Italic'),
+        local('Roboto-BlackItalic'),
+        url(/css/fonts/Roboto_Italic-UltraBold.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Italic-UltraBold.woff) format('woff');
 }
 
-
-/* Open Sans Condensed */
+/* Roboto Mono */
 /* normal */
 @font-face {
-    font-family: 'Open Sans Condensed';
+    font-family: 'Roboto Mono';
     font-style: normal;
-    font-weight: 300;
-    src: local('Open Sans Cond Light'),
-        local('OpenSans-CondensedLight'),
-        url(/css/fonts/OpenSans_Condensed-Light.woff2) format('woff2'),
-        url(/css/fonts/OpenSans_Condensed-Light.woff) format('woff');
+    font-weight: 100;
+    src: local('Roboto Mono Thin'),
+        local('RobotoMono-Thin'),
+        url(/css/fonts/Roboto_Mono-Thin.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Mono-Thin.woff) format('woff');
 }
 @font-face {
-    font-family: 'Open Sans Condensed';
+    font-family: 'Roboto Mono';
+    font-style: normal;
+    font-weight: 300;
+    src: local('Roboto Mono Light'),
+        local('RobotoMono-Light'),
+        url(/css/fonts/Roboto_Mono-Light.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Mono-Light.woff) format('woff');
+}
+@font-face {
+    font-family: 'Roboto Mono';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Roboto Mono'),
+        local('RobotoMono-Regular'),
+        url(/css/fonts/Roboto_Mono-Regular.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Mono-Regular.woff) format('woff');
+}
+@font-face {
+    font-family: 'Roboto Mono';
+    font-style: normal;
+    font-weight: 500;
+    src: local('Roboto Mono Medium'),
+        local('RobotoMono-Medium'),
+        url(/css/fonts/Roboto_Mono-Medium.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Mono-Medium.woff) format('woff');
+}
+@font-face {
+    font-family: 'Roboto Mono';
     font-style: normal;
     font-weight: 700;
-    src: local('Open Sans Condensed Bold'),
-        local('OpenSans-CondensedBold'),
-        url(/css/fonts/OpenSans_Condensed-Bold.woff2) format('woff2'),
-        url(/css/fonts/OpenSans_Condensed-Bold.woff) format('woff');
+    src: local('Roboto Mono Bold'),
+        local('RobotoMono-Bold'),
+        url(/css/fonts/Roboto_Mono-Bold.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Mono-Bold.woff) format('woff');
 }
 
 /* italic */
 @font-face {
-    font-family: 'Open Sans Condensed';
+    font-family: 'Roboto Mono';
+    font-style: italic;
+    font-weight: 100;
+    src: local('Roboto Mono Thin Italic'),
+        local('RobotoMono-ThinItalic'),
+        url(/css/fonts/Roboto_Mono_Italic-Thin.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Mono_Italic-Thin.woff) format('woff');
+}
+@font-face {
+    font-family: 'Roboto Mono';
     font-style: italic;
     font-weight: 300;
-    src: local('Open Sans Cond Light Italic'),
-        local('OpenSans-CondensedLightItalic'),
-        url(/css/fonts/OpenSans_Condensed_Italic-Light.woff2) format('woff2'),
-        url(/css/fonts/OpenSans_Condensed_Italic-Light.woff) format('woff');
+    src: local('Roboto Mono Light Italic'),
+        local('RobotoMono-LightItalic'),
+        url(/css/fonts/Roboto_Mono_Italic-Light.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Mono_Italic-Light.woff) format('woff');
+}
+@font-face {
+    font-family: 'Roboto Mono';
+    font-style: italic;
+    font-weight: 400;
+    src: local('Roboto Mono Italic'),
+        local('RobotoMono-Italic'),
+        url(/css/fonts/Roboto_Mono_Italic-Regular.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Mono_Italic-Regular.woff) format('woff');
+}
+@font-face {
+    font-family: 'Roboto Mono';
+    font-style: italic;
+    font-weight: 500;
+    src: local('Roboto Mono Medium Italic'),
+        local('RobotoMono-MediumItalic'),
+        url(/css/fonts/Roboto_Mono_Italic-Medium.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Mono_Italic-Medium.woff) format('woff');
+}
+@font-face {
+    font-family: 'Roboto Mono';
+    font-style: italic;
+    font-weight: 700;
+    src: local('Roboto Mono Bold Italic'),
+        local('RobotoMono-BoldItalic'),
+        url(/css/fonts/Roboto_Mono_Italic-Bold.woff2) format('woff2'),
+        url(/css/fonts/Roboto_Mono_Italic-Bold.woff) format('woff');
 }
 /* End Fonts Settings */
 
@@ -160,7 +240,7 @@ html {
 }
 body {
     line-height: 1;
-    font-family: 'Open Sans', sans-serif;
+    font-family: Roboto, sans-serif;
     font-weight: 400;
 }
 ul {
