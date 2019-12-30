@@ -100,6 +100,7 @@ var Project = {
     }
     , _data: {}
     , _templates: {}
+    , _param_start_job: []
 
     , _messages: [
         'cis'
@@ -614,7 +615,7 @@ var Project = {
 
                 showButtons(buttons.job, (message.data || {}).properties);
                 if (createTable(message)) {
-                    Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(((message.data || {}).params || []))));
+                    this._param_start_job = ((message.data || {}).params || []);
                 }
 
             // cis.job.run.success
@@ -919,7 +920,7 @@ var Project = {
 
         } else if (action == 'startJob') {
 
-            var fields = JSON.parse(decodeURIComponent(Cookie.get('param_start_job') || '%5B%5D'));
+            var self = this;
 
             // <input id="%%class%%" type="checkbox" name="%%name%%" checked="%%value%%">
             // <span>%%text%%</span>
@@ -927,7 +928,7 @@ var Project = {
             createModal({
                 title: 'Set params'
                 , fields: (function() {
-                    var params = fields;
+                    var params = self._param_start_job;
                     params.push({
                         type: 'checkbox'
                         , class: 'start-job-force'
@@ -943,15 +944,13 @@ var Project = {
             addEvent(this._modal.button.querySelector('div'), 'click', function() {
                 Selector.queryAll('#project-form-params input')
                     .forEach(function(input, key) {
-                        fields[key].value = input.value.trim();
+                        self._param_start_job[key].value = input.value.trim();
                     });
-
-                // Cookie.set('param_start_job', encodeURIComponent(JSON.stringify(fields || [])));
 
                 self._sendRequest(self._events.request.cis.build_run, {
                     project: self._url.project
                     , job: self._url.job
-                    , params: fields
+                    , params: self._param_start_job
                     , force: !!document.getElementById('start-job-force').checked
                 });
                 self.modal('close');
