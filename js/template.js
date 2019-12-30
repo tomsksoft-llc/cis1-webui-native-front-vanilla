@@ -1,4 +1,4 @@
-var config_socket = 'ws://cis.tomsksoft:8080/ws'; // ws://cis.tomsksoft:8080/ws
+var config_socket = ''; // ws://cis.tomsksoft:8080/ws
 
 var templates = {};
 
