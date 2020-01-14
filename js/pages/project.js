@@ -44,6 +44,7 @@ var Project = {
                 , job_invalid_params:   'cis.job.error.invalid_params'
                 , job_doesnt_exist:     'cis.job.error.doesnt_exist'
                 , build_doesnt_exist:   'cis.build.error.doesnt_exist'
+                , build_log_error:      'cis.session.not_established'
 
                 // success
                 , project_list:     'cis.project_list.get.success'
@@ -56,6 +57,10 @@ var Project = {
                 , build_run:        'cis.job.run.success'
                 , build_remove:     'cis.build.remove.success'
                 , entry_list:       'cis.build.info.success'
+
+                // process
+                , build_log_entry:  'cis.session.log_entry'
+                , build_log_closed: 'cis.session.closed'
             }
             , fs: {
                 // errors
@@ -85,6 +90,8 @@ var Project = {
                 , build_list:       'cis.job.info'
                 , build_run:        'cis.job.run'
                 , build_remove:     'cis.build.remove'
+                , build_subscribe:  'cis.session.subscribe'
+                , build_unsubscribe: 'cis.session.unsubscribe'
                 , entry_list:       'cis.build.info'
             }
             , fs: {
@@ -108,6 +115,7 @@ var Project = {
     ]
 
     , _last_file_content: ''
+    , _last_session_id: ''
 
     , init: function() {
 
@@ -214,6 +222,10 @@ var Project = {
                     self._elements.buttons.html(
                         (self._templates.property || '')
                             .replacePHs('onclick', (function() {
+
+                                if (item.onclick) {
+                                    return item.onclick;
+                                }
 
                                 var type = (item.metainfo || {}).type;
                                 var obj = JSON.parse(JSON.stringify(self._url));
@@ -550,11 +562,13 @@ var Project = {
             // cis.job.error.doesnt_exist
             // cis.job.error.invalid_params
             // cis.build.error.doesnt_exist
+            // cis.session.not_established
             if ([
                     this._events.response.cis.project_doesnt_exist
                     , this._events.response.cis.job_doesnt_exist
                     , this._events.response.cis.job_invalid_params
                     , this._events.response.cis.build_doesnt_exist
+                    , this._events.response.cis.build_log_error
                 ].inArray(message.event)) {
 
                 // cis.project.error.doesnt_exist
@@ -572,9 +586,16 @@ var Project = {
 
                     showButtons(buttons.job);
 
+                // cis.session.not_established
+                } else if (message.event == this._events.response.cis.build_log_error) {
+
+                    this.modal('close', { type: 'log' });
+
                 }
 
-                Toast.message('error', message.errorMessage);
+                if (message.errorMessage) {
+                    Toast.message('error', message.errorMessage);
+                }
 
             // cis.project_list.get.success
             } else if (message.event == this._events.response.cis.project_list) {
@@ -621,8 +642,22 @@ var Project = {
             // cis.job.run.success
             } else if (message.event == this._events.response.cis.build_run) {
 
-                this._sendRequest(this._events.request.fs.refresh);
                 Toast.message('info', 'Job run success');
+
+                this.showLog(message.data.session_id);
+
+            // cis.session.log_entry
+            } else if (message.event == this._events.response.cis.build_log_entry) {
+
+                this.modal('log', message.data);
+
+            // cis.session.closed
+            } else if (message.event == this._events.response.cis.build_log_closed) {
+
+                if (this._last_session_id = message.data.session_id &&
+                        this._modal.form.getAttribute('data-type') == 'log') {
+                    Toast.message('info', 'Log ended');
+                }
 
             // cis.build.remove.success
             } else if (message.event == this._events.response.cis.build_remove) {
@@ -634,7 +669,12 @@ var Project = {
 
                 if (createTable(message)) {
 
-                    showButtons(buttons.build);
+                    showButtons(buttons.build, [
+                        {
+                            onclick: 'Project.showLog("' + message.data.session_id + '");'
+                            , name: 'Run log'
+                        }
+                    ]);
 
                     if ((message.data || {}).date) {
                         this._elements.info.html(
@@ -690,7 +730,6 @@ var Project = {
             } else if (message.event == this._events.response.fs.new_dir) {
 
                 location.reload();
-                // this._sendRequest(this._events.request.fs.refresh);
                 Toast.message('info', 'Create success');
 
             // fs.entry.remove.success
@@ -717,19 +756,25 @@ var Project = {
         }
     }
 
+    , showLog: function(session_id) {
+
+        this._last_session_id = session_id;
+
+        this._sendRequest(this._events.request.cis.build_subscribe, {
+            session_id: this._last_session_id
+        });
+
+    }
+
     /**
      *  Modal
      *
      * @param {string} action - Key to action selection
      * @param params          - (Optional)Parameter for actions
-     *     Variant
-     *         action = 'createNewFolder' (Send a request to create a new file)
-     *         {string} params - Title form; what will be created ('Project' || 'Job')
-     *
-     *         action = 'remove' (Remove folder)
-     *         {bool} params   - Deletion confirmed
      */
     , modal: function(action, params) {
+
+        var self = this;
 
         if ( ! this._modal) {
             this._modal = {
@@ -739,18 +784,30 @@ var Project = {
                 , button: null
             };
 
-            for (var key in this._modal) {
-                this._modal[key] = Selector.id('project-form' + ((key == 'form') ?  '' : ('-' + key)));
-            }
+            Object.keys(self._modal)
+                .forEach(function(item) {
+                    self._modal[item] = Selector.id('project-form' + ((item == 'form') ?  '' : ('-' + item)));
+                });
         }
 
         if (action == 'close') {
+            if (params &&
+                    this._modal.form.getAttribute('data-type') != params.type) {
+                return;
+            }
+
+            this._modal.form.setAttribute('data-type', '');
             this._modal.form.className = '';
             this._modal.params.innerHTML = '';
+
+            if (this._last_session_id) {
+                this._sendRequest(this._events.request.build_unsubscribe, {
+                    session_id: this._last_session_id
+                });
+                this._last_session_id = '';
+            }
             return;
         }
-
-        var self = this;
 
         /**
          *  @param {string} title   - (Optional) Name of form
@@ -760,19 +817,18 @@ var Project = {
          *          @param {string} name    - (Optional) Field name
          *          @param {string} value   - (Optional) Field value
          *          @param {obj} file       - (Optional) Object with attributes
-         *              @param {string} accept  - (Optional) Attribute
          *              @param {bool} multiple  - (Optional) Attribute
-         *  @param {array} custom   - (Optional) Array with obj param
-         *      @param {obj}
-         *          @
-         *  @param {string} button  - (Optional) Text on buttons
+         *              @param {string} accept  - (Optional) Attribute
+         *  @param {string} custom      - (Optional) Custom HTML
+         *  @param {string} button      - (Optional) Text on buttons
          */
         function createModal(params) {
             params = params || {};
             self._modal.params.innerHTML = '';
             self._modal.name.innerHTML = params.title || '';
+            self._modal.button.innerHTML = '';
 
-            (params.fields || [{}])
+            (params.fields || [])
                 .forEach(function(item) {
 
                     if (item.type == 'file') {
@@ -782,18 +838,10 @@ var Project = {
                                 .replacePHs('name', (item.name || ''))
                                 .replacePHs('type', (item.type || 'text'))
                                 .replacePHs('attributes', (function() {
-                                    var attributes = [];
-
-                                    if (item.file) {
-                                        if ('accept' in item.file) {
-                                            attributes.push('accept="' + item.file.accept + '"');
-                                        }
-                                        if ('multiple' in item.file) {
-                                            attributes.push('multiple="' + (item.file.multiple).toString() + '"');
-                                        }
-                                    }
-
-                                    return attributes.join(' ');
+                                    return Object.keys(item.file)
+                                        .map(function(value) {
+                                            return value + '="' + item.file[value].toString() + '"';
+                                        }).join(' ');
                                 })())
                         );
 
@@ -811,16 +859,98 @@ var Project = {
                     }
                 });
 
-            self._modal.button.html(
-                (self._templates.button || '')
-                    .replacePHs('name', (params.button || ''))
-                    .replacePHs('onclick', '')
-                , true);
+            if (params.custom) {
 
+                self._modal.params.html(params.custom);
+
+            }
+
+            if (params.button) {
+                self._modal.button.html(
+                    (self._templates.button || '')
+                        .replacePHs('name', (params.button || ''))
+                        .replacePHs('onclick', '')
+                    );
+            }
+
+            self._modal.form.setAttribute('data-type', action);
             self._modal.form.className = 'show-modal';
         }
 
-        if (action == 'addDir') {
+        if (action == 'log') {
+
+            if (this._last_session_id != params.session_id) {
+                return;
+            }
+
+            if (this._modal.form.getAttribute('data-type') != 'log') {
+
+                createModal({
+                    title: 'Run log'
+                    , custom: this._templates.form_log_item
+                        .replacePHs('time', 'Time')
+                        .replacePHs('message', 'Messages')
+                });
+
+            }
+
+            var result_date = (function() {
+                var date = new Date(params.time);
+
+                date = {
+                    day: date.getDate()
+                    , month: date.getMonth() + 1
+                    , year: date.getFullYear()
+                    , hours: date.getHours()
+                    , minutes: date.getMinutes()
+                    , seconds: date.getSeconds()
+                    , miliseconds: date.getMilliseconds()
+                };
+
+                [
+                    'day'
+                    , 'month'
+                    , 'hours'
+                    , 'minutes'
+                    , 'seconds'
+                ].forEach(function(key) {
+                    if (date[key] < 10) {
+                        date[key] = '0' + date[key];
+                    }
+                });
+
+                date.year = date.year.toString().slice(2);
+
+                if (date.miliseconds < 10) {
+                    date.miliseconds = '00' + date.miliseconds;
+                } else if (date.miliseconds < 100) {
+                    date.miliseconds = '0' + date.miliseconds;
+                }
+
+                return date;
+            })();
+
+            this._modal.params.html(this._templates.form_log_item
+                .replacePHs('time', (
+                    [
+                        result_date.day
+                        , result_date.month
+                        , (
+                            result_date.year +
+                            ' ' +
+                            [
+                                result_date.hours
+                                , result_date.minutes
+                                , result_date.seconds
+                            ].join(':')
+                        )
+                        , result_date.miliseconds
+                    ].join('.')
+                ))
+                .replacePHs('message', (params.message || '...'), true)
+            );
+
+        } else if (action == 'addDir') {
 
             createModal({
                 title: 'New ' + params.type
@@ -859,7 +989,7 @@ var Project = {
 
                 if (value) {
                     self._sendRequest(events[params.type].event, events[params.type].value);
-                    self.modal('close');
+                    self.modal('close', { type: action });
                 } else {
                     Toast.message('error', 'Name must be not empty');
                 }
@@ -889,6 +1019,7 @@ var Project = {
                 };
 
                 self._sendRequest(events[params.type]);
+                self.modal('close', { type: action });
             });
 
         } else if (action == 'rename') {
@@ -912,7 +1043,7 @@ var Project = {
                         oldPath: self._serialize() + '/' + params.value
                         , newPath: self._serialize() + '/' + value
                     });
-                    self.modal('close');
+                    self.modal('close', { type: action });
                 } else {
                     Toast.message('error', 'Name must be not empty');
                 }
@@ -922,13 +1053,10 @@ var Project = {
 
             var self = this;
 
-            // <input id="%%class%%" type="checkbox" name="%%name%%" checked="%%value%%">
-            // <span>%%text%%</span>
-
             createModal({
                 title: 'Set params'
                 , fields: (function() {
-                    var params = self._param_start_job;
+                    var params = JSON.parse(JSON.stringify(self._param_start_job));
                     params.push({
                         type: 'checkbox'
                         , class: 'start-job-force'
@@ -942,7 +1070,7 @@ var Project = {
             });
 
             addEvent(this._modal.button.querySelector('div'), 'click', function() {
-                Selector.queryAll('#project-form-params input')
+                Selector.queryAll('#project-form-params input[type="text"]')
                     .forEach(function(input, key) {
                         self._param_start_job[key].value = input.value.trim();
                     });
@@ -953,7 +1081,8 @@ var Project = {
                     , params: self._param_start_job
                     , force: !!document.getElementById('start-job-force').checked
                 });
-                self.modal('close');
+
+                self.modal('close', { type: action });
             });
 
         } else if (action == 'addFile') {
@@ -1048,7 +1177,7 @@ var Project = {
                     }
                 });
 
-                self.modal('close');
+                self.modal('close', { type: action });
             });
 
         }
@@ -1122,8 +1251,6 @@ var Project = {
             transactionId: (new Date()).getTime(),
             data: data
         });
-
-        this.modal('close');
     }
 
     , _serialize: function(params) {

@@ -282,6 +282,7 @@ div.file-cell > label {
     display: block;
 }
 #project-form > div {
+    width: 100%;
     min-width: 350px;
     max-width: 450px;
     top: 100px;
@@ -291,6 +292,9 @@ div.file-cell > label {
     background: #ffffff;
     text-align: center;
     color: #a9a9a9;
+}
+#project-form[data-type="log"] > div {
+    max-width: 650px;
 }
 #project-form-header {
     position: relative;
@@ -328,6 +332,29 @@ div.file-cell > label {
 }
 #project-form-params > div {
     text-align: left;
+}
+#project-form[data-type="log"] #project-form-params {
+    color: #666;
+}
+#project-form[data-type="log"] #project-form-params > div {
+    position: relative;
+    padding-left: 150px;
+    box-sizing: border-box;
+    line-height: 20px;
+}
+#project-form[data-type="log"] #project-form-params > div + div {
+    margin-top: 10px;
+}
+#project-form[data-type="log"] #project-form-params > div > div {
+    display: inline-block;
+    line-height: 20px;
+    word-break: break-all;
+    vertical-align: top;
+}
+#project-form[data-type="log"] #project-form-params > div > div:first-child {
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 #project-form-params > div > span {
     display: block;
