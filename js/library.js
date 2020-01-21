@@ -1028,7 +1028,11 @@ function AJAX(params) {
         for (var index_param in params.data) {
             if (typeof params.data[index_param] == 'object') {
                 for (var index_file in params.data[index_param]) {
-                    data.append(index_file, params.data[index_param][index_file], params.data[index_param][index_file].name);
+                    if (typeof params.data[index_param][index_file] == 'object') {
+                        data.append(index_file, params.data[index_param][index_file], params.data[index_param][index_file].name);
+                    } else {
+                        data.append(index_file, params.data[index_param][index_file]);
+                    }
                 }
             } else {
                 data.append(index_param, params.data[index_param]);
