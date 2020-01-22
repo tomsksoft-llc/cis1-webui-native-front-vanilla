@@ -313,6 +313,7 @@ var Socket = {
 
     , reconnect: function() {
         Socket.open(Socket._callback);
+        Toast.close();
     }
 
     , close: function() {

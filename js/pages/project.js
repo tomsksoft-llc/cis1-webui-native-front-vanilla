@@ -14,13 +14,13 @@
  *         @param {string} event - Success of action
  *
  *         @param {obj} data     - (Optional) Message data
- *             @param {status} number    - (Optional) Exit code
- *             @param {string} date      - (Optional) Start date
- *             @param {array} fs_entries - (Optional) Array with record objects
- *                 @param {string} name    - Name of entry
- *                 @param {string} link    - (Optional) URL to download
- *                 @param {bool} directory - (Optional) Is this property or build
- *                 @param {obj} metainfo   - (Optional) Record metadata
+ *             @param {string} exit_code    - (Optional) Exit code
+ *             @param {string} date         - (Optional) Start date
+ *             @param {array} fs_entries    - (Optional) Array with record objects
+ *                 @param {string} name     - Name of entry
+ *                 @param {string} link     - (Optional) URL to download
+ *                 @param {bool} directory  - (Optional) Is this property or build
+ *                 @param {obj} metainfo    - (Optional) Record metadata
  *                     @param {string} date - (Optional) Start date
  */
 
@@ -484,6 +484,7 @@ var Project = {
 
                         return template
                             .replacePHs('title', type, true)
+                            .replacePHs('status', ((item.metainfo || {}).status || ''))
                             .replacePHs('executable', ((item.metainfo || {}).executable || 'false'))
                             .replacePHs('rename_event', ("Project.modal('rename', { value: '%%item_name%%' })"), true)
                             .replacePHs('url', ('#' + obj.serialize()
@@ -745,11 +746,12 @@ var Project = {
                                 .replacePHs('value', message.data.date)
                         );
                     }
-                    if (typeof ((message.data || {}).status) == "number") {
+                    
+                    if ('exit_code' in (message.data || {})) {
                         this._elements.info.html(
                             (this._templates.info || '')
-                                .replacePHs('key', 'exitcode')
-                                .replacePHs('value', message.data.status)
+                                .replacePHs('key', 'Exit code')
+                                .replacePHs('value', message.data.exit_code)
                         );
                     }
                 }
