@@ -58,6 +58,8 @@ addEvent(document, 'ready', function() {
                 '/css/pages/' + attr + '.css'
             ]).addToHead('css');
 
+            var params = item.getAttribute('data-params') || '';
+
             AJAX({
                 url: '/modules/' + attr + '.html'
                 , method: 'POST'
@@ -72,7 +74,7 @@ addEvent(document, 'ready', function() {
 
                         ([
                             '/js/pages/' + attr + '.js'
-                        ]).addToHead('js', (attr.capitalize() + '.init(); Socket.addTypes(' + attr.capitalize() + ', ' + attr.capitalize() + '._messages);'));
+                        ]).addToHead('js', (attr.capitalize() + '.init(' + params + '); Socket.addTypes(' + attr.capitalize() + ', ' + attr.capitalize() + '._messages);'));
                     }
                     , error: function() {
                         html.removeClass('wait');

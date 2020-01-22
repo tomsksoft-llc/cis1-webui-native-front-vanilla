@@ -1028,10 +1028,11 @@ function AJAX(params) {
         for (var index_param in params.data) {
             if (typeof params.data[index_param] == 'object') {
                 for (var index_file in params.data[index_param]) {
-                    if (typeof params.data[index_param][index_file] == 'object') {
-                        data.append(index_file, params.data[index_param][index_file], params.data[index_param][index_file].name);
+                    var item = params.data[index_param][index_file];
+                    if (typeof item == 'object') {
+                        data.append(index_file, item, item.name);
                     } else {
-                        data.append(index_file, params.data[index_param][index_file]);
+                        data.append(index_file, item);
                     }
                 }
             } else {
@@ -1144,12 +1145,16 @@ var Hash = {
     }
     , empty_default: ''
 
-    , get: function(delimiters) {
+    , get: function(delimiters, json_contains) {
         delimiters = delimiters || {};
         var obj_hash = {};
 
+        var escape = json_contains ?
+            /<|>/g :
+            /<|>|\"|\'|\/|%3C|%3E|%22|%27/g;
+
         var arr_hash = window.location.hash.slice(1)
-            .replace(/(<|>|\"|\'|\/|%3C|%3E|%22|%27)/g, '')
+            .replace(escape, '')
             .split('pairs' in delimiters ? delimiters.pairs : this.delimiters.pairs);
 
         for (var index_hash in arr_hash) {

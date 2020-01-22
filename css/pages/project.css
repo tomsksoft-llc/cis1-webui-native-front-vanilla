@@ -28,6 +28,9 @@ div.file-cell > label {
     padding-top: 50px;
     margin-right: 20px;
 }
+#project[data-type="custom"] #project-buttons {
+    padding-top: 0;
+}
 #project-buttons > div {
     width: 130px;
     min-width: 130px;
@@ -63,6 +66,9 @@ div.file-cell > label {
     padding: 10px;
     border: none;
     color: #41b7ef;
+}
+#project[data-type="custom"] #project-path {
+    display: none;
 }
 #project-path > a {
     color: #41b7ef;

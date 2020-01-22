@@ -109,6 +109,9 @@ var Project = {
     , _templates: {}
     , _param_start_job: []
 
+    , _params: {}
+    , _action: null
+
     , _messages: [
         'cis'
         , 'fs'
@@ -117,7 +120,7 @@ var Project = {
     , _last_file_content: ''
     , _last_session_id: ''
 
-    , init: function() {
+    , init: function(params) {
 
         var self = this;
         this._url = Hash.get();
@@ -135,6 +138,15 @@ var Project = {
                         .replaceAll('-','_')
                     )] = item.innerHTML.trim();
             });
+        
+        if (typeof params == 'object') {
+            this._params = params;
+        } else {
+            this._params = {
+                type: 'all'
+            };
+        }
+        this._elements.project.setAttribute('data-type', this._params.type);
 
         this.send();
     }
@@ -143,7 +155,38 @@ var Project = {
 
         var self = this;
 
-        this._url = Hash.get();
+        this._url = Hash.get({}, true);
+
+        // // begin custom
+        // var res = JSON.parse(JSON.stringify(this._url));
+        // res.action = JSON.stringify({
+        //     name: 'startJob'
+        //     , params: [
+        //         {
+        //             name: 'name_1'
+        //             , value: 'a'
+        //         }
+        //         , {
+        //             name: 'name_2'
+        //             , value: ' a s'
+        //         }
+        //         , {
+        //             name: 'name_3'
+        //             , value: 'ascas f asf '
+        //         }
+        //     ]
+        // });
+        // Hash.set(res);
+        //
+        // this._url = Hash.get({}, true);
+        // // end custom
+
+        if (this._url.action) {
+            try {
+                this._action = JSON.parse(this._url.action);
+            } catch(e) {}
+            delete this._url.action;
+        }
 
         if (this._url.file) {
 
@@ -453,107 +496,119 @@ var Project = {
         }
 
         var buttons = {
-            root: [
-                {
-                    name: 'New project'
-                    , onclick: "Project.modal('addDir', {type: 'project'});"
-                }
-                , {
-                    name: 'New dir'
-                    , onclick: "Project.modal('addDir', {type: 'directory'});"
-                }
-                , {
-                    name: 'Add file(-s)'
-                    , onclick: "Project.modal('addFile', {name: 'file'});"
-                }
-            ]
-            , project: [
-                {
-                    name: 'New job'
-                    , onclick: "Project.modal('addDir', {type: 'job'});"
-                }
-                , {
-                    name: 'Remove project'
-                    , onclick: "Project.modal('removeDir', {type: 'project'});"
-                }
-                , {
-                    name: 'New dir'
-                    , onclick: "Project.modal('addDir', {type: 'directory'});"
-                }
-                , {
-                    name: 'Add file(-s)'
-                    , onclick: "Project.modal('addFile', {name: 'file'});"
-                }
-            ]
-            , job: [
-                {
-                    name: 'Start job'
-                    , onclick: "Project.modal('startJob');"
-                }
-                , {
-                    name: 'Remove job'
-                    , onclick: "Project.modal('removeDir', {type: 'job'});"
-                }
-                , {
-                    name: 'New dir'
-                    , onclick: "Project.modal('addDir', {type: 'directory'});"
-                }
-                , {
-                    name: 'Add file(-s)'
-                    , onclick: "Project.modal('addFile', {name: 'file'});"
-                }
-            ]
-            , build: [
-                {
-                    name: 'Remove build'
-                    , onclick: "Project.modal('removeDir', {type: 'build'});"
-                }
-                , {
-                    name: 'New dir'
-                    , onclick: "Project.modal('addDir', {type: 'directory'});"
-                }
-                , {
-                    name: 'Add file(-s)'
-                    , onclick: "Project.modal('addFile', {name: 'file'});"
-                }
-                // , {
-                //     name: 'Add params'
-                //     , onclick: "Project.modal('addFile', {name: 'params', accept: '.params'});"
-                // }
-                // , {
-                //     name: 'Add readme'
-                //     , onclick: "Project.modal('addFile', {name: 'readme', accept: '.md, .txt'});"
-                // }
-            ]
-            , directory: [
-                {
-                    name: 'Remove directory'
-                    , onclick: "Project.modal('removeDir', {type: 'directory'});"
-                }
-                , {
-                    name: 'New dir'
-                    , onclick: "Project.modal('addDir', {type: 'directory'});"
-                }
-                , {
-                    name: 'Add file(-s)'
-                    , onclick: "Project.modal('addFile', {name: 'file'});"
-                }
-            ]
-            , file: [
-                {
-                    name: 'Replace content'
-                    , onclick: "Project.actionButton('file', 'replace');"
-                }
-                , {
-                    name: 'Download'
-                    , onclick: "Project.actionButton('file', 'download');"
-                }
-                , {
-                    name: 'Remove'
-                    , onclick: "Project.modal('removeDir', {type: 'file'});"
-                }
-            ]
+            all: {
+                root: [
+                    {
+                        name: 'New project'
+                        , onclick: "Project.modal('addDir', {type: 'project'});"
+                    }
+                    , {
+                        name: 'New dir'
+                        , onclick: "Project.modal('addDir', {type: 'directory'});"
+                    }
+                    , {
+                        name: 'Add file(-s)'
+                        , onclick: "Project.modal('addFile', {name: 'file'});"
+                    }
+                ]
+                , project: [
+                    {
+                        name: 'New job'
+                        , onclick: "Project.modal('addDir', {type: 'job'});"
+                    }
+                    , {
+                        name: 'Remove project'
+                        , onclick: "Project.modal('removeDir', {type: 'project'});"
+                    }
+                    , {
+                        name: 'New dir'
+                        , onclick: "Project.modal('addDir', {type: 'directory'});"
+                    }
+                    , {
+                        name: 'Add file(-s)'
+                        , onclick: "Project.modal('addFile', {name: 'file'});"
+                    }
+                ]
+                , job: [
+                    {
+                        name: 'Start job'
+                        , onclick: "Project.modal('startJob');"
+                    }
+                    , {
+                        name: 'Remove job'
+                        , onclick: "Project.modal('removeDir', {type: 'job'});"
+                    }
+                    , {
+                        name: 'New dir'
+                        , onclick: "Project.modal('addDir', {type: 'directory'});"
+                    }
+                    , {
+                        name: 'Add file(-s)'
+                        , onclick: "Project.modal('addFile', {name: 'file'});"
+                    }
+                ]
+                , build: [
+                    {
+                        name: 'Remove build'
+                        , onclick: "Project.modal('removeDir', {type: 'build'});"
+                    }
+                    , {
+                        name: 'New dir'
+                        , onclick: "Project.modal('addDir', {type: 'directory'});"
+                    }
+                    , {
+                        name: 'Add file(-s)'
+                        , onclick: "Project.modal('addFile', {name: 'file'});"
+                    }
+                    // , {
+                    //     name: 'Add params'
+                    //     , onclick: "Project.modal('addFile', {name: 'params', accept: '.params'});"
+                    // }
+                    // , {
+                    //     name: 'Add readme'
+                    //     , onclick: "Project.modal('addFile', {name: 'readme', accept: '.md, .txt'});"
+                    // }
+                ]
+                , directory: [
+                    {
+                        name: 'Remove directory'
+                        , onclick: "Project.modal('removeDir', {type: 'directory'});"
+                    }
+                    , {
+                        name: 'New dir'
+                        , onclick: "Project.modal('addDir', {type: 'directory'});"
+                    }
+                    , {
+                        name: 'Add file(-s)'
+                        , onclick: "Project.modal('addFile', {name: 'file'});"
+                    }
+                ]
+                , file: [
+                    {
+                        name: 'Replace content'
+                        , onclick: "Project.actionButton('file', 'replace');"
+                    }
+                    , {
+                        name: 'Download'
+                        , onclick: "Project.actionButton('file', 'download');"
+                    }
+                    , {
+                        name: 'Remove'
+                        , onclick: "Project.modal('removeDir', {type: 'file'});"
+                    }
+                ]
+            }
+            , custom: {
+                job: [
+                    {
+                        name: 'Start job'
+                        , onclick: "Project.modal('startJob');"
+                    }
+                ]
+            }
         };
+
+        buttons = buttons[this._params.type] || {};
 
         // cis. ...
         if ( ! message.event.indexOf('cis.')) {
@@ -636,7 +691,12 @@ var Project = {
 
                 showButtons(buttons.job, (message.data || {}).properties);
                 if (createTable(message)) {
-                    this._param_start_job = ((message.data || {}).params || []);
+                    if ((this._action || {}).name == 'startJob') {
+                        this._param_start_job = this._action.params;
+                        this.modal('startJob');
+                    } else {
+                        this._param_start_job = ((message.data || {}).params || []);
+                    }
                 }
 
             // cis.job.run.success
