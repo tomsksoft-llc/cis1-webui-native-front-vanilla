@@ -186,6 +186,7 @@ var Project = {
                 this._action = JSON.parse(this._url.action);
             } catch(e) {}
             delete this._url.action;
+            Hash.set(this._url);
         }
 
         if (this._url.file) {
@@ -220,6 +221,7 @@ var Project = {
         } else {
 
             this._sendRequest(this._events.request.cis.project_list);
+
         }
 
         Selector.query('title').innerHTML = 'CIS: ' + (self._url.serialize()
@@ -663,7 +665,7 @@ var Project = {
             // cis.project.add.success
             } else if (message.event == this._events.response.cis.project_add) {
 
-                location.reload();
+                this.send();
 
             // cis.project.remove.success
             } else if (message.event == this._events.response.cis.project_remove) {
@@ -679,7 +681,7 @@ var Project = {
             // cis.job.add.success
             } else if (message.event == this._events.response.cis.job_add) {
 
-                location.reload();
+                this.send();
 
             // cis.job.remove.success
             } else if (message.event == this._events.response.cis.job_remove) {
@@ -703,8 +705,8 @@ var Project = {
             } else if (message.event == this._events.response.cis.build_run) {
 
                 Toast.message('info', 'Job run success');
-
                 this.showLog(message.data.session_id);
+                this.send();
 
             // cis.session.log_entry
             } else if (message.event == this._events.response.cis.build_log_entry) {
@@ -784,13 +786,13 @@ var Project = {
             // fs.entry.refresh.success
             } else if (message.event == this._events.response.fs.refresh) {
 
-                location.reload();
+                this.send();
 
             // fs.entry.new_dir.success
             } else if (message.event == this._events.response.fs.new_dir) {
 
-                location.reload();
                 Toast.message('info', 'Create success');
+                this.send();
 
             // fs.entry.remove.success
             } else if (message.event == this._events.response.fs.remove) {
@@ -801,7 +803,7 @@ var Project = {
             } else if (message.event == this._events.response.fs.move) {
 
                 Hash.set(this._url);
-                this._sendRequest(this._events.request.fs.refresh);
+                this.send();
 
             // fs.entry.executable.success
             } else if (message.event == this._events.response.fs.executable) {
@@ -1226,9 +1228,7 @@ var Project = {
                         }
                         , success: function() {
                             Toast.message('success', 'File(-s) added success');
-                            setTimeout(function() {
-                                location.reload();
-                            }, 2 * 1000);
+                            self.send();
                         }
                         , error: function(text, xhr) {
                             Toast.message('error', 'File(-s) added error');
@@ -1285,7 +1285,7 @@ var Project = {
             this._elements.path.querySelector('a')).href;
 
         if (new_href == window.location) {
-            window.location.reload();
+            this.send();
         } else {
             window.location = new_href;
         }
