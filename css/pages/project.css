@@ -321,7 +321,7 @@ div.file-cell > label {
     color: #a9a9a9;
 }
 #project-form[data-type="log"] > div {
-    max-width: 650px;
+    max-width: 700px;
 }
 #project-form-header {
     position: relative;
@@ -345,11 +345,12 @@ div.file-cell > label {
     font-size: 30px;
     text-align: center;
     cursor: pointer;
-    transform: rotate(-45deg);
-    -webkit-transform: rotate(-45deg);
 }
 #project-form-close:after {
     content: '+';
+    display: block;
+    transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
 }
 #project-form-close:hover {
     color: #54ccf3;
@@ -365,7 +366,7 @@ div.file-cell > label {
 }
 #project-form[data-type="log"] #project-form-params > div {
     position: relative;
-    padding-left: 150px;
+    padding-left: 270px;
     box-sizing: border-box;
     line-height: 20px;
 }
@@ -378,10 +379,16 @@ div.file-cell > label {
     word-break: break-all;
     vertical-align: top;
 }
-#project-form[data-type="log"] #project-form-params > div > div:first-child {
+#project-form[data-type="log"] #project-form-params > div > div:nth-child(1),
+#project-form[data-type="log"] #project-form-params > div > div:nth-child(2) {
     position: absolute;
     top: 0;
     left: 0;
+    padding-right: 10px;
+    box-sizing: border-box;
+}
+#project-form[data-type="log"] #project-form-params > div > div:nth-child(2) {
+    left: 150px;
 }
 #project-form-params > div > span {
     display: block;

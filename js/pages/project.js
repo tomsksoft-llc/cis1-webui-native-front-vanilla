@@ -57,6 +57,7 @@ var Project = {
                 , build_run:        'cis.job.run.success'
                 , build_remove:     'cis.build.remove.success'
                 , entry_list:       'cis.build.info.success'
+                , job_finished:     'cis.job.finished'
 
                 // process
                 , build_log_entry:  'cis.session.log_entry'
@@ -754,7 +755,33 @@ var Project = {
                                 .replacePHs('value', message.data.exit_code)
                         );
                     }
+
+                    if ('exit_message' in (message.data || {})) {
+                        this._elements.info.html(
+                            (this._templates.info || '')
+                                .replacePHs('key', 'Exit message')
+                                .replacePHs('value', message.data.exit_message)
+                        );
+                    }
                 }
+
+            // cis.job.finished
+            } else if (message.event == this._events.response.cis.job_finished) {
+
+                Toast.open({
+                    type: (function() {
+                        if ((message.data || {}).status == 'failed') {
+                            return 'error';
+                        } else if ((message.data || {}).status == 'success') {
+                            return 'success';
+                        }
+                        return 'info';
+                    })()
+                    , text: ((message.data || {}).exit_message || '').encode() +
+                        ' -> Exit code: ' + (message.data || {}).exit_code
+                    , button_close: true
+                });
+
             }
 
         // fs
@@ -816,7 +843,7 @@ var Project = {
 
         //unidentified message
         } else {
-            console.warn('not processed message');
+            console.error('not processed message');
         }
     }
 
@@ -953,6 +980,7 @@ var Project = {
                     title: 'Run log'
                     , custom: this._templates.form_log_item
                         .replacePHs('time', 'Time')
+                        .replacePHs('action', 'Action')
                         .replacePHs('message', 'Messages')
                 });
 
@@ -1011,6 +1039,7 @@ var Project = {
                         , result_date.miliseconds
                     ].join('.')
                 ))
+                .replacePHs('action', (params.action || '...'), true)
                 .replacePHs('message', (params.message || '...'), true)
             );
 

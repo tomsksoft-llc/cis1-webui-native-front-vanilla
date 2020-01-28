@@ -358,6 +358,7 @@ var Toast = {
         , 'info'
     ]
     , _timeout: null
+    , _loop: []
 
     , _init: function(obj) {
         var self = this;
@@ -404,9 +405,13 @@ var Toast = {
 
         var delay = 0;
 
+        if ( ! this._element.wrapper) {
+            return;
+        }
+
         if (this._element.wrapper.hasClass('show')) {
-            this.close();
-            delay = .2;
+            this._loop.push(obj);
+            return;
         }
 
         var self = this;
@@ -486,6 +491,11 @@ var Toast = {
 
         self._timeout = setTimeout(function() {
             self._element.wrapper.removeClass('show');
+            if (self._loop.length) {
+                setTimeout(function() {
+                    self.open(self._loop.shift());
+                }, .2 * 1000);
+            }
         }, delay * 1000);
     }
 };
