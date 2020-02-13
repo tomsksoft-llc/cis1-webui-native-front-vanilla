@@ -50,38 +50,52 @@ addEvent(document, 'ready', function() {
             }
         });
 
-    Selector.queryAll('#content *[data-block]')
-        .forEach(function(item) {
-            var attr = item.getAttribute('data-block');
+    function loadTemplates(type) {
+        Selector.queryAll('*[data-' + type + ']:not([data-status])')
+            .forEach(function(item) {
+                var attr = item.getAttribute('data-' + type);
+                item.setAttribute('data-status', 'inited');
 
-            ([
-                '/css/pages/' + attr + '.css'
-            ]).addToHead('css');
+                ([
+                    '/css/pages/' + attr + '.css'
+                ]).addToHead('css');
 
-            var params = item.getAttribute('data-params') || '';
+                AJAX({
+                    url: '/' + type + 's/' + attr + '.html'
+                    , method: 'GET'
+                    , events: {
+                        wait: function() {
+                            html.addClass('wait');
+                        }
+                        , success: function(data) {
+                            html.removeClass('wait');
 
-            AJAX({
-                url: '/modules/' + attr + '.html'
-                , method: 'POST'
-                , events: {
-                    wait: function() {
-                        html.addClass('wait');
+                            item.innerHTML = data;
+                            item.setAttribute('data-status', 'loaded');
+
+                            if (type == 'module') {
+                                var callback = attr.capitalize() + '.init(' + (item.getAttribute('data-params') || '') + '); ' +
+                                    'Socket.addTypes(' + attr.capitalize() + ');';
+                                ([
+                                    '/js/pages/' + attr + '.js'
+                                ]).addToHead('js', callback);
+                            } else {
+                                setTimeout(function() {
+                                    loadTemplates('module');
+                                }, 0);
+                            }
+                        }
+                        , error: function() {
+                            html.removeClass('wait');
+                            item.setAttribute('data-status', 'empty');
+                        }
                     }
-                    , success: function(data) {
-                        html.removeClass('wait');
-
-                        item.innerHTML = data;
-
-                        ([
-                            '/js/pages/' + attr + '.js'
-                        ]).addToHead('js', (attr.capitalize() + '.init(' + params + '); Socket.addTypes(' + attr.capitalize() + ', ' + attr.capitalize() + '._messages);'));
-                    }
-                    , error: function() {
-                        html.removeClass('wait');
-                    }
-                }
+                });
             });
-        });
+    }
+
+    loadTemplates('module');
+    loadTemplates('template');
 });
 
 addEvent(window, 'load', function() {
@@ -93,28 +107,18 @@ addEvent(window, 'load', function() {
     });
 
     User.init();
-    Socket.addTypes(User, User._messages);
+    Socket.addTypes(User);
 
     Socket.open(function() { body.removeClass('spinner'); });
-
-    // as example
-    Page.init({
-        header: ''
-        , footer: ''
-    });
 });
 
 var Page = {
-    init: function(params) {
-        params = params || {};
+    plugins: {
+        code_mirror: '/js/plugins/code_mirror/'
+    }
 
-        Object.keys(params)
-            .forEach(function(item) {
-                if (params[item]) {
-                    body.addClass(item);
-                    Selector.id(item).innerHTML = params[item];
-                }
-            });
+    , init: function(params) {
+        params = params || {};
     }
 };
 
@@ -245,14 +249,8 @@ var Socket = {
         };
 
         this.ws.onerror = function(error) {
-            Toast.open({
-                type: 'error'
-                , text: 'WebSocket error connection'
-                , button_custom: {
-                    text: 'reconnect'
-                    , action: self.reconnect
-                }
-            });
+            Toast.message('warning', 'WebSocket error connection');
+
             console.warn(error);
             console.error('WebSocket Client Error: ' + error.message);
         };
@@ -279,13 +277,13 @@ var Socket = {
         };
     }
 
-    , addTypes: function(value, types) {
+    , addTypes: function(obj) {
 
         var self = this;
 
-        types
+        (obj._messages || [])
             .forEach(function(type) {
-                Config.modules[type] = value;
+                Config.modules[type] = obj;
 
                 while ((self._messages[type] || []).length) {
                     Config.modules[type].onmessage(self._messages[type].shift());
@@ -364,7 +362,7 @@ var Toast = {
         var self = this;
 
         AJAX({
-            url: '/modules/toast.html'
+            url: '/templates/toast.html'
             , method: 'POST'
             , events: {
                 wait: function() {
@@ -403,8 +401,6 @@ var Toast = {
             return;
         }
 
-        var delay = 0;
-
         if ( ! this._element.wrapper) {
             return;
         }
@@ -414,46 +410,39 @@ var Toast = {
             return;
         }
 
-        var self = this;
+        if (obj.type &&
+            this._types.indexOf(obj.type) > -1) {
 
-        setTimeout(function() {
-            if (obj.type &&
-                self._types.indexOf(obj.type) > -1) {
+            this._element.wrapper.setAttribute('data-type', obj.type);
+        } else {
+            this._element.wrapper.setAttribute('data-type', 'default');
+        }
 
-                self._element.wrapper.setAttribute('data-type', obj.type);
-            } else {
-                self._element.wrapper.setAttribute('data-type', 'default');
-            }
+        this._element.text.innerHTML = obj.text || '';
 
-            self._element.text.innerHTML = obj.text || '';
+        this._element.buttons
+            .removeClass('button-close')
+            .removeClass('button-custom');
 
-            self._element.buttons
-                .removeClass('button-close')
-                .removeClass('button-custom');
+        if (obj.button_close) {
+            this._element.buttons.addClass('button-close');
+        }
 
-            if (obj.button_close) {
+        if (obj.button_custom &&
+            typeof obj.button_custom.action == "function") {
 
-                self._element.buttons.addClass('button-close');
+            this._element.button_custom.innerHTML = obj.button_custom.text || '';
+            this._element.button_custom.setAttribute('onclick', 'Toast._button_action();');
+            this._button_action = obj.button_custom.action;
 
-            }
+            this._element.buttons.addClass('button-custom');
+        }
 
-            if (obj.button_custom &&
-                typeof obj.button_custom.action == "function") {
+        if (obj.delay) {
+            Toast.close(obj.delay);
+        }
 
-                self._element.button_custom.innerHTML = obj.button_custom.text || '';
-                self._element.button_custom.setAttribute('onclick', 'Toast._button_action();');
-                self._button_action = obj.button_custom.action;
-
-                self._element.buttons.addClass('button-custom');
-            }
-
-            if (obj.delay) {
-                Toast.close(obj.delay);
-            }
-
-            self._element.wrapper.addClass('show');
-
-        }, delay * 1000);
+        this._element.wrapper.addClass('show');
     }
 
     , message: function(type, message) {
@@ -504,22 +493,24 @@ var Toast = {
  * Modal window with custom content
  *
  * Method 'open'    - Open modal
- * @param {string} header   - Text for modal header
- * @param {string} content  - HTML for modal content
+ *  @param {string} header      - Text for modal header
+ *  @param {string} content     - HTML for modal content
+ *  @param {function} content   - On open callback
  *
  * Method 'close'   - Close modal
  */
 var Modal = {
     _loaded: false
+
     , header: null
     , window: null
     , content: null
 
-    , _init: function(header, content) {
+    , _init: function(header, content, callback) {
         var self = this;
 
         AJAX({
-            url: '/modules/modal.html'
+            url: '/templates/modal.html'
             , method: 'POST'
             , events: {
                 wait: function() {
@@ -536,7 +527,14 @@ var Modal = {
                         self.header = document.querySelector('#modal-window > h1');
                         self.content = document.getElementById('modal-content');
 
-                        self.open(header, content);
+                        addEvent(document.getElementById('modal-close'), 'click', self.close);
+                        addEvent(document.getElementById('modal'), 'click', function(event) {
+                            if (event.target.id == 'modal') {
+                                self.close();
+                            }
+                        });
+
+                        self.open(header, content, callback);
                     }, 0);
                 }
                 , error: function() {
@@ -546,9 +544,9 @@ var Modal = {
         });
     }
 
-    , open: function(header, content) {
+    , open: function(header, content, callback) {
         if ( ! this._loaded) {
-            this._init(header, content);
+            this._init(header, content, callback);
             return;
         }
 
@@ -557,7 +555,14 @@ var Modal = {
 
         html.style.paddingRight = window.innerWidth - html.clientWidth + 'px';
         html.addClass('modal-show');
+
+        setTimeout(function() {
+            if (typeof callback == 'function') {
+                callback();
+            }
+        }, 0);
     }
+
     , close: function() {
         html.style.paddingRight = 0;
         html.removeClass('modal-show');

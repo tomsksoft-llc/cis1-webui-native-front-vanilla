@@ -1,25 +1,26 @@
-<h2>Login</h2>
-<div id="auth-sign-in">
-    <div id="auth-form">
-        <div>
-            <span>Login</span>
-            <input id="auth-username" class="custom-input" type="text" name="username" maxlength="30">
+<div id="auth-content">
+    <div id="auth-sign-in">
+        <div id="auth-form">
+            <div>
+                <span>Login</span>
+                <input id="auth-username" class="custom-input" type="text" name="username" maxlength="30">
+            </div>
+            <div>
+                <span>Password</span>
+                <input id="auth-password" class="custom-input" type="password" name="password" maxlength="15">
+            </div>
         </div>
-        <div>
-            <span>Password</span>
-            <input id="auth-pass" class="custom-input" type="password" name="password" maxlength="15">
+        <div id="auth-checkbox">
+            <label>
+                <input id="auth-remember" type="checkbox" name="remember">
+                <span>Remember Me</span>
+            </label>
         </div>
+        <div class="custom-button blue-button" onclick="Auth.signInByLogPass();">Sign in</div>
+        <!--<a href="#">Forgot Your Password?</a>-->
     </div>
-    <div id="auth-checkbox">
-        <label>
-            <input id="auth-remember" type="checkbox" name="remember">
-            <span>Remember Me</span>
-        </label>
+    <div id="auth-sign-out">
+        <span></span>
+        <div class="custom-button blue-button" onclick="Auth.signOut();">Sign Out</div>
     </div>
-    <div class="custom-button blue-button" onclick="Auth.signInByLogPass();">Sign in</div>
-    <a href="#">Forgot Your Password?</a>
-</div>
-<div id="auth-sign-out">
-    <span></span>
-    <div class="custom-button blue-button" onclick="Auth.signOut();">Sign Out</div>
 </div>

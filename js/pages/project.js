@@ -23,7 +23,6 @@
  *                 @param {obj} metainfo    - (Optional) Record metadata
  *                     @param {string} date - (Optional) Start date
  */
-
 var Project = {
 
     _url: {}
@@ -121,6 +120,61 @@ var Project = {
     , _last_file_content: ''
     , _last_session_id: ''
 
+    , _loaded_langs: []
+    , _code_mirror: null
+
+    , _code_mirror_loop: [
+        function() {
+            [
+                'lib/codemirror.css'
+                , 'addon/fold/foldgutter.css'
+                , 'addon/dialog/dialog.css'
+                , 'theme/monokai.css'
+            ].map(function(item) {
+                return Page.plugins.code_mirror + item;
+            }).addToHead('css');
+
+            [
+                'lib/codemirror.js'
+            ].map(function(item) {
+                return Page.plugins.code_mirror + item;
+            }).addToHead('js', 'Project._code_mirror_loop.shift()();');
+        }
+        , function() {
+            [
+                'mode/meta.js'
+            ].map(function(item) {
+                return Page.plugins.code_mirror + item;
+            }).addToHead('js', 'Project._code_mirror_loop.shift()();');
+        }
+        , function() {
+            [
+                'keymap/sublime.js'
+            ].map(function(item) {
+                return Page.plugins.code_mirror + item;
+            }).addToHead('js', 'Project._code_mirror_loop.shift()();');
+        }
+        , function() {
+            [
+                'addon/search/searchcursor.js'
+                , 'addon/search/search.js'
+                , 'addon/dialog/dialog.js'
+                , 'addon/edit/matchbrackets.js'
+                , 'addon/edit/closebrackets.js'
+                , 'addon/comment/comment.js'
+                , 'addon/wrap/hardwrap.js'
+                , 'addon/fold/foldcode.js'
+                , 'addon/fold/brace-fold.js'
+            ].map(function(item) {
+                return Page.plugins.code_mirror + item;
+            }).addToHead('js');
+
+            if (Project._code_mirror_loop.length) {
+                Project._code_mirror_loop.shift()();
+            }
+        }
+    ]
+
     , init: function(params) {
 
         var self = this;
@@ -150,6 +204,8 @@ var Project = {
         this._elements.project.setAttribute('data-type', this._params.type);
 
         this.send();
+
+        this._code_mirror_loop.shift()();
     }
 
     , send: function() {
@@ -360,9 +416,14 @@ var Project = {
                             wait: function() {
                                 html.addClass('wait');
                             }
-                            , success: function(data) {
-                                textarea.innerHTML = data;
-                                self._last_file_content = textarea.value;
+                            , success: function(data, xhr) {
+
+                                self.textEditor({
+                                    action: 'new'
+                                    , value: data
+                                    , mime: xhr.getResponseHeader('content-length')
+                                });
+
                                 html.removeClass('wait');
                             }
                             , error: function(text, xhr) {
@@ -373,7 +434,7 @@ var Project = {
                     });
 
                     addEvent(textarea, ['keyup', 'focus', 'blur'], function() {
-                        if (this.value == self._last_file_content) {
+                        if (self._last_file_content == this.value) {
                             file_save.setAttribute('data-disabled', 'disabled');
                         } else {
                             file_save.setAttribute('data-disabled', '');
@@ -403,9 +464,9 @@ var Project = {
                                     file: (function() {
                                         var file = null;
                                         try {
-                                            file = new File([new Blob([textarea.value])], self._url.file);
+                                            file = new File([new Blob([self.textEditor({ action: 'value' })])], self._url.file);
                                         } catch(e) {
-                                            file = new Blob([textarea.value], { type: '' });
+                                            file = new Blob([self.textEditor({ action: 'value' })], { type: '' });
                                             file.lastModifiedDate = (new Date()).getTime();
                                             file.name = self._url.file;
                                         }
@@ -418,7 +479,7 @@ var Project = {
                                     html.addClass('wait');
                                 }
                                 , success: function() {
-                                    self._last_file_content = textarea.value;
+                                    self._last_file_content = self.textEditor({ action: 'value' });
                                     file_save.setAttribute('data-disabled', 'disabled');
                                     Toast.message('success', 'File saved');
                                     html.removeClass('wait');
@@ -857,6 +918,108 @@ var Project = {
 
     }
 
+    , textEditor: function(params) {
+
+        params = params || {};
+
+        var self = this;
+
+        if (this._code_mirror_loop.length) {
+            this._code_mirror_loop.push(function() {
+                setTimeout(function() {
+                    self.textEditor(params);
+                    self._code_mirror_loop.shift();
+                }, 0 * 1000);
+            });
+            return;
+        }
+
+        function setValue(value) {
+            self._code_mirror.setValue(value);
+        }
+
+        function setOption(mime) {
+            self._code_mirror.setOption('mode', (CodeMirror.findModeByMIME(mime) ||
+                CodeMirror.findModeByMIME('text/plain')).mode);
+        }
+
+        if (params.action == 'new') {
+
+            var keymap = 'sublime';
+            var theme = 'monokai';
+
+            this._code_mirror = CodeMirror.fromTextArea(Selector.id('file-content'), {
+                lineNumbers: true
+                , keyMap: keymap
+                , autoCloseBrackets: true
+                , matchBrackets: true
+                , showCursorWhenSelecting: true
+                , theme: theme
+                , tabSize: 4
+            });
+
+            setValue(params.value || '');
+
+            this._code_mirror.on('change', function() {
+                var file_save = Selector.query('#project-table > div.file-row > div.file-cell > .custom-button');
+
+                if (self._last_file_content == self._code_mirror.getValue()) {
+                    file_save.setAttribute('data-disabled', 'disabled');
+                } else {
+                    file_save.setAttribute('data-disabled', '');
+                }
+            });
+
+            setOption(params.mime);
+            this._last_file_content = this._code_mirror.getValue();
+
+            Selector.query('#file-editor-keymap > ul').innerHTML =
+                Object.keys(CodeMirror.keyMap[keymap])
+                    .map(function(key) {
+
+                        var value = CodeMirror.keyMap[keymap][key];
+
+                        if (key != 'fallthrough' &&
+                                value != '...' &&
+                                ( ! /find/.test(value) ||
+                                    /findUnder/.test(value))) {
+
+                            return (self._templates.info || '')
+                                .replacePHs('key', key)
+                                .replacePHs('value', value);
+                        }
+                    }).join('');
+
+        } else if (params.action == 'mime') {
+
+            if (this._loaded_langs.indexOf(params.mime || 'text/plain') > -1) {
+                setOption(params.mime);
+            } else {
+                var mode = (CodeMirror.findModeByMIME(params.mime) || {}).mode || '';
+                if (mode) {
+                    ([
+                        Page.plugins.code_mirror + 'mode/' + mode + '/' + mode + '.js'
+                    ]).addToHead('js', ('Project.textEditor({ action: "mime", mime: "' + params.mime + '" });'));
+                    this._loaded_langs.push(params.mime);
+                } else {
+                    setOption(params.mime);
+                    this._loaded_langs.push('text/plain');
+                }
+            }
+
+            setOption(params.mime);
+
+        } else if (params.action == 'value') {
+
+            if (params.value) {
+                setValue(params.value);
+            } else {
+                return this._code_mirror.getValue();
+            }
+
+        }
+    }
+
     /**
      *  Modal
      *
@@ -966,6 +1129,7 @@ var Project = {
 
             self._modal.form.setAttribute('data-type', action);
             self._modal.form.className = 'show-modal';
+            self._modal.form.style.paddingTop = Scroll.get() + 100 + 'px';
         }
 
         if (action == 'log') {
@@ -1276,11 +1440,12 @@ var Project = {
 
     , actionButton: function(type, action) {
 
+        var self = this;
+
         if (type == 'file') {
 
             if (action == 'replace') {
 
-                var textarea = Selector.id('file-content');
                 var file_save = Selector.query('#project-table > div.file-row > div.file-cell > .custom-button');
                 var temp_input = document.createElement('input');
 
@@ -1290,7 +1455,16 @@ var Project = {
                 temp_input.onchange = function() {
                     var reader = new FileReader();
                     reader.onload = function() {
-                        textarea.value = this.result;
+
+                        self.textEditor({
+                            action: 'value'
+                            , value: this.result
+                        });
+                        self.textEditor({
+                            action: 'mime'
+                            , mime: temp_input.files[0].type
+                        });
+
                         file_save.setAttribute('data-disabled', '');
                     };
                     reader.readAsText(this.files[0]);

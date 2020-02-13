@@ -1003,7 +1003,7 @@ function AJAX(params) {
 
             if (xhr.status === 200) { // on success
                 if (isFunction(params.events.success)) {
-                    params.events.success(response_text);
+                    params.events.success(response_text, xhr);
                 }
             } else { // on error
                 if (isFunction(params.events.error)) {

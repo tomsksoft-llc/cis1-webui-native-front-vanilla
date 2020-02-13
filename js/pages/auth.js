@@ -5,23 +5,15 @@
  *  init            - Variable initialization
  *  signInByLogPass - Sign in by login and password
  *  signOut         - Log out from account
- *
  *  onmessage       - Behavior on response from server
- *  @param {object} message - Text of response text of response from server(
- *      @param {string} event - Success of action
- *                               Variant 'auth.success' (success sign in) ||
- *                               'auth.error.wrong_credentials' (data error) ||
- *                               'auth.logout_success' (success sign out)
- *      @param {object} data  - (optional) Message (for success sign in)
- *          @param {string} token - Token of user
+ *      @param {object} message - Text of response text of response from server(
  */
-
 var Auth = {
 
     _elements: {
-        auth: null
+        content: null
         , username: null
-        , pass: null
+        , password: null
         , remember: null
     }
     , _cookie: {
@@ -29,32 +21,51 @@ var Auth = {
         , username: null
     }
     , _events: {
-        request: {
+        response: {
+            sign_in:                'auth.login_pass.success'
+            , sign_out:             'auth.logout.success'
+            , wrong_credentials:    'auth.error.wrong_credentials'
+            , login_required:       'auth.error.login_required'
+        }
+        , request: {
             sign_in_token:  'auth.token'
             , sign_in_log:  'auth.login_pass'
             , sign_out:     'auth.logout'
         }
-        , response: {
-            sign_in:    'auth.login_pass.success'
-            , error:    'auth.error.wrong_credentials'
-            , sign_out: 'auth.logout.success'
-        }
     }
+
+    , events: {}
+    , _state: ''
 
     , _messages: [
         'auth'
     ]
 
-    , init: function() {
+    , init: function(params) {
+
+        params = params || {};
+
+        for (var key in params) {
+            this.events[key] = params[key];
+        }
 
         for (var key in this._elements) {
-            this._elements[key] = Selector.id(((key == 'auth') ? '' : 'auth-') + key);
+            this._elements[key] = Selector.id('auth-' + key);
         }
         for (var key in this._cookie) {
             this._cookie[key] = decodeURIComponent(Cookie.get(key));
         }
 
-        this._sendRequest(this._events.request.sign_in_token, { token: this._cookie.auth_token });
+        if (this._elements.content) {
+            this._elements.content.className = this._state;
+        } else {
+            this._sendRequest(this._events.request.sign_in_token, { token: this._cookie.auth_token });
+        }
+    }
+
+    , open: function(header, content) {
+
+        Modal.open(header, content, function() { Auth.init(); });
     }
 
     , signInByLogPass: function() {
@@ -64,7 +75,7 @@ var Auth = {
             Toast.message('warning', 'Please enter your login');
             return;
         }
-        if ( ! this._elements.pass.value) {
+        if ( ! this._elements.password.value) {
 
             Toast.message('warning', 'Please enter your password');
             return;
@@ -72,7 +83,7 @@ var Auth = {
 
         this._sendRequest(this._events.request.sign_in_log, {
             username: this._elements.username.value
-            , pass: this._elements.pass.value
+            , pass: this._elements.password.value
         });
     }
 
@@ -85,14 +96,17 @@ var Auth = {
 
         message = message || {event: ''};
 
+        // auth.login_pass.success
         if (message.event == this._events.response.sign_in) {
 
             this._cookie.auth_token = (message.data || {}).token || '';
 
-            if (this._elements.username.value) {
+            if (this._elements.username &&
+                    this._elements.username.value) {
 
                 this._cookie.username = this._elements.username.value;
-                if (this._elements.remember.checked) {
+                if (this._elements.remember &&
+                        this._elements.remember.checked) {
                     for (var key in this._cookie) {
                         Cookie.set(key, encodeURIComponent(this._cookie[key]));
                     }
@@ -101,28 +115,50 @@ var Auth = {
 
             Selector.query('#auth-sign-out > span').innerHTML = 'Logged in as ' + this._cookie.username;
             Toast.message('success', 'authentication was successful');
-            this._elements.auth.className = 'sign-out';
+            this._state = 'sign-out';
 
-        } else if (message.event == this._events.response.error) {
-
-            if (this._elements.username.value) {
-                Toast.message('error', 'wrong login or password');
-            }
-
-            this._elements.auth.className = 'sign-in';
-
+        // auth.logout.success
         } else if (message.event == this._events.response.sign_out) {
 
             for (var key in this._cookie) {
                 Cookie.delete(key);
             }
 
-            this._elements.auth.className = 'sign-in';
+            this._state = 'sign-in';
+
+        // auth.error.wrong_credentials
+        } else if (message.event == this._events.response.wrong_credentials) {
+
+            if (this._elements.username &&
+                    this._elements.username.value) {
+                Toast.message('error', 'wrong login or password');
+            }
+
+            this._state = 'sign-in';
+
+        // auth.error.login_required
+        } else if (message.event == this._events.response.login_required) {
+
+            var sign_in_button = Selector.id('header-login-signin');
+            if (sign_in_button) {
+                sign_in_button.click();
+            }
+
+            this._state = 'sign-in';
 
         } else {
 
             console.warn('not processed message');
+
         }
+
+        if (this._elements.content) {
+            this._elements.content.className = this._state;
+        }
+
+        try {
+            this.events.onChangeState(this._state);
+        } catch(e) {}
     }
 
     , _sendRequest: function(event, data) {

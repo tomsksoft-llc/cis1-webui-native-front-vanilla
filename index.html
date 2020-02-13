@@ -11,23 +11,25 @@
 
         <script type="text/javascript" src="/js/library.js"></script>
         <script type="text/javascript" src="/js/template.js"></script>
+
+        <style>
+            #project {
+                position: relative;
+                width: 100%;
+            }
+        </style>
     </head>
     <body class="spinner">
 
         <div id="wrapper">
-            <div id="header">
-                [[header]]
-            </div>
+            <div id="header" data-template="header"></div>
             <div id="content-wrapper">
                 <div id="content">
-                    <div id="project" data-block="project" data-params='{"type":"all"}'></div>
-                    <div id="auth" data-block="auth"></div>
+                    <div id="project" data-module="project" data-params='{"type":"all"}'></div>
                 </div>
             </div>
         </div>
-        <div id="footer">
-            [[footer]]
-        </div>
+        <div id="footer" data-template="footer"></div>
 
 	    <div id="spinner"></div>
     </body>
