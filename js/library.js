@@ -336,37 +336,65 @@ var Cookie = {
         for (var cookie_index in arr_cookies) {
             var cookie_item = arr_cookies[cookie_index].trim().split('=');
             if (cookie_item[0] == name) {
-                return cookie_item[1];
+                return decodeURIComponent(cookie_item[1]);
             }
         }
         return '';
     }
     , set: function(name, value, settings) {
+
+        settings = settings || {};
+
         if ( ! name) {
             return;
         }
 
-        if ( ! settings) {
-            settings = {};
+        if ('expires' in settings) {
+            var date = new Date();
+            date.setTime(date.getTime() + (settings.expires * 24 * 60 * 60 * 1000));
+            document.cookie = 'expires=' + date.toUTCString();
+        } else if (this.get('expires')) {
+            document.cookie = 'expires=';
         }
 
-        var data = {};
+        var data = [];
 
-        var date = new Date();
-        date.setTime(date.getTime() + ((settings.expires || 365) * 24 * 60 * 60 * 1000));
+        if (name) {
+            data.push({
+                name: name
+                , value: value
+            });
+        }
+        if ('path' in settings) {
+            data.push({
+                name: 'path'
+                , value: settings.path
+            });
+        }
+        if ('domain' in settings) {
+            data.push({
+                name: 'domain'
+                , value: settings.domain
+            });
+        }
+        if (this.get('expires')) {
+            data.push({
+                name: 'expires'
+                , value: this.get('expires')
+            });
+        }
 
-        data[name] = value;
-        data.expires = date.toUTCString();
-        data.domain = settings.domain || window.location.hostname;
-        data.path = settings.path || '/';
-
-        document.cookie = Object.keys(data)
-            .map(function(key) {
-                return key + '=' + data[key];
+        document.cookie = data
+            .map(function(item) {
+                return item.name + '=' + item.value;
             }).join('; ');
     }
     , delete: function(name) {
-        this.set(name, '', { expires: -1 });
+        if (this.get('expires')) {
+            this.set(name, '', {expires: -1});
+        } else {
+            this.set(name, '');
+        }
     }
 };
 

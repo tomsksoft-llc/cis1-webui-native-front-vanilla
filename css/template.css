@@ -413,7 +413,7 @@ html.modal-show {
     top: 0;
     left: -100%;
     opacity: 0;
-    z-index: 10;
+    z-index: 9;
     overflow: hidden;
 }
 html.modal-show > body > #modal-wrapper {

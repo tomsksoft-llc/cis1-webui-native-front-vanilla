@@ -58,8 +58,10 @@ var Auth = {
 
         if (this._elements.content) {
             this._elements.content.className = this._state;
-        } else {
+        } else if (this._cookie.auth_token) {
             this._sendRequest(this._events.request.sign_in_token, { token: this._cookie.auth_token });
+        } else {
+            this._state = 'sign-in';
         }
     }
 
@@ -94,6 +96,8 @@ var Auth = {
 
     , onmessage: function(message) {
 
+        var self = this;
+
         message = message || {event: ''};
 
         // auth.login_pass.success
@@ -105,16 +109,20 @@ var Auth = {
                     this._elements.username.value) {
 
                 this._cookie.username = this._elements.username.value;
-                if (this._elements.remember &&
-                        this._elements.remember.checked) {
-                    for (var key in this._cookie) {
+
+                for (var key in this._cookie) {
+                    if (self._elements.remember &&
+                            self._elements.remember.checked) {
+                        Cookie.set(key, encodeURIComponent(this._cookie[key]), { expires: 30 });
+                    } else {
                         Cookie.set(key, encodeURIComponent(this._cookie[key]));
                     }
                 }
+
+                Selector.query('#auth-sign-out > span').innerHTML = 'Logged in as "' + this._cookie.username + '"';
+                Toast.message('success', 'authentication was successful');
             }
 
-            Selector.query('#auth-sign-out > span').innerHTML = 'Logged in as ' + this._cookie.username;
-            Toast.message('success', 'authentication was successful');
             this._state = 'sign-out';
 
         // auth.logout.success
@@ -132,6 +140,13 @@ var Auth = {
             if (this._elements.username &&
                     this._elements.username.value) {
                 Toast.message('error', 'wrong login or password');
+            } else {
+                Toast.message('error', 'Auth wrong credentials, please sign in');
+
+                var sign_in_button = Selector.id('header-login-signin');
+                if (sign_in_button) {
+                    sign_in_button.click();
+                }
             }
 
             this._state = 'sign-in';
