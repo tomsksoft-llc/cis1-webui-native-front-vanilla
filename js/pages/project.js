@@ -421,7 +421,7 @@ var Project = {
                                 self.textEditor({
                                     action: 'new'
                                     , value: data
-                                    , mime: xhr.getResponseHeader('content-length')
+                                    , mime: xhr.getResponseHeader("Content-Type")
                                 });
 
                                 html.removeClass('wait');
